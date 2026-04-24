@@ -1,1 +1,31 @@
 @import "tailwindcss";
+
+@theme {
+  --color-devstash-bg: #08090b;
+  --color-devstash-panel: #101216;
+  --color-devstash-line: rgba(255, 255, 255, 0.1);
+}
+
+:root {
+  color-scheme: dark;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: #08090b;
+}
+
+button,
+input,
+textarea {
+  font: inherit;
+}
+
+::selection {
+  background: rgba(110, 231, 183, 0.28);
+  color: #ffffff;
+}

@@ -13,8 +13,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Devstash",
-  description: "A clean Next.js starting point for Devstash.",
+  title: "DevStash Dashboard",
+  description: "A static dashboard mockup for the DevStash SaaS.",
 };
 
 export default function RootLayout({
