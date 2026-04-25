@@ -302,6 +302,31 @@ export const items: DashboardItem[] = [
     isFavorite: false,
     preview: "https://tailwindcss.com/docs/theme",
   },
+  {
+    id: "item_zod_schema_pattern",
+    title: "Zod Schema Pattern",
+    description: "Validation schema structure for form and API inputs",
+    typeSlug: "snippet",
+    collectionSlugs: ["react-patterns"],
+    tags: ["zod", "validation", "forms"],
+    updatedAt: "Jan 4",
+    isPinned: false,
+    isFavorite: true,
+    language: "TypeScript",
+    preview: "const schema = z.object({ email: z.string().email() });",
+  },
+  {
+    id: "item_docker_cleanup_command",
+    title: "Docker Cleanup Command",
+    description: "Remove unused containers, networks, images, and build cache",
+    typeSlug: "command",
+    collectionSlugs: ["git-commands"],
+    tags: ["docker", "cleanup", "local"],
+    updatedAt: "Jan 3",
+    isPinned: false,
+    isFavorite: false,
+    preview: "docker system prune --all --volumes",
+  },
 ];
 
 export const mockDashboardData = {
