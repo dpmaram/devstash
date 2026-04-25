@@ -30,12 +30,3 @@ export const itemTypeIconClasses: Record<ItemTypeSlug, string> = {
   image: "text-pink-400",
   link: "text-emerald-400",
 };
-
-export const collectionAccentClasses = [
-  "border-l-blue-500",
-  "border-l-violet-500",
-  "border-l-zinc-500",
-  "border-l-yellow-300",
-  "border-l-orange-500",
-  "border-l-emerald-500",
-];
