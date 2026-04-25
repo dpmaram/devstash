@@ -60,6 +60,20 @@ export type DashboardItem = {
   accentColor: string;
 };
 
+const dashboardItemTypeOrder = [
+  "snippet",
+  "prompt",
+  "command",
+  "note",
+  "file",
+  "image",
+  "link",
+] as const;
+
+const dashboardItemTypeRank = new Map<string, number>(
+  dashboardItemTypeOrder.map((slug, index) => [slug, index]),
+);
+
 function formatUpdatedAt(updatedAt: Date, now: Date) {
   const diffMs = Math.max(0, now.getTime() - updatedAt.getTime());
   const diffMinutes = Math.floor(diffMs / 60_000);
@@ -130,6 +144,25 @@ function pluralizeItemType(value: string) {
   }
 
   return `${value}s`;
+}
+
+export function sortDashboardItemTypes<T extends { slug: string }>(
+  itemTypes: T[],
+) {
+  return [...itemTypes].sort((firstItemType, secondItemType) => {
+    const firstRank =
+      dashboardItemTypeRank.get(firstItemType.slug) ?? Number.MAX_SAFE_INTEGER;
+    const secondRank =
+      dashboardItemTypeRank.get(secondItemType.slug) ?? Number.MAX_SAFE_INTEGER;
+    const rankDifference =
+      firstRank - secondRank;
+
+    if (rankDifference !== 0) {
+      return rankDifference;
+    }
+
+    return firstItemType.slug.localeCompare(secondItemType.slug);
+  });
 }
 
 export function toDashboardItemType(itemType: ItemTypeRecordWithCount) {

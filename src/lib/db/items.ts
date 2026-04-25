@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 
 import {
+  sortDashboardItemTypes,
   toDashboardItem,
   toDashboardItemType,
   type DashboardItem,
@@ -155,7 +156,7 @@ export async function getDashboardItemTypes(
     itemCounts.map((itemCount) => [itemCount.itemTypeId, itemCount._count._all]),
   );
 
-  return itemTypes.map((itemType) =>
+  return sortDashboardItemTypes(itemTypes).map((itemType) =>
     toDashboardItemType({
       ...itemType,
       itemCount: itemCountByTypeId.get(itemType.id) ?? 0,
