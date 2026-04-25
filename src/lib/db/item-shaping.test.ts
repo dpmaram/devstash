@@ -1,7 +1,11 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 
-import { toDashboardItem, type ItemRecord } from "./item-shaping";
+import {
+  toDashboardItem,
+  toDashboardItemType,
+  type ItemRecord,
+} from "./item-shaping";
 
 const now = new Date("2026-04-25T16:30:00.000Z");
 
@@ -105,5 +109,43 @@ describe("toDashboardItem", () => {
 
     assert.equal(linkItem.preview, "https://tailwindcss.com/docs");
     assert.equal(fileItem.preview, "component-context.md");
+  });
+});
+
+describe("toDashboardItemType", () => {
+  it("formats system item types for the dashboard sidebar", () => {
+    const itemType = toDashboardItemType({
+      id: "type_snippet",
+      name: "snippet",
+      slug: "snippet",
+      icon: "Code",
+      color: "#3b82f6",
+      itemCount: 12,
+    });
+
+    assert.deepEqual(itemType, {
+      id: "type_snippet",
+      name: "snippet",
+      slug: "snippet",
+      label: "Snippets",
+      href: "/items/snippets",
+      icon: "Code",
+      color: "#3b82f6",
+      itemCount: 12,
+    });
+  });
+
+  it("pluralizes image item type links naturally", () => {
+    const itemType = toDashboardItemType({
+      id: "type_image",
+      name: "image",
+      slug: "image",
+      icon: "Image",
+      color: "#ec4899",
+      itemCount: 2,
+    });
+
+    assert.equal(itemType.label, "Images");
+    assert.equal(itemType.href, "/items/images");
   });
 });

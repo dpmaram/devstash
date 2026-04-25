@@ -1,8 +1,13 @@
 import { prisma } from "@/lib/prisma";
 
-import { toDashboardItem, type DashboardItem } from "./item-shaping";
+import {
+  toDashboardItem,
+  toDashboardItemType,
+  type DashboardItem,
+  type DashboardItemType,
+} from "./item-shaping";
 
-export type { DashboardItem } from "./item-shaping";
+export type { DashboardItem, DashboardItemType } from "./item-shaping";
 
 type DashboardItemsOptions = {
   limit?: number;
@@ -124,6 +129,38 @@ export async function getDashboardRecentItems(
   });
 
   return items.map((item) => toDashboardItem(item));
+}
+
+export async function getDashboardItemTypes(
+  options: Pick<DashboardItemsOptions, "userEmail"> = {},
+): Promise<DashboardItemType[]> {
+  const user = await getDashboardUser(options.userEmail);
+  const [itemTypes, itemCounts] = await Promise.all([
+    prisma.itemType.findMany({
+      where: { isSystem: true },
+      orderBy: { createdAt: "asc" },
+      select: itemTypeSelect,
+    }),
+    user
+      ? prisma.item.groupBy({
+          by: ["itemTypeId"],
+          where: { userId: user.id },
+          _count: {
+            _all: true,
+          },
+        })
+      : Promise.resolve([]),
+  ]);
+  const itemCountByTypeId = new Map(
+    itemCounts.map((itemCount) => [itemCount.itemTypeId, itemCount._count._all]),
+  );
+
+  return itemTypes.map((itemType) =>
+    toDashboardItemType({
+      ...itemType,
+      itemCount: itemCountByTypeId.get(itemType.id) ?? 0,
+    }),
+  );
 }
 
 export async function getDashboardItemData(

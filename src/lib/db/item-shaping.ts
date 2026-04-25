@@ -6,6 +6,16 @@ export type ItemTypeRecord = {
   color: string;
 };
 
+export type ItemTypeRecordWithCount = ItemTypeRecord & {
+  itemCount: number;
+};
+
+export type DashboardItemType = ItemTypeRecord & {
+  label: string;
+  href: string;
+  itemCount: number;
+};
+
 export type ItemRecord = {
   id: string;
   title: string;
@@ -100,6 +110,41 @@ function getPreview(item: ItemRecord) {
   }
 
   return "";
+}
+
+function capitalize(value: string) {
+  return value.charAt(0).toUpperCase() + value.slice(1);
+}
+
+function pluralizeItemType(value: string) {
+  if (value.endsWith("s")) {
+    return value;
+  }
+
+  if (value.endsWith("y")) {
+    return `${value.slice(0, -1)}ies`;
+  }
+
+  if (value.endsWith("ge")) {
+    return `${value}s`;
+  }
+
+  return `${value}s`;
+}
+
+export function toDashboardItemType(itemType: ItemTypeRecordWithCount) {
+  const pluralName = pluralizeItemType(itemType.name);
+
+  return {
+    id: itemType.id,
+    name: itemType.name,
+    slug: itemType.slug,
+    label: capitalize(pluralName),
+    href: `/items/${pluralizeItemType(itemType.slug)}`,
+    icon: itemType.icon,
+    color: itemType.color,
+    itemCount: itemType.itemCount,
+  } satisfies DashboardItemType;
 }
 
 export function toDashboardItem(item: ItemRecord, now = new Date()) {

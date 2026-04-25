@@ -8,25 +8,34 @@ import {
 } from "@/components/dashboard/dashboard-icons";
 import {
   getDashboardCollectionData,
+  getDashboardCollections,
   type DashboardCollection,
   type DashboardStat,
 } from "@/lib/db/collections";
 import {
   getDashboardItemData,
+  getDashboardItemTypes,
   type DashboardItem,
 } from "@/lib/db/items";
 import { mockDashboardData, type ItemTypeSlug } from "@/lib/mock-data";
 
 export async function DashboardShell() {
-  const { currentUser, itemTypes } = mockDashboardData;
-  const [{ collections, stats }, { pinnedItems, recentItems }] = await Promise.all([
+  const { currentUser } = mockDashboardData;
+  const [
+    { collections, stats },
+    { pinnedItems, recentItems },
+    itemTypes,
+    sidebarCollections,
+  ] = await Promise.all([
     getDashboardCollectionData({ limit: 6 }),
     getDashboardItemData({ pinnedLimit: 3, recentLimit: 10 }),
+    getDashboardItemTypes(),
+    getDashboardCollections({ limit: 20 }),
   ]);
 
   return (
     <DashboardChrome
-      collections={collections}
+      collections={sidebarCollections}
       currentUser={currentUser}
       itemTypes={itemTypes}
     >
