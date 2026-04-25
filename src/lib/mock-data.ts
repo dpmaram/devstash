@@ -55,7 +55,7 @@ export type CurrentUser = {
 export const currentUser: CurrentUser = {
   id: "user_john_doe",
   name: "John Doe",
-  email: "john@example.com",
+  email: "durga.maram@gmail.com",
   avatarUrl: null,
   planTier: "pro",
 };
