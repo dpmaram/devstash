@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 
 import {
+  sortDashboardItemTypes,
   toDashboardItem,
   toDashboardItemType,
   type ItemRecord,
@@ -147,5 +148,75 @@ describe("toDashboardItemType", () => {
 
     assert.equal(itemType.label, "Images");
     assert.equal(itemType.href, "/items/images");
+  });
+});
+
+describe("sortDashboardItemTypes", () => {
+  it("orders item types for the dashboard sidebar", () => {
+    const itemTypes = [
+      {
+        id: "type_link",
+        name: "link",
+        slug: "link",
+        icon: "Link",
+        color: "#10b981",
+      },
+      {
+        id: "type_file",
+        name: "file",
+        slug: "file",
+        icon: "File",
+        color: "#6b7280",
+      },
+      {
+        id: "type_prompt",
+        name: "prompt",
+        slug: "prompt",
+        icon: "Sparkles",
+        color: "#8b5cf6",
+      },
+      {
+        id: "type_note",
+        name: "note",
+        slug: "note",
+        icon: "StickyNote",
+        color: "#fde047",
+      },
+      {
+        id: "type_snippet",
+        name: "snippet",
+        slug: "snippet",
+        icon: "Code",
+        color: "#3b82f6",
+      },
+      {
+        id: "type_image",
+        name: "image",
+        slug: "image",
+        icon: "Image",
+        color: "#ec4899",
+      },
+      {
+        id: "type_command",
+        name: "command",
+        slug: "command",
+        icon: "Terminal",
+        color: "#f97316",
+      },
+    ];
+
+    const sortedSlugs = sortDashboardItemTypes(itemTypes).map(
+      (itemType) => itemType.slug,
+    );
+
+    assert.deepEqual(sortedSlugs, [
+      "snippet",
+      "prompt",
+      "command",
+      "note",
+      "file",
+      "image",
+      "link",
+    ]);
   });
 });

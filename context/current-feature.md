@@ -49,3 +49,5 @@ Completed
 - Verified Dashboard Items implementation against current spec with Prisma-backed item data already in place
 - Completed Dashboard Items feature
 - Cleared Dashboard Items current feature details after completion
+- Reordered dashboard sidebar item types to snippets, prompts, commands, notes, files, images, and links
+- Completed sidebar item type ordering update and cleared current feature details
