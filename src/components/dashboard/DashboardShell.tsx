@@ -12,14 +12,17 @@ import {
   type DashboardStat,
 } from "@/lib/db/collections";
 import {
-  mockDashboardData,
+  getDashboardItemData,
   type DashboardItem,
-  type ItemTypeSlug,
-} from "@/lib/mock-data";
+} from "@/lib/db/items";
+import { mockDashboardData, type ItemTypeSlug } from "@/lib/mock-data";
 
 export async function DashboardShell() {
   const { currentUser, itemTypes } = mockDashboardData;
-  const { collections, stats } = await getDashboardCollectionData({ limit: 6 });
+  const [{ collections, stats }, { pinnedItems, recentItems }] = await Promise.all([
+    getDashboardCollectionData({ limit: 6 }),
+    getDashboardItemData({ pinnedLimit: 3, recentLimit: 10 }),
+  ]);
 
   return (
     <DashboardChrome
@@ -27,22 +30,28 @@ export async function DashboardShell() {
       currentUser={currentUser}
       itemTypes={itemTypes}
     >
-      <DashboardMain collections={collections} stats={stats} />
+      <DashboardMain
+        collections={collections}
+        pinnedItems={pinnedItems}
+        recentItems={recentItems}
+        stats={stats}
+      />
     </DashboardChrome>
   );
 }
 
 function DashboardMain({
   collections,
+  pinnedItems,
+  recentItems,
   stats,
 }: {
   collections: DashboardCollection[];
+  pinnedItems: DashboardItem[];
+  recentItems: DashboardItem[];
   stats: DashboardStat[];
 }) {
-  const { items } = mockDashboardData;
-  const pinnedItems = items.filter((item) => item.isPinned);
   const recentCollections = collections.slice(0, 6);
-  const recentItems = items.slice(0, 10);
 
   return (
     <section className="space-y-8 p-5 sm:p-6 lg:p-8">
@@ -83,13 +92,15 @@ function DashboardMain({
         </div>
       </DashboardSection>
 
-      <DashboardSection title="Pinned Items">
-        <div className="grid gap-4 xl:grid-cols-3">
-          {pinnedItems.map((item) => (
-            <PinnedItemCard item={item} key={item.id} />
-          ))}
-        </div>
-      </DashboardSection>
+      {pinnedItems.length > 0 ? (
+        <DashboardSection title="Pinned Items">
+          <div className="grid gap-4 xl:grid-cols-3">
+            {pinnedItems.map((item) => (
+              <PinnedItemCard item={item} key={item.id} />
+            ))}
+          </div>
+        </DashboardSection>
+      ) : null}
 
       <DashboardSection title="Recent Items">
         <div className="space-y-3">
@@ -196,25 +207,22 @@ function getCollectionTypeIconClass(slug: string) {
 }
 
 function PinnedItemCard({ item }: { item: DashboardItem }) {
-  const Icon = itemTypeIcons[item.typeSlug];
-
   return (
     <Link
-      className="block rounded-lg border border-devstash-line bg-white/[0.025] p-5 transition hover:bg-white/[0.05]"
+      className="block rounded-lg border border-l-4 border-devstash-line bg-white/[0.025] p-5 transition hover:bg-white/[0.05]"
       href={`/items/${item.typeSlug}s`}
+      style={{ borderLeftColor: item.accentColor }}
     >
       <div className="flex items-start gap-4">
         <div className="flex size-12 shrink-0 items-center justify-center rounded-lg bg-white/[0.05]">
-          <Icon
-            aria-hidden="true"
-            className={`size-5 ${itemTypeIconClasses[item.typeSlug]}`}
-          />
+          {renderDashboardItemTypeIcon(item.typeSlug, "size-5")}
         </div>
         <div className="min-w-0 flex-1">
-          <div className="flex min-w-0 items-center gap-2">
+          <div className="flex min-w-0 flex-wrap items-center gap-2">
             <h3 className="truncate text-lg font-semibold text-white">
               {item.title}
             </h3>
+            <ItemTypeBadge item={item} />
             <span className="text-muted-foreground">Pinned</span>
             {item.isFavorite ? (
               <Star
@@ -234,26 +242,23 @@ function PinnedItemCard({ item }: { item: DashboardItem }) {
 }
 
 function RecentItemRow({ item }: { item: DashboardItem }) {
-  const Icon = itemTypeIcons[item.typeSlug];
-
   return (
     <Link
-      className="flex items-start gap-4 rounded-lg border border-devstash-line bg-white/[0.025] p-4 transition hover:bg-white/[0.05]"
+      className="flex items-start gap-4 rounded-lg border border-l-4 border-devstash-line bg-white/[0.025] p-4 transition hover:bg-white/[0.05]"
       href={`/items/${item.typeSlug}s`}
+      style={{ borderLeftColor: item.accentColor }}
     >
       <div className="flex size-11 shrink-0 items-center justify-center rounded-lg bg-white/[0.05]">
-        <Icon
-          aria-hidden="true"
-          className={`size-5 ${itemTypeIconClasses[item.typeSlug]}`}
-        />
+        {renderDashboardItemTypeIcon(item.typeSlug, "size-5")}
       </div>
       <div className="min-w-0 flex-1">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
           <div className="min-w-0">
-            <div className="flex min-w-0 items-center gap-2">
+            <div className="flex min-w-0 flex-wrap items-center gap-2">
               <h3 className="truncate text-lg font-semibold text-white">
                 {item.title}
               </h3>
+              <ItemTypeBadge item={item} />
               {item.isPinned ? (
                 <span className="text-sm text-muted-foreground">Pinned</span>
               ) : null}
@@ -274,6 +279,36 @@ function RecentItemRow({ item }: { item: DashboardItem }) {
       </div>
     </Link>
   );
+}
+
+function ItemTypeBadge({ item }: { item: DashboardItem }) {
+  return (
+    <span
+      className="rounded-md border border-white/10 bg-white/[0.05] px-2 py-1 text-xs text-zinc-300"
+      style={{ borderColor: item.accentColor }}
+    >
+      {formatItemTypeName(item.itemType.name)}
+    </span>
+  );
+}
+
+function renderDashboardItemTypeIcon(slug: string, sizeClass: string) {
+  if (isKnownItemTypeSlug(slug)) {
+    const Icon = itemTypeIcons[slug];
+
+    return (
+      <Icon
+        aria-hidden="true"
+        className={`${sizeClass} ${itemTypeIconClasses[slug]}`}
+      />
+    );
+  }
+
+  return <Circle aria-hidden="true" className={`${sizeClass} text-zinc-400`} />;
+}
+
+function formatItemTypeName(name: string) {
+  return name.charAt(0).toUpperCase() + name.slice(1);
 }
 
 function TagList({ tags }: { tags: string[] }) {

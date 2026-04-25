@@ -37,3 +37,7 @@ Completed
 - Implemented dashboard collection data fetching with Prisma-backed cards, type icons, accent colors, and stats
 - Completed Dashboard Collections feature
 - Cleared Dashboard Collections current feature details after completion
+- Current feature set to Dashboard Items and marked In Progress
+- Implemented dashboard item data fetching with Prisma-backed pinned and recent items, type badges, type-colored borders, and item previews
+- Completed Dashboard Items feature
+- Cleared Dashboard Items current feature details after completion
