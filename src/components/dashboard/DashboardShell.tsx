@@ -1,20 +1,25 @@
 import Link from "next/link";
-import { Folder, Star } from "lucide-react";
+import { Circle, Folder, Star } from "lucide-react";
 
 import { DashboardChrome } from "@/components/dashboard/DashboardChrome";
 import {
-  collectionAccentClasses,
   itemTypeIconClasses,
   itemTypeIcons,
 } from "@/components/dashboard/dashboard-icons";
 import {
+  getDashboardCollectionData,
+  type DashboardCollection,
+  type DashboardStat,
+} from "@/lib/db/collections";
+import {
   mockDashboardData,
-  type Collection,
   type DashboardItem,
+  type ItemTypeSlug,
 } from "@/lib/mock-data";
 
-export function DashboardShell() {
-  const { collections, currentUser, itemTypes } = mockDashboardData;
+export async function DashboardShell() {
+  const { currentUser, itemTypes } = mockDashboardData;
+  const { collections, stats } = await getDashboardCollectionData({ limit: 6 });
 
   return (
     <DashboardChrome
@@ -22,40 +27,22 @@ export function DashboardShell() {
       currentUser={currentUser}
       itemTypes={itemTypes}
     >
-      <DashboardMain />
+      <DashboardMain collections={collections} stats={stats} />
     </DashboardChrome>
   );
 }
 
-function DashboardMain() {
-  const { collections, items } = mockDashboardData;
-  const favoriteItems = items.filter((item) => item.isFavorite);
-  const favoriteCollections = collections.filter((collection) => collection.isFavorite);
+function DashboardMain({
+  collections,
+  stats,
+}: {
+  collections: DashboardCollection[];
+  stats: DashboardStat[];
+}) {
+  const { items } = mockDashboardData;
   const pinnedItems = items.filter((item) => item.isPinned);
   const recentCollections = collections.slice(0, 6);
   const recentItems = items.slice(0, 10);
-  const stats = [
-    {
-      label: "Items",
-      value: items.length,
-      detail: `${pinnedItems.length} pinned`,
-    },
-    {
-      label: "Collections",
-      value: collections.length,
-      detail: `${recentCollections.length} recent`,
-    },
-    {
-      label: "Favorite Items",
-      value: favoriteItems.length,
-      detail: "Saved for reuse",
-    },
-    {
-      label: "Favorite Collections",
-      value: favoriteCollections.length,
-      detail: "Quick access",
-    },
-  ];
 
   return (
     <section className="space-y-8 p-5 sm:p-6 lg:p-8">
@@ -85,14 +72,13 @@ function DashboardMain() {
 
       <DashboardSection title="Recent Collections">
         <div className="grid gap-4 md:grid-cols-2 2xl:grid-cols-3">
-          {recentCollections.map((collection, index) => (
-            <CollectionCard
-              accentClass={
-                collectionAccentClasses[index % collectionAccentClasses.length]
-              }
-              collection={collection}
-              key={collection.id}
-            />
+          {recentCollections.length === 0 ? (
+            <div className="rounded-lg border border-devstash-line bg-white/[0.025] p-5 text-sm text-muted-foreground md:col-span-2 2xl:col-span-3">
+              No collections yet.
+            </div>
+          ) : null}
+          {recentCollections.map((collection) => (
+            <CollectionCard collection={collection} key={collection.id} />
           ))}
         </div>
       </DashboardSection>
@@ -132,16 +118,15 @@ function DashboardSection({
 }
 
 function CollectionCard({
-  accentClass,
   collection,
 }: {
-  accentClass: string;
-  collection: Collection;
+  collection: DashboardCollection;
 }) {
   return (
     <Link
-      className={`block rounded-lg border border-l-4 border-devstash-line ${accentClass} bg-white/[0.025] p-5 transition hover:bg-white/[0.05]`}
+      className="block rounded-lg border border-l-4 border-devstash-line bg-white/[0.025] p-5 transition hover:bg-white/[0.05]"
       href={`/collections/${collection.slug}`}
+      style={{ borderLeftColor: collection.accentColor }}
     >
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0">
@@ -169,17 +154,18 @@ function CollectionCard({
         {collection.description}
       </p>
       <div className="mt-5 flex flex-wrap gap-2">
-        {collection.itemTypeSlugs.map((typeSlug) => {
-          const Icon = itemTypeIcons[typeSlug];
+        {collection.types.map((type) => {
+          const Icon = getCollectionTypeIcon(type.slug);
 
           return (
             <span
               className="inline-flex size-6 items-center justify-center rounded-md bg-white/[0.05]"
-              key={typeSlug}
+              key={type.id}
+              title={type.name}
             >
               <Icon
                 aria-hidden="true"
-                className={`size-4 ${itemTypeIconClasses[typeSlug]}`}
+                className={`size-4 ${getCollectionTypeIconClass(type.slug)}`}
               />
             </span>
           );
@@ -187,6 +173,26 @@ function CollectionCard({
       </div>
     </Link>
   );
+}
+
+function isKnownItemTypeSlug(slug: string): slug is ItemTypeSlug {
+  return slug in itemTypeIcons;
+}
+
+function getCollectionTypeIcon(slug: string) {
+  if (isKnownItemTypeSlug(slug)) {
+    return itemTypeIcons[slug];
+  }
+
+  return Circle;
+}
+
+function getCollectionTypeIconClass(slug: string) {
+  if (isKnownItemTypeSlug(slug)) {
+    return itemTypeIconClasses[slug];
+  }
+
+  return "text-zinc-400";
 }
 
 function PinnedItemCard({ item }: { item: DashboardItem }) {

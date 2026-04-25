@@ -19,11 +19,12 @@ import {
 } from "@/components/dashboard/dashboard-icons";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import type { Collection, CurrentUser, ItemType } from "@/lib/mock-data";
+import type { DashboardCollection } from "@/lib/db/collections";
+import type { CurrentUser, ItemType } from "@/lib/mock-data";
 
 type DashboardChromeProps = {
   children: ReactNode;
-  collections: Collection[];
+  collections: DashboardCollection[];
   currentUser: CurrentUser;
   itemTypes: ItemType[];
 };
@@ -109,7 +110,7 @@ function DashboardSidebar({
   onCloseMobile,
   onToggleCollapse,
 }: {
-  collections: Collection[];
+  collections: DashboardCollection[];
   currentUser: CurrentUser;
   isCollapsed: boolean;
   isMobileOpen: boolean;
@@ -169,7 +170,7 @@ function SidebarContent({
   onToggleCollapse,
   variant,
 }: {
-  collections: Collection[];
+  collections: DashboardCollection[];
   currentUser: CurrentUser;
   isCollapsed: boolean;
   itemTypes: ItemType[];
@@ -331,7 +332,7 @@ function CollectionLink({
   onClick,
   showFavorite = false,
 }: {
-  collection: Collection;
+  collection: DashboardCollection;
   isCollapsed: boolean;
   onClick?: () => void;
   showFavorite?: boolean;
