@@ -30,3 +30,4 @@ Completed
 - Dashboard UI Phase 1 route, shadcn setup, and layout placeholders
 - Dashboard UI Phase 2 responsive collapsible sidebar with mock data navigation
 - Dashboard UI Phase 3 stats, recent collections, pinned items, and recent items
+- Prisma + Neon PostgreSQL setup with local Postgres migration and seed support
