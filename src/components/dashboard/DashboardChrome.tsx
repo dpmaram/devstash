@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState, type ReactNode } from "react";
 import {
+  Circle,
   Folder,
   Menu,
   PanelLeftClose,
@@ -20,13 +21,14 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import type { DashboardCollection } from "@/lib/db/collections";
-import type { CurrentUser, ItemType } from "@/lib/mock-data";
+import type { DashboardItemType } from "@/lib/db/items";
+import type { CurrentUser, ItemTypeSlug } from "@/lib/mock-data";
 
 type DashboardChromeProps = {
   children: ReactNode;
   collections: DashboardCollection[];
   currentUser: CurrentUser;
-  itemTypes: ItemType[];
+  itemTypes: DashboardItemType[];
 };
 
 export function DashboardChrome({
@@ -114,7 +116,7 @@ function DashboardSidebar({
   currentUser: CurrentUser;
   isCollapsed: boolean;
   isMobileOpen: boolean;
-  itemTypes: ItemType[];
+  itemTypes: DashboardItemType[];
   onCloseMobile: () => void;
   onToggleCollapse: () => void;
 }) {
@@ -173,7 +175,7 @@ function SidebarContent({
   collections: DashboardCollection[];
   currentUser: CurrentUser;
   isCollapsed: boolean;
-  itemTypes: ItemType[];
+  itemTypes: DashboardItemType[];
   onCloseMobile: () => void;
   onToggleCollapse: () => void;
   variant: "desktop" | "mobile";
@@ -221,35 +223,27 @@ function SidebarContent({
 
       <nav className="min-h-0 flex-1 overflow-y-auto px-3 py-6">
         <SidebarSection isCollapsed={isCollapsed} title="Types">
-          {itemTypes.map((itemType) => {
-            const Icon = itemTypeIcons[itemType.slug];
-            const href = `/items/${itemType.name.toLowerCase()}`;
-
-            return (
-              <Link
-                className="flex h-11 items-center gap-3 rounded-lg px-3 text-sm text-zinc-300 transition hover:bg-white/[0.06] hover:text-white"
-                href={href}
-                key={itemType.id}
-                onClick={variant === "mobile" ? onCloseMobile : undefined}
-                title={isCollapsed ? itemType.name : undefined}
-              >
-                <Icon
-                  aria-hidden="true"
-                  className={`size-5 shrink-0 ${itemTypeIconClasses[itemType.slug]}`}
-                />
-                {!isCollapsed ? (
-                  <>
-                    <span className="min-w-0 flex-1 truncate text-base">
-                      {itemType.name}
-                    </span>
-                    <span className="text-sm text-muted-foreground">
-                      {itemType.itemCount}
-                    </span>
-                  </>
-                ) : null}
-              </Link>
-            );
-          })}
+          {itemTypes.map((itemType) => (
+            <Link
+              className="flex h-11 items-center gap-3 rounded-lg px-3 text-sm text-zinc-300 transition hover:bg-white/[0.06] hover:text-white"
+              href={itemType.href}
+              key={itemType.id}
+              onClick={variant === "mobile" ? onCloseMobile : undefined}
+              title={isCollapsed ? itemType.label : undefined}
+            >
+              {renderSidebarItemTypeIcon(itemType.slug)}
+              {!isCollapsed ? (
+                <>
+                  <span className="min-w-0 flex-1 truncate text-base">
+                    {itemType.label}
+                  </span>
+                  <span className="text-sm text-muted-foreground">
+                    {itemType.itemCount}
+                  </span>
+                </>
+              ) : null}
+            </Link>
+          ))}
         </SidebarSection>
 
         <SidebarSection isCollapsed={isCollapsed} title="Favorite Collections">
@@ -259,7 +253,7 @@ function SidebarContent({
               isCollapsed={isCollapsed}
               key={collection.id}
               onClick={variant === "mobile" ? onCloseMobile : undefined}
-              showFavorite
+              variant="favorite"
             />
           ))}
         </SidebarSection>
@@ -271,8 +265,13 @@ function SidebarContent({
               isCollapsed={isCollapsed}
               key={collection.id}
               onClick={variant === "mobile" ? onCloseMobile : undefined}
+              variant="recent"
             />
           ))}
+          <ViewAllCollectionsLink
+            isCollapsed={isCollapsed}
+            onClick={variant === "mobile" ? onCloseMobile : undefined}
+          />
         </SidebarSection>
       </nav>
 
@@ -330,12 +329,12 @@ function CollectionLink({
   collection,
   isCollapsed,
   onClick,
-  showFavorite = false,
+  variant,
 }: {
   collection: DashboardCollection;
   isCollapsed: boolean;
   onClick?: () => void;
-  showFavorite?: boolean;
+  variant: "favorite" | "recent";
 }) {
   return (
     <Link
@@ -344,11 +343,19 @@ function CollectionLink({
       onClick={onClick}
       title={isCollapsed ? collection.name : undefined}
     >
-      <Folder aria-hidden="true" className="size-5 shrink-0 text-muted-foreground" />
+      {variant === "recent" ? (
+        <span
+          aria-hidden="true"
+          className="size-3 shrink-0 rounded-full ring-2 ring-white/[0.06]"
+          style={{ backgroundColor: collection.accentColor }}
+        />
+      ) : (
+        <Folder aria-hidden="true" className="size-5 shrink-0 text-muted-foreground" />
+      )}
       {!isCollapsed ? (
         <>
           <span className="min-w-0 flex-1 truncate text-base">{collection.name}</span>
-          {showFavorite ? (
+          {variant === "favorite" ? (
             <Star
               aria-hidden="true"
               className="size-4 shrink-0 fill-yellow-400 text-yellow-400"
@@ -361,5 +368,50 @@ function CollectionLink({
         </>
       ) : null}
     </Link>
+  );
+}
+
+function ViewAllCollectionsLink({
+  isCollapsed,
+  onClick,
+}: {
+  isCollapsed: boolean;
+  onClick?: () => void;
+}) {
+  return (
+    <Link
+      className="flex h-11 items-center gap-3 rounded-lg px-3 text-sm text-zinc-300 transition hover:bg-white/[0.06] hover:text-white"
+      href="/collections"
+      onClick={onClick}
+      title={isCollapsed ? "View all collections" : undefined}
+    >
+      <Folder aria-hidden="true" className="size-5 shrink-0 text-muted-foreground" />
+      {!isCollapsed ? (
+        <span className="min-w-0 flex-1 truncate text-base">
+          View all collections
+        </span>
+      ) : null}
+    </Link>
+  );
+}
+
+function isKnownItemTypeSlug(slug: string): slug is ItemTypeSlug {
+  return slug in itemTypeIcons;
+}
+
+function renderSidebarItemTypeIcon(slug: string) {
+  if (isKnownItemTypeSlug(slug)) {
+    const Icon = itemTypeIcons[slug];
+
+    return (
+      <Icon
+        aria-hidden="true"
+        className={`size-5 shrink-0 ${itemTypeIconClasses[slug]}`}
+      />
+    );
+  }
+
+  return (
+    <Circle aria-hidden="true" className="size-5 shrink-0 text-muted-foreground" />
   );
 }

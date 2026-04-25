@@ -41,3 +41,7 @@ Completed
 - Implemented dashboard item data fetching with Prisma-backed pinned and recent items, type badges, type-colored borders, and item previews
 - Completed Dashboard Items feature
 - Cleared Dashboard Items current feature details after completion
+- Current feature set to Stats & Sidebar and marked In Progress
+- Implemented database-backed dashboard stats and sidebar data with system item types, collection links, and recent collection accent dots
+- Completed Stats & Sidebar feature
+- Cleared Stats & Sidebar current feature details after completion
