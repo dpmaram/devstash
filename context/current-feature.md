@@ -1,22 +1,31 @@
-# Current Feature
+# Current Feature: Add Pro Badge to Sidebar
 
 <!-- Feature Name -->
 
-None
+Add Pro Badge to Sidebar
 
 ## Status
 
 <!-- Not Started|In Progress|Completed -->
 
-Completed
+In Progress
 
 ## Goals
 
 <!-- Goals & requirements -->
 
+- Add a Pro badge to the Files item type in the sidebar.
+- Add a Pro badge to the Images item type in the sidebar.
+- Use the shadcn/ui Badge component.
+- Keep the badge clean and subtle.
+- Display the badge text as uppercase `PRO`.
+
 ## Notes
 
 <!-- Any extra notes -->
+
+- Loaded from `context/features/add-pro-badge-sidebar-spec.md`.
+- User requested `add-prod-badge-sidebar-spec.md`; resolved to existing spec `add-pro-badge-sidebar-spec.md`.
 
 ## History
 
@@ -51,3 +60,6 @@ Completed
 - Cleared Dashboard Items current feature details after completion
 - Reordered dashboard sidebar item types to snippets, prompts, commands, notes, files, images, and links
 - Completed sidebar item type ordering update and cleared current feature details
+- 2026-04-26 10:47 EDT - Loaded Add Pro Badge to Sidebar spec from `context/features/add-pro-badge-sidebar-spec.md` and set status to Not Started. User requested `add-prod-badge-sidebar-spec.md`; resolved to existing `add-pro-badge-sidebar-spec.md`.
+- 2026-04-26 10:50 EDT - Started Add Pro Badge to Sidebar on branch `feature/add-pro-badge-sidebar`.
+- 2026-04-26 10:53 EDT - Implemented subtle uppercase `PRO` sidebar badges for Files and Images using the shadcn/ui Badge component. Verified targeted tests, dashboard shaping tests, lint, and production build.

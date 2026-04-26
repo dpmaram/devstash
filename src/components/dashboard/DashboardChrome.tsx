@@ -18,6 +18,11 @@ import {
   itemTypeIconClasses,
   itemTypeIcons,
 } from "@/components/dashboard/dashboard-icons";
+import {
+  SIDEBAR_PRO_BADGE_LABEL,
+  shouldShowSidebarProBadge,
+} from "@/components/dashboard/sidebar-pro-badge";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import type { DashboardCollection } from "@/lib/db/collections";
@@ -237,6 +242,14 @@ function SidebarContent({
                   <span className="min-w-0 flex-1 truncate text-base">
                     {itemType.label}
                   </span>
+                  {shouldShowSidebarProBadge(itemType.slug) ? (
+                    <Badge
+                      className="h-5 rounded-md border-devstash-line bg-white/[0.04] px-1.5 text-[0.62rem] font-semibold text-muted-foreground"
+                      variant="outline"
+                    >
+                      {SIDEBAR_PRO_BADGE_LABEL}
+                    </Badge>
+                  ) : null}
                   <span className="text-sm text-muted-foreground">
                     {itemType.itemCount}
                   </span>
