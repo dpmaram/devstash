@@ -51,3 +51,7 @@ Completed
 - Cleared Dashboard Items current feature details after completion
 - Reordered dashboard sidebar item types to snippets, prompts, commands, notes, files, images, and links
 - Completed sidebar item type ordering update and cleared current feature details
+- 2026-04-26 10:47 EDT - Loaded Add Pro Badge to Sidebar spec from `context/features/add-pro-badge-sidebar-spec.md` and set status to Not Started. User requested `add-prod-badge-sidebar-spec.md`; resolved to existing `add-pro-badge-sidebar-spec.md`.
+- 2026-04-26 10:50 EDT - Started Add Pro Badge to Sidebar on branch `feature/add-pro-badge-sidebar`.
+- 2026-04-26 10:53 EDT - Implemented subtle uppercase `PRO` sidebar badges for Files and Images using the shadcn/ui Badge component. Verified targeted tests, dashboard shaping tests, lint, and production build.
+- 2026-04-26 11:03 EDT - Completed Add Pro Badge to Sidebar feature and cleared current feature details.
