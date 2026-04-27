@@ -1,33 +1,22 @@
-# Current Feature: Optimize Dashboard Data Loading
+# Current Feature
 
 <!-- Feature Name -->
 
-Optimize Dashboard Data Loading
+None
 
 ## Status
 
 <!-- Not Started|In Progress|Completed -->
 
-In Progress
+Completed
 
 ## Goals
 
 <!-- Goals & requirements -->
 
-- Resolve the dashboard user once per dashboard render and pass the resolved user context into dashboard data loaders where needed.
-- Reduce dashboard item query overfetching by selecting only fields used by the current UI and shaping logic.
-- Reduce dashboard collection query overfetching by avoiding full item relation loads when counts or item type summaries are enough.
-- Preserve the current dashboard UI, seed/demo behavior, and existing tests.
-- Add or update focused tests for changed query/shaping behavior where practical.
-
 ## Notes
 
 <!-- Any extra notes -->
-
-- Quick-win performance feature from the code-scanner finding: dashboard data loading repeats queries and overfetches large fields.
-- Keep this scoped to query efficiency and N+1-style overfetching only.
-- Do not implement authentication, session wiring, authorization, or user fallback changes in this feature.
-- No Prisma schema or migration changes are expected.
 
 ## History
 
@@ -69,3 +58,4 @@ In Progress
 - 2026-04-27 00:01 EDT - Loaded Optimize Dashboard Data Loading as a quick-win performance feature from the code-scanner findings, focused on dashboard query efficiency and excluding authentication work.
 - 2026-04-27 00:02 EDT - Started Optimize Dashboard Data Loading on branch `feature/optimize-dashboard-data-loading`.
 - 2026-04-27 00:10 EDT - Implemented Optimize Dashboard Data Loading with shared dashboard user resolution, slim dashboard item selects, batched collection type summaries, and collection shaping from count/type summaries. Verified local tests, lint, and production build; `npm run db:test` was blocked by database connection refusal.
+- 2026-04-27 00:15 EDT - Completed Optimize Dashboard Data Loading, merged it into `main`, deleted the local feature branch, and cleared current feature details.
