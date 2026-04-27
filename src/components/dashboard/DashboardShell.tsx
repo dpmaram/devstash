@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Circle, Folder, Star } from "lucide-react";
 
+import { auth } from "@/auth";
 import { DashboardChrome } from "@/components/dashboard/DashboardChrome";
 import {
   itemTypeIconClasses,
@@ -18,11 +19,12 @@ import {
   type DashboardItem,
 } from "@/lib/db/items";
 import { getDashboardUser } from "@/lib/db/dashboard-user";
+import { toCurrentUser } from "@/lib/auth/current-user";
 import { mockDashboardData, type ItemTypeSlug } from "@/lib/mock-data";
 
 export async function DashboardShell() {
-  const { currentUser } = mockDashboardData;
-  const dashboardUser = await getDashboardUser();
+  const [session, dashboardUser] = await Promise.all([auth(), getDashboardUser()]);
+  const currentUser = toCurrentUser(session?.user, mockDashboardData.currentUser);
   const [
     { collections, stats },
     { pinnedItems, recentItems },
