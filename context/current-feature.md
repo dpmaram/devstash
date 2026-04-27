@@ -1,33 +1,22 @@
-# Current Feature: Auth UI - Sign In, Register & Sign Out
+# Current Feature
 
 <!-- Feature Name -->
 
-Auth UI - Sign In, Register & Sign Out
+None
 
 ## Status
 
 <!-- Not Started|In Progress|Completed -->
 
-In Progress
+Completed
 
 ## Goals
 
 <!-- Goals & requirements -->
 
-- Replace NextAuth default pages with custom sign-in and registration UI.
-- Create `/sign-in` with email/password fields, GitHub sign-in, register link, validation, and error display.
-- Create `/register` with name, email, password, confirm password fields, validation, `/api/auth/register` submission, and successful redirect to sign-in.
-- Update the dashboard sidebar user area to show avatar, user name, and email.
-- Add avatar click behavior with profile navigation and a sign-out dropdown/action.
-- Create a reusable avatar component that uses GitHub images when available and initials fallback otherwise.
-
 ## Notes
 
 <!-- Any extra notes -->
-
-- Spec source: `context/features/auth-phase-3-spec.md`.
-- Avatar fallback should generate initials from the user's name, for example `Brad Traversy` to `BT`.
-- Manual checks from the spec include custom sign-in rendering, GitHub sign-in, email/password sign-in, avatar display, sign-out behavior, and registration redirect.
 
 ## History
 
@@ -84,3 +73,4 @@ In Progress
 - 2026-04-27 18:42 EDT - Implemented custom sign-in and register pages, auth form validation, custom Auth.js sign-in routing, session-backed dashboard user display, avatar initials/image fallback, protected profile page, avatar profile link, and sign-out menu. Verified full local tests, TypeScript, lint, production build, database smoke test, credentials sign-in to `/dashboard`, avatar navigation to `/profile`, sidebar sign-out to `/sign-in`, and registration redirect to `/sign-in`.
 - 2026-04-27 18:48 EDT - Verified the sidebar user block with a newly registered credentials account; the dashboard showed that account's name, email, and initials instead of the seeded demo user.
 - 2026-04-27 18:51 EDT - Replaced the post-registration inline success message with a toast notification that says `Account created. You can now log in.` Verified the registration redirect toast in-browser, full local tests, TypeScript, lint, and production build.
+- 2026-04-27 18:54 EDT - Completed Auth UI - Sign In, Register & Sign Out, merged it into `main`, deleted the local feature branch, and cleared current feature details.
