@@ -1,36 +1,22 @@
-# Current Feature: Auth Setup - NextAuth + GitHub Provider
+# Current Feature
+
+<!-- Feature Name -->
+
+None
 
 ## Status
 
 <!-- Not Started|In Progress|Completed -->
 
-In Progress
+Completed
 
 ## Goals
 
 <!-- Goals & requirements -->
 
-- Install NextAuth v5 beta and the Auth.js Prisma adapter.
-- Set up the split auth config pattern for edge compatibility.
-- Add GitHub OAuth authentication.
-- Add Auth.js route handlers under the Next.js app router.
-- Protect `/dashboard/*` routes using Next.js 16 `src/proxy.ts`.
-- Redirect unauthenticated dashboard users to the default NextAuth sign-in page.
-- Extend the NextAuth session type so `session.user.id` is available.
-- Verify dashboard redirect, GitHub sign-in, and post-auth redirect back to `/dashboard`.
-
 ## Notes
 
 <!-- Any extra notes -->
-
-- Spec source: `context/features/auth-phase-1-spec.md`
-- Use current Auth.js/NextAuth v5 documentation to confirm the newest config and conventions before implementation.
-- Use `next-auth@beta`, not `@latest`.
-- Keep `src/auth.config.ts` edge-compatible with providers only and no Prisma adapter.
-- Put the full Prisma adapter/JWT strategy config in `src/auth.ts`.
-- Use `src/proxy.ts` at the same level as `src/app/`, exporting `proxy` as a named export from `auth(...)`.
-- Do not set a custom `pages.signIn`; use the default NextAuth sign-in page for testing.
-- Required environment variables: `AUTH_SECRET`, `AUTH_GITHUB_ID`, `AUTH_GITHUB_SECRET`.
 
 ## History
 
@@ -77,3 +63,4 @@ In Progress
 - 2026-04-27 09:15 EDT - Started Auth Setup - NextAuth + GitHub Provider on branch `feature/auth-setup-nextauth-github-provider`.
 - 2026-04-27 09:31 EDT - Implemented Auth Setup - NextAuth + GitHub Provider with NextAuth v5 beta, Auth.js Prisma adapter, edge-safe split config, GitHub OAuth provider, route handlers, dashboard proxy protection, session user id mapping, and automated auth tests. Verified full Node test suite, TypeScript, lint, and production build.
 - 2026-04-27 09:47 EDT - Fixed local GitHub OAuth callback errors by correcting the `.env` GitHub secret key, starting local Postgres on port 5433, and allowing GitHub email account linking only in development for existing local users. Verified Playwright GitHub login reaches `/dashboard`, full Node tests, TypeScript, lint, and production build.
+- 2026-04-27 09:55 EDT - Completed Auth Setup - NextAuth + GitHub Provider, merged it into `main`, deleted the local feature branch, and cleared current feature details.
