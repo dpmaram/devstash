@@ -1,36 +1,22 @@
-# Current Feature: Setup Email Verification on Register
+# Current Feature
 
 <!-- Feature Name -->
 
-Setup Email Verification on Register
+None
 
 ## Status
 
 <!-- Not Started|In Progress|Completed -->
 
-In Progress
+Completed
 
 ## Goals
 
 <!-- Goals & requirements -->
 
-- Require newly registered email/password users to verify their email before they can sign in.
-- Generate a single-use verification token during registration and persist it with an expiration.
-- Send a verification email through Resend with a link the user can click.
-- Add a verification endpoint/page that validates the token, marks `User.emailVerified`, and handles invalid or expired links.
-- Update registration UI/API behavior so users see a "check your email" flow instead of being told they can immediately log in.
-- Keep GitHub OAuth users working without unnecessary email verification friction.
-- Add focused tests for token creation, email sending boundaries, verification success, invalid/expired tokens, and blocked credentials sign-in before verification.
-
 ## Notes
 
 <!-- Any extra notes -->
-
-- Use Resend for outbound email.
-- `RESEND_API_KEY` is available in the local env file; do not print or expose the secret value.
-- Prisma already includes `User.emailVerified` and `VerificationToken`, so prefer using the existing schema shape unless implementation proves a migration is needed.
-- Add any public app URL/from-address env names to `.env.example` as placeholders only.
-- Preserve existing Auth.js split-config and Node runtime constraints around credentials registration.
 
 ## History
 
@@ -92,3 +78,4 @@ In Progress
 - 2026-04-27 19:06 EDT - Started Setup Email Verification on Register.
 - 2026-04-27 19:14 EDT - Implemented email verification on registration with hashed single-use tokens, Resend transactional email delivery, verification redirect handling, blocked credentials sign-in until `emailVerified` is set, updated auth toast messaging, and placeholder email env docs. Verified focused auth/email tests, full local tests, TypeScript, lint, production build, database smoke test, and Prisma migration status.
 - 2026-04-27 19:15 EDT - Added clean registration failure handling for Resend send errors so users are not created when verification email delivery fails. Re-ran full tests, TypeScript, lint, production build, database smoke test, and Prisma migration status.
+- 2026-04-27 19:35 EDT - Completed Setup Email Verification on Register, merged it into `main`, deleted the local feature branch, and cleared current feature details.
