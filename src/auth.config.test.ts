@@ -21,7 +21,10 @@ describe("auth config", () => {
     assert.equal("adapter" in authConfig, false);
     assert.equal("callbacks" in authConfig, false);
     assert.equal("session" in authConfig, false);
-    assert.equal("pages" in authConfig, false);
+  });
+
+  it("uses the custom sign-in page", () => {
+    assert.equal(authConfig.pages?.signIn, "/sign-in");
   });
 
   it("registers GitHub and Credentials providers", () => {

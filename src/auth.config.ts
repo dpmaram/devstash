@@ -20,6 +20,9 @@ export const credentialsProviderFields = {
 };
 
 const authConfig = {
+  pages: {
+    signIn: "/sign-in",
+  },
   providers: [
     GitHub({
       allowDangerousEmailAccountLinking: shouldAllowGitHubEmailAccountLinking(),

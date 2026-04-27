@@ -14,13 +14,13 @@ describe("proxy", () => {
     assert.equal(typeof proxy, "function");
   });
 
-  it("only protects dashboard routes", async () => {
+  it("protects dashboard and profile routes", async () => {
     const { config } = await loadProxy();
 
-    assert.deepEqual(config.matcher, ["/dashboard/:path*"]);
+    assert.deepEqual(config.matcher, ["/dashboard/:path*", "/profile/:path*"]);
   });
 
-  it("redirects unauthenticated dashboard requests to the default sign-in page", async () => {
+  it("redirects unauthenticated dashboard requests to the custom sign-in page", async () => {
     const { proxy } = await loadProxy();
     const context: Parameters<typeof proxy>[1] = {
       params: Promise.resolve({}),
@@ -34,7 +34,7 @@ describe("proxy", () => {
     assert.equal(response.status, 307);
     assert.equal(
       response.headers.get("location"),
-      "http://localhost:3000/api/auth/signin?callbackUrl=http%3A%2F%2Flocalhost%3A3000%2Fdashboard",
+      "http://localhost:3000/sign-in?callbackUrl=http%3A%2F%2Flocalhost%3A3000%2Fdashboard",
     );
   });
 });

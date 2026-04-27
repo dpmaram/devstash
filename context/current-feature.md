@@ -1,22 +1,33 @@
-# Current Feature
+# Current Feature: Auth UI - Sign In, Register & Sign Out
 
 <!-- Feature Name -->
 
-None
+Auth UI - Sign In, Register & Sign Out
 
 ## Status
 
 <!-- Not Started|In Progress|Completed -->
 
-Completed
+In Progress
 
 ## Goals
 
 <!-- Goals & requirements -->
 
+- Replace NextAuth default pages with custom sign-in and registration UI.
+- Create `/sign-in` with email/password fields, GitHub sign-in, register link, validation, and error display.
+- Create `/register` with name, email, password, confirm password fields, validation, `/api/auth/register` submission, and successful redirect to sign-in.
+- Update the dashboard sidebar user area to show avatar, user name, and email.
+- Add avatar click behavior with profile navigation and a sign-out dropdown/action.
+- Create a reusable avatar component that uses GitHub images when available and initials fallback otherwise.
+
 ## Notes
 
 <!-- Any extra notes -->
+
+- Spec source: `context/features/auth-phase-3-spec.md`.
+- Avatar fallback should generate initials from the user's name, for example `Brad Traversy` to `BT`.
+- Manual checks from the spec include custom sign-in rendering, GitHub sign-in, email/password sign-in, avatar display, sign-out behavior, and registration redirect.
 
 ## History
 
@@ -68,3 +79,8 @@ Completed
 - 2026-04-27 09:58 EDT - Started Auth Credentials - Email/Password Provider on branch `feature/auth-credentials-email-password-provider`.
 - 2026-04-27 10:42 EDT - Implemented Auth Credentials - Email/Password Provider with Auth.js Credentials support, bcrypt-backed password verification, registration API route, default sign-in redirect to `/dashboard`, and automated auth tests. Verified full local tests, TypeScript, lint, production build, database smoke test, browser credentials sign-in to `/dashboard`, and GitHub OAuth initiation.
 - 2026-04-27 18:28 EDT - Completed Auth Credentials - Email/Password Provider, merged it into `main`, deleted the local feature branch, and cleared current feature details.
+- 2026-04-27 18:30 EDT - Loaded Auth UI - Sign In, Register & Sign Out spec from `context/features/auth-phase-3-spec.md` and set status to Not Started.
+- 2026-04-27 18:31 EDT - Started Auth UI - Sign In, Register & Sign Out on branch `feature/auth-ui-sign-in-register-sign-out`.
+- 2026-04-27 18:42 EDT - Implemented custom sign-in and register pages, auth form validation, custom Auth.js sign-in routing, session-backed dashboard user display, avatar initials/image fallback, protected profile page, avatar profile link, and sign-out menu. Verified full local tests, TypeScript, lint, production build, database smoke test, credentials sign-in to `/dashboard`, avatar navigation to `/profile`, sidebar sign-out to `/sign-in`, and registration redirect to `/sign-in`.
+- 2026-04-27 18:48 EDT - Verified the sidebar user block with a newly registered credentials account; the dashboard showed that account's name, email, and initials instead of the seeded demo user.
+- 2026-04-27 18:51 EDT - Replaced the post-registration inline success message with a toast notification that says `Account created. You can now log in.` Verified the registration redirect toast in-browser, full local tests, TypeScript, lint, and production build.

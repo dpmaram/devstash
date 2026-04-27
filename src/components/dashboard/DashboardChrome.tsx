@@ -3,17 +3,22 @@
 import Link from "next/link";
 import { useState, type ReactNode } from "react";
 import {
+  ChevronUp,
   Circle,
   Folder,
+  LogOut,
   Menu,
   PanelLeftClose,
   PanelLeftOpen,
   Plus,
   Search,
   Star,
+  UserRound,
   X,
 } from "lucide-react";
+import { signOut } from "next-auth/react";
 
+import { UserAvatar } from "@/components/auth/user-avatar";
 import {
   itemTypeIconClasses,
   itemTypeIcons,
@@ -289,31 +294,96 @@ function SidebarContent({
       </nav>
 
       <div className="border-t border-devstash-line p-4">
-        <div className="flex items-center gap-3">
-          <div className="flex size-11 shrink-0 items-center justify-center rounded-full bg-zinc-100 text-sm font-semibold text-zinc-950">
-            {currentUser.name
-              .split(" ")
-              .map((part) => part[0])
-              .join("")}
-          </div>
-          {!isCollapsed ? (
-            <>
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-base font-medium text-white">
-                  {currentUser.name}
-                </p>
-                <p className="truncate text-sm text-muted-foreground">
-                  {currentUser.email}
-                </p>
-              </div>
-              <span className="rounded-md border border-devstash-line bg-white/[0.04] px-2 py-1 text-xs uppercase text-muted-foreground">
-                {currentUser.planTier}
-              </span>
-            </>
-          ) : null}
-        </div>
+        <SidebarUserMenu currentUser={currentUser} isCollapsed={isCollapsed} />
       </div>
     </>
+  );
+}
+
+function SidebarUserMenu({
+  currentUser,
+  isCollapsed,
+}: {
+  currentUser: CurrentUser;
+  isCollapsed: boolean;
+}) {
+  const [isOpen, setIsOpen] = useState(false);
+
+  if (isCollapsed) {
+    return (
+      <Link
+        aria-label="Open profile"
+        className="inline-flex rounded-full outline-none transition focus-visible:ring-3 focus-visible:ring-ring/50"
+        href="/profile"
+        title={currentUser.name}
+      >
+        <UserAvatar
+          email={currentUser.email}
+          imageUrl={currentUser.avatarUrl}
+          name={currentUser.name}
+        />
+      </Link>
+    );
+  }
+
+  return (
+    <div className="relative">
+      {isOpen ? (
+        <div className="absolute bottom-full left-0 right-0 mb-3 overflow-hidden rounded-lg border border-devstash-line bg-[#111318] shadow-2xl shadow-black/40">
+          <Link
+            className="flex h-11 items-center gap-3 px-3 text-sm text-zinc-200 transition hover:bg-white/[0.06] hover:text-white"
+            href="/profile"
+            onClick={() => setIsOpen(false)}
+          >
+            <UserRound aria-hidden="true" className="size-4 text-muted-foreground" />
+            Profile
+          </Link>
+          <button
+            className="flex h-11 w-full items-center gap-3 px-3 text-left text-sm text-zinc-200 transition hover:bg-white/[0.06] hover:text-white"
+            onClick={() => signOut({ callbackUrl: "/sign-in" })}
+            type="button"
+          >
+            <LogOut aria-hidden="true" className="size-4 text-muted-foreground" />
+            Sign out
+          </button>
+        </div>
+      ) : null}
+
+      <div className="flex items-center gap-3">
+        <Link
+          aria-label="Open profile"
+          className="rounded-full outline-none transition focus-visible:ring-3 focus-visible:ring-ring/50"
+          href="/profile"
+        >
+          <UserAvatar
+            email={currentUser.email}
+            imageUrl={currentUser.avatarUrl}
+            name={currentUser.name}
+          />
+        </Link>
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-base font-medium text-white">
+            {currentUser.name}
+          </p>
+          <p className="truncate text-sm text-muted-foreground">
+            {currentUser.email}
+          </p>
+        </div>
+        <Button
+          aria-expanded={isOpen}
+          aria-label={isOpen ? "Close user menu" : "Open user menu"}
+          className="size-9 rounded-lg border-devstash-line bg-white/[0.04] text-muted-foreground hover:bg-white/[0.08] hover:text-foreground"
+          onClick={() => setIsOpen((value) => !value)}
+          type="button"
+          variant="outline"
+        >
+          <ChevronUp
+            aria-hidden="true"
+            className={`size-4 transition-transform ${isOpen ? "rotate-180" : ""}`}
+          />
+        </Button>
+      </div>
+    </div>
   );
 }
 
