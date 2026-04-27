@@ -12,6 +12,11 @@ type AttachSessionUserIdParams = {
   token: JWT;
 };
 
+type ResolveAuthRedirectParams = {
+  url: string;
+  baseUrl: string;
+};
+
 export function attachSessionUserId({
   session,
   token,
@@ -23,8 +28,38 @@ export function attachSessionUserId({
   return session;
 }
 
+export function resolveAuthRedirect({
+  url,
+  baseUrl,
+}: ResolveAuthRedirectParams) {
+  if (url === baseUrl || url === `${baseUrl}/`) {
+    return `${baseUrl}/dashboard`;
+  }
+
+  if (url.startsWith("/")) {
+    return `${baseUrl}${url}`;
+  }
+
+  let redirectUrl: URL;
+
+  try {
+    redirectUrl = new URL(url);
+  } catch {
+    return baseUrl;
+  }
+
+  if (redirectUrl.origin === baseUrl) {
+    return url;
+  }
+
+  return baseUrl;
+}
+
 export const authCallbacks = {
   session({ session, token }) {
     return attachSessionUserId({ session, token }) as Session;
+  },
+  redirect({ url, baseUrl }) {
+    return resolveAuthRedirect({ url, baseUrl });
   },
 } satisfies NextAuthConfig["callbacks"];

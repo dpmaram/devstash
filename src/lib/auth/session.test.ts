@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 
-import { attachSessionUserId } from "./session";
+import { attachSessionUserId, resolveAuthRedirect } from "./session";
 
 describe("attachSessionUserId", () => {
   it("copies the JWT subject onto session.user.id", () => {
@@ -35,6 +35,65 @@ describe("attachSessionUserId", () => {
         token: {},
       }),
       session,
+    );
+  });
+});
+
+describe("resolveAuthRedirect", () => {
+  it("sends the default successful sign-in redirect to dashboard", () => {
+    assert.equal(
+      resolveAuthRedirect({
+        url: "http://localhost:3000",
+        baseUrl: "http://localhost:3000",
+      }),
+      "http://localhost:3000/dashboard",
+    );
+    assert.equal(
+      resolveAuthRedirect({
+        url: "http://localhost:3000/",
+        baseUrl: "http://localhost:3000",
+      }),
+      "http://localhost:3000/dashboard",
+    );
+  });
+
+  it("preserves explicit same-origin callback URLs", () => {
+    assert.equal(
+      resolveAuthRedirect({
+        url: "http://localhost:3000/dashboard/collections",
+        baseUrl: "http://localhost:3000",
+      }),
+      "http://localhost:3000/dashboard/collections",
+    );
+  });
+
+  it("resolves relative callback URLs against the app origin", () => {
+    assert.equal(
+      resolveAuthRedirect({
+        url: "/dashboard",
+        baseUrl: "http://localhost:3000",
+      }),
+      "http://localhost:3000/dashboard",
+    );
+  });
+
+  it("rejects off-origin callback URLs", () => {
+    assert.equal(
+      resolveAuthRedirect({
+        url: "https://example.com/dashboard",
+        baseUrl: "http://localhost:3000",
+      }),
+      "http://localhost:3000",
+    );
+  });
+
+  it("falls back when callback URL parsing fails", () => {
+    assert.equal(
+      resolveAuthRedirect({
+        url: "https://[invalid-url",
+        baseUrl: "http://localhost:3000",
+      }),
+      "http://localhost:3000",
     );
   });
 });
