@@ -20,11 +20,11 @@ export type ItemRecord = {
   id: string;
   title: string;
   description: string | null;
-  content: string | null;
-  url: string | null;
-  fileName: string | null;
-  fileUrl: string | null;
-  language: string | null;
+  content?: string | null;
+  url?: string | null;
+  fileName?: string | null;
+  fileUrl?: string | null;
+  language?: string | null;
   isPinned: boolean;
   isFavorite: boolean;
   updatedAt: Date;

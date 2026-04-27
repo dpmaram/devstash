@@ -30,10 +30,10 @@ function collectionRecord(
     isFavorite: true,
     updatedAt: baseDate,
     defaultType: itemType("note", "#fde047", "StickyNote"),
-    items: [
-      { item: { id: "item_1", itemType: itemType("snippet", "#3b82f6", "Code") } },
-      { item: { id: "item_2", itemType: itemType("snippet", "#3b82f6", "Code") } },
-      { item: { id: "item_3", itemType: itemType("command", "#f97316", "Terminal") } },
+    itemCount: 3,
+    typeSummaries: [
+      { itemType: itemType("snippet", "#3b82f6", "Code"), itemCount: 2 },
+      { itemType: itemType("command", "#f97316", "Terminal"), itemCount: 1 },
     ],
     ...overrides,
   };
@@ -62,7 +62,8 @@ describe("toDashboardCollection", () => {
   it("uses the default type for empty collections", () => {
     const collection = toDashboardCollection(
       collectionRecord({
-        items: [],
+        itemCount: 0,
+        typeSummaries: [],
         defaultType: itemType("link", "#10b981", "Link"),
       }),
       baseDate,

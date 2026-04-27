@@ -17,20 +17,22 @@ import {
   getDashboardItemTypes,
   type DashboardItem,
 } from "@/lib/db/items";
+import { getDashboardUser } from "@/lib/db/dashboard-user";
 import { mockDashboardData, type ItemTypeSlug } from "@/lib/mock-data";
 
 export async function DashboardShell() {
   const { currentUser } = mockDashboardData;
+  const dashboardUser = await getDashboardUser();
   const [
     { collections, stats },
     { pinnedItems, recentItems },
     itemTypes,
     sidebarCollections,
   ] = await Promise.all([
-    getDashboardCollectionData({ limit: 6 }),
-    getDashboardItemData({ pinnedLimit: 3, recentLimit: 10 }),
-    getDashboardItemTypes(),
-    getDashboardCollections({ limit: 20 }),
+    getDashboardCollectionData({ limit: 6, user: dashboardUser }),
+    getDashboardItemData({ pinnedLimit: 3, recentLimit: 10, user: dashboardUser }),
+    getDashboardItemTypes({ user: dashboardUser }),
+    getDashboardCollections({ limit: 20, user: dashboardUser }),
   ]);
 
   return (

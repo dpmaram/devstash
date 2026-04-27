@@ -14,12 +14,13 @@ export type CollectionRecord = {
   isFavorite: boolean;
   updatedAt: Date;
   defaultType: CollectionItemType | null;
-  items: {
-    item: {
-      id: string;
-      itemType: CollectionItemType;
-    };
-  }[];
+  itemCount: number;
+  typeSummaries: CollectionTypeSummary[];
+};
+
+export type CollectionTypeSummary = {
+  itemType: CollectionItemType;
+  itemCount: number;
 };
 
 export type DashboardCollection = {
@@ -93,8 +94,8 @@ function formatUpdatedAt(updatedAt: Date, now: Date) {
 function getCollectionTypes(collection: CollectionRecord) {
   const typesBySlug = new Map<string, CollectionItemType>();
 
-  for (const collectionItem of collection.items) {
-    const itemType = collectionItem.item.itemType;
+  for (const typeSummary of collection.typeSummaries) {
+    const itemType = typeSummary.itemType;
 
     if (!typesBySlug.has(itemType.slug)) {
       typesBySlug.set(itemType.slug, itemType);
@@ -109,21 +110,13 @@ function getCollectionTypes(collection: CollectionRecord) {
 }
 
 function getMostUsedType(collection: CollectionRecord) {
-  const countsBySlug = new Map<string, number>();
-  const typesBySlug = new Map<string, CollectionItemType>();
   let mostUsedType: CollectionItemType | null = null;
   let mostUsedCount = 0;
 
-  for (const collectionItem of collection.items) {
-    const itemType = collectionItem.item.itemType;
-    const count = (countsBySlug.get(itemType.slug) ?? 0) + 1;
-
-    countsBySlug.set(itemType.slug, count);
-    typesBySlug.set(itemType.slug, itemType);
-
-    if (count > mostUsedCount) {
-      mostUsedCount = count;
-      mostUsedType = itemType;
+  for (const typeSummary of collection.typeSummaries) {
+    if (typeSummary.itemCount > mostUsedCount) {
+      mostUsedCount = typeSummary.itemCount;
+      mostUsedType = typeSummary.itemType;
     }
   }
 
@@ -138,7 +131,7 @@ export function toDashboardCollection(collection: CollectionRecord, now = new Da
     name: collection.name,
     slug: collection.slug,
     description: collection.description ?? "No description yet.",
-    itemCount: collection.items.length,
+    itemCount: collection.itemCount,
     isFavorite: collection.isFavorite,
     accentColor: mostUsedType.color,
     updatedAt: formatUpdatedAt(collection.updatedAt, now),
