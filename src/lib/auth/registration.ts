@@ -1,4 +1,9 @@
+import { randomBytes } from "node:crypto";
+
 import bcrypt from "bcryptjs";
+
+import { sendResendEmail } from "@/lib/email/resend";
+import { hashVerificationToken } from "./verification";
 
 type RegistrationInput = {
   name?: unknown;
@@ -17,6 +22,17 @@ type ExistingUser = {
   id: string;
 };
 
+type VerificationUrlInput = {
+  email: string;
+  token: string;
+};
+
+type VerificationEmailInput = {
+  to: string;
+  name: string;
+  verificationUrl: string;
+};
+
 export type RegisterUserDeps = {
   findUserByEmail: (email: string) => Promise<ExistingUser | null>;
   hashPassword: (password: string) => Promise<string>;
@@ -25,6 +41,17 @@ export type RegisterUserDeps = {
     email: string;
     passwordHash: string;
   }) => Promise<RegisteredUser>;
+  generateVerificationToken: () => string;
+  hashVerificationToken: (token: string) => string;
+  createVerificationToken: (data: {
+    identifier: string;
+    token: string;
+    expires: Date;
+  }) => Promise<void>;
+  createVerificationUrl: (input: VerificationUrlInput) => string;
+  sendVerificationEmail: (input: VerificationEmailInput) => Promise<void>;
+  now: () => Date;
+  verificationTokenTtlMs: number;
 };
 
 export type RegisterUserResult =
@@ -35,7 +62,7 @@ export type RegisterUserResult =
     }
   | {
       ok: false;
-      status: 400 | 409;
+      status: 400 | 409 | 502;
       error: string;
     };
 
@@ -131,15 +158,109 @@ async function createUser(data: {
   });
 }
 
-const defaultDeps: RegisterUserDeps = {
-  findUserByEmail,
-  hashPassword: (password) => bcrypt.hash(password, 12),
-  createUser,
-};
+function generateVerificationToken() {
+  return randomBytes(32).toString("hex");
+}
+
+async function createVerificationToken(data: {
+  identifier: string;
+  token: string;
+  expires: Date;
+}) {
+  const { prisma } = await import("../prisma");
+
+  await prisma.verificationToken.deleteMany({
+    where: {
+      identifier: data.identifier,
+    },
+  });
+  await prisma.verificationToken.create({
+    data,
+  });
+}
+
+function getAppBaseUrl(baseUrl?: string) {
+  const configuredBaseUrl =
+    baseUrl ?? process.env.APP_URL ?? process.env.NEXT_PUBLIC_APP_URL ?? process.env.AUTH_URL;
+
+  return (configuredBaseUrl ?? "http://localhost:3000").replace(/\/+$/, "");
+}
+
+function createVerificationUrl(input: VerificationUrlInput, baseUrl?: string) {
+  const url = new URL("/api/auth/verify-email", getAppBaseUrl(baseUrl));
+
+  url.searchParams.set("email", input.email);
+  url.searchParams.set("token", input.token);
+
+  return url.toString();
+}
+
+function createVerificationEmailHtml(input: VerificationEmailInput) {
+  const name = escapeHtml(input.name);
+  const verificationUrl = escapeHtml(input.verificationUrl);
+
+  return `<p>Hi ${name},</p><p>Click the link below to verify your DevStash email address.</p><p><a href="${verificationUrl}">Verify your email</a></p><p>If you did not create a DevStash account, you can ignore this email.</p>`;
+}
+
+function createVerificationEmailText(input: VerificationEmailInput) {
+  return `Hi ${input.name},
+
+Verify your DevStash email address:
+${input.verificationUrl}
+
+If you did not create a DevStash account, you can ignore this email.`;
+}
+
+async function sendVerificationEmail(input: VerificationEmailInput) {
+  await sendResendEmail({
+    to: input.to,
+    subject: "Verify your DevStash email",
+    html: createVerificationEmailHtml(input),
+    text: createVerificationEmailText(input),
+    idempotencyKey: `verify-email:${hashVerificationToken(
+      input.verificationUrl,
+    ).slice(0, 64)}`,
+  });
+}
+
+function escapeHtml(value: string) {
+  return value.replace(/[&<>"']/g, (character) => {
+    switch (character) {
+      case "&":
+        return "&amp;";
+      case "<":
+        return "&lt;";
+      case ">":
+        return "&gt;";
+      case '"':
+        return "&quot;";
+      case "'":
+        return "&#39;";
+      default:
+        return character;
+    }
+  });
+}
+
+export function createRegisterUserDeps(options: { baseUrl?: string } = {}) {
+  return {
+    findUserByEmail,
+    hashPassword: (password: string) => bcrypt.hash(password, 12),
+    createUser,
+    generateVerificationToken,
+    hashVerificationToken,
+    createVerificationToken,
+    createVerificationUrl: (input: VerificationUrlInput) =>
+      createVerificationUrl(input, options.baseUrl),
+    sendVerificationEmail,
+    now: () => new Date(),
+    verificationTokenTtlMs: 24 * 60 * 60 * 1000,
+  } satisfies RegisterUserDeps;
+}
 
 export async function registerUser(
   input: unknown,
-  deps: RegisterUserDeps = defaultDeps,
+  deps: RegisterUserDeps = createRegisterUserDeps(),
 ): Promise<RegisterUserResult> {
   const parsedInput = parseRegistrationInput(input);
 
@@ -158,10 +279,37 @@ export async function registerUser(
   }
 
   const passwordHash = await deps.hashPassword(parsedInput.value.password);
+  const verificationToken = deps.generateVerificationToken();
+  const hashedVerificationToken = deps.hashVerificationToken(verificationToken);
+  const verificationUrl = deps.createVerificationUrl({
+    email: parsedInput.value.email,
+    token: verificationToken,
+  });
+  const expires = new Date(deps.now().getTime() + deps.verificationTokenTtlMs);
+
+  try {
+    await deps.sendVerificationEmail({
+      to: parsedInput.value.email,
+      name: parsedInput.value.name,
+      verificationUrl,
+    });
+  } catch {
+    return {
+      ok: false,
+      status: 502,
+      error: "Unable to send verification email. Try again later.",
+    };
+  }
+
   const user = await deps.createUser({
     name: parsedInput.value.name,
     email: parsedInput.value.email,
     passwordHash,
+  });
+  await deps.createVerificationToken({
+    identifier: parsedInput.value.email,
+    token: hashedVerificationToken,
+    expires,
   });
 
   return {

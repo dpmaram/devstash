@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 
 import {
+  getEmailVerificationToastMessage,
   getRegistrationSuccessToastMessage,
   validateRegisterForm,
   validateSignInForm,
@@ -83,14 +84,41 @@ describe("validateRegisterForm", () => {
 });
 
 describe("getRegistrationSuccessToastMessage", () => {
-  it("returns the toast message after successful registration", () => {
+  it("returns the check-email toast message after successful registration", () => {
     assert.equal(
       getRegistrationSuccessToastMessage(true),
-      "Account created. You can now log in.",
+      "Check your email to verify your account before signing in.",
     );
   });
 
   it("does not show a toast when registration did not just complete", () => {
     assert.equal(getRegistrationSuccessToastMessage(false), null);
+  });
+});
+
+describe("getEmailVerificationToastMessage", () => {
+  it("returns a success toast after email verification", () => {
+    assert.equal(
+      getEmailVerificationToastMessage("success"),
+      "Email verified. You can now sign in.",
+    );
+  });
+
+  it("returns an expired-link toast", () => {
+    assert.equal(
+      getEmailVerificationToastMessage("expired"),
+      "That verification link expired. Create a new account or request another link.",
+    );
+  });
+
+  it("returns an invalid-link toast", () => {
+    assert.equal(
+      getEmailVerificationToastMessage("invalid"),
+      "That verification link is invalid. Check your email and try again.",
+    );
+  });
+
+  it("does not show a toast for unknown status", () => {
+    assert.equal(getEmailVerificationToastMessage(undefined), null);
   });
 });

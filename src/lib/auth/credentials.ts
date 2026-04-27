@@ -9,6 +9,7 @@ type CredentialsUserRecord = {
   email: string | null;
   image: string | null;
   passwordHash: string | null;
+  emailVerified: Date | null;
 };
 
 export type AuthorizeCredentialsDeps = {
@@ -57,6 +58,7 @@ async function findUserByEmail(email: string) {
       email: true,
       image: true,
       passwordHash: true,
+      emailVerified: true,
     },
   });
 }
@@ -79,6 +81,10 @@ export async function authorizeCredentials(
   const user = await deps.findUserByEmail(parsedCredentials.email);
 
   if (!user?.passwordHash) {
+    return null;
+  }
+
+  if (!user.emailVerified) {
     return null;
   }
 

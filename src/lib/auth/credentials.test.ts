@@ -49,6 +49,7 @@ describe("authorizeCredentials", () => {
           email: "ada@example.com",
           image: null,
           passwordHash: null,
+          emailVerified: new Date("2026-04-27T19:00:00.000Z"),
         }),
         verifyPassword: async () => {
           throw new Error("verifyPassword should not be called");
@@ -69,8 +70,30 @@ describe("authorizeCredentials", () => {
           email: "ada@example.com",
           image: null,
           passwordHash: "hashed-password",
+          emailVerified: new Date("2026-04-27T19:00:00.000Z"),
         }),
         verifyPassword: async () => false,
+      },
+    );
+
+    assert.equal(user, null);
+  });
+
+  it("returns null when the email/password user has not verified their email", async () => {
+    const user = await authorizeCredentials(
+      { email: "ada@example.com", password: "password123" },
+      {
+        findUserByEmail: async () => ({
+          id: "user_123",
+          name: "Ada",
+          email: "ada@example.com",
+          image: null,
+          passwordHash: "hashed-password",
+          emailVerified: null,
+        }),
+        verifyPassword: async () => {
+          throw new Error("verifyPassword should not be called");
+        },
       },
     );
 
@@ -87,6 +110,7 @@ describe("authorizeCredentials", () => {
           email: "ada@example.com",
           image: "https://example.com/ada.png",
           passwordHash: "hashed-password",
+          emailVerified: new Date("2026-04-27T19:00:00.000Z"),
         }),
         verifyPassword: async (password, hash) =>
           password === "password123" && hash === "hashed-password",

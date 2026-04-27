@@ -8,6 +8,7 @@ import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
+  getEmailVerificationToastMessage,
   getRegistrationSuccessToastMessage,
   getSignInErrorMessage,
   validateSignInForm,
@@ -16,10 +17,12 @@ import {
 
 export function SignInForm({
   callbackUrl = "/dashboard",
+  emailVerificationStatus,
   initialError,
   registered = false,
 }: {
   callbackUrl?: string;
+  emailVerificationStatus?: string | null;
   initialError?: string | null;
   registered?: boolean;
 }) {
@@ -29,7 +32,8 @@ export function SignInForm({
   );
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(
-    getRegistrationSuccessToastMessage(registered),
+    getEmailVerificationToastMessage(emailVerificationStatus) ??
+      getRegistrationSuccessToastMessage(registered),
   );
 
   useEffect(() => {

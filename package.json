@@ -12,6 +12,7 @@
     "db:seed": "prisma generate && tsx prisma/seed.ts",
     "db:studio": "prisma studio",
     "db:test": "prisma generate && tsx scripts/test-db.ts",
+    "db:delete-non-demo-users": "prisma generate && tsx scripts/delete-non-demo-users.ts",
     "prisma:generate": "prisma generate",
     "prisma:deploy": "prisma migrate deploy",
     "prisma:migrate": "prisma migrate dev",

@@ -1,7 +1,32 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 
-import { registerUser } from "./registration";
+import { registerUser, type RegisterUserDeps } from "./registration";
+
+function createRegisterUserDeps(
+  overrides: Partial<RegisterUserDeps> = {},
+): RegisterUserDeps {
+  return {
+    findUserByEmail: async () => null,
+    hashPassword: async (password) => `hashed:${password}`,
+    createUser: async (data) => ({
+      id: "user_123",
+      name: data.name,
+      email: data.email,
+    }),
+    generateVerificationToken: () => "raw-verification-token",
+    hashVerificationToken: (token) => `hashed:${token}`,
+    createVerificationToken: async () => {},
+    createVerificationUrl: ({ email, token }) =>
+      `https://devstash.test/api/auth/verify-email?email=${encodeURIComponent(
+        email,
+      )}&token=${encodeURIComponent(token)}`,
+    sendVerificationEmail: async () => {},
+    now: () => new Date("2026-04-27T19:00:00.000Z"),
+    verificationTokenTtlMs: 24 * 60 * 60 * 1000,
+    ...overrides,
+  };
+}
 
 describe("registerUser", () => {
   it("rejects missing registration fields", async () => {
@@ -13,14 +38,14 @@ describe("registerUser", () => {
         password: "password123",
         confirmPassword: "password123",
       },
-      {
+      createRegisterUserDeps({
         findUserByEmail: async () => null,
         hashPassword: async () => "hashed-password",
         createUser: async () => {
           createCalls += 1;
           throw new Error("createUser should not be called");
         },
-      },
+      }),
     );
 
     assert.deepEqual(result, {
@@ -39,13 +64,13 @@ describe("registerUser", () => {
         password: "password123",
         confirmPassword: "different-password",
       },
-      {
+      createRegisterUserDeps({
         findUserByEmail: async () => null,
         hashPassword: async () => "hashed-password",
         createUser: async () => {
           throw new Error("createUser should not be called");
         },
-      },
+      }),
     );
 
     assert.deepEqual(result, {
@@ -65,7 +90,7 @@ describe("registerUser", () => {
         password: "password123",
         confirmPassword: "password123",
       },
-      {
+      createRegisterUserDeps({
         findUserByEmail: async (email) =>
           email === "ada@example.com" ? { id: "user_existing" } : null,
         hashPassword: async () => {
@@ -75,7 +100,7 @@ describe("registerUser", () => {
         createUser: async () => {
           throw new Error("createUser should not be called");
         },
-      },
+      }),
     );
 
     assert.deepEqual(result, {
@@ -94,6 +119,20 @@ describe("registerUser", () => {
           passwordHash: string;
         }
       | undefined;
+    let createdVerificationToken:
+      | {
+          identifier: string;
+          token: string;
+          expires: Date;
+        }
+      | undefined;
+    let sentVerificationEmail:
+      | {
+          to: string;
+          name: string;
+          verificationUrl: string;
+        }
+      | undefined;
 
     const result = await registerUser(
       {
@@ -102,7 +141,7 @@ describe("registerUser", () => {
         password: "password123",
         confirmPassword: "password123",
       },
-      {
+      createRegisterUserDeps({
         findUserByEmail: async () => null,
         hashPassword: async (password) => `hashed:${password}`,
         createUser: async (data) => {
@@ -114,13 +153,30 @@ describe("registerUser", () => {
             email: data.email,
           };
         },
-      },
+        createVerificationToken: async (data) => {
+          createdVerificationToken = data;
+        },
+        sendVerificationEmail: async (message) => {
+          sentVerificationEmail = message;
+        },
+      }),
     );
 
     assert.deepEqual(createdUser, {
       name: "Ada Lovelace",
       email: "ada@example.com",
       passwordHash: "hashed:password123",
+    });
+    assert.deepEqual(createdVerificationToken, {
+      identifier: "ada@example.com",
+      token: "hashed:raw-verification-token",
+      expires: new Date("2026-04-28T19:00:00.000Z"),
+    });
+    assert.deepEqual(sentVerificationEmail, {
+      to: "ada@example.com",
+      name: "Ada Lovelace",
+      verificationUrl:
+        "https://devstash.test/api/auth/verify-email?email=ada%40example.com&token=raw-verification-token",
     });
     assert.deepEqual(result, {
       ok: true,
@@ -131,5 +187,39 @@ describe("registerUser", () => {
         email: "ada@example.com",
       },
     });
+  });
+
+  it("returns an error without creating the user when verification email cannot be sent", async () => {
+    let createCalls = 0;
+
+    const result = await registerUser(
+      {
+        name: "Ada",
+        email: "ada@example.com",
+        password: "password123",
+        confirmPassword: "password123",
+      },
+      createRegisterUserDeps({
+        createUser: async (data) => {
+          createCalls += 1;
+
+          return {
+            id: "user_123",
+            name: data.name,
+            email: data.email,
+          };
+        },
+        sendVerificationEmail: async () => {
+          throw new Error("Resend failed");
+        },
+      }),
+    );
+
+    assert.deepEqual(result, {
+      ok: false,
+      status: 502,
+      error: "Unable to send verification email. Try again later.",
+    });
+    assert.equal(createCalls, 0);
   });
 });
