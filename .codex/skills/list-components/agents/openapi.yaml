@@ -1,0 +1,4 @@
+interface:
+  display_name: "Sample Skill"
+  short_description: "Inventory React component files"
+  default_prompt: "Use $list-components to list and summarize the React components in this project."

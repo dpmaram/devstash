@@ -1,40 +1,76 @@
-# devstash
+# DevStash
 
-devstash - durga repo
+DevStash is a developer knowledge hub for snippets, commands, prompts, notes, files, images, links, and custom types.
 
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+## Stack
 
-## Getting Started
+- Next.js 16 with React 19 and TypeScript
+- Tailwind CSS v4 and shadcn/ui-style components
+- Prisma ORM with PostgreSQL
+- Auth.js data model support
+- Planned Cloudflare R2 uploads and OpenAI-powered assistive features
 
-First, run the development server:
+## Local Development
+
+Install dependencies:
+
+```bash
+npm install
+```
+
+Run the development server:
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open `http://localhost:3000` for the main page or `http://localhost:3000/dashboard` for the database-backed dashboard.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Database
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Set the required variables in `.env`:
 
-## Learn More
+```bash
+DATABASE_URL="postgresql://..."
+DIRECT_URL="postgresql://..."
+```
 
-To learn more about Next.js, take a look at the following resources:
+Generate the Prisma client:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```bash
+npm run prisma:generate
+```
 
-You can check out the [Next.js GitHub repository](https://github.com/vercel/next.js) for more information.
+Run reviewed development migrations:
 
-## Deploy on Vercel
+```bash
+npm run prisma:migrate
+```
 
-The easiest way to deploy this app is to use the [Vercel Platform](https://vercel.com/new).
+Seed demo data:
 
-Check out the [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```bash
+npm run db:seed
+```
+
+Do not use `prisma db push` in this project. Schema changes should go through Prisma Migrate.
+
+## Useful Commands
+
+```bash
+npm run lint
+npx tsc --noEmit
+npm run build
+npm run db:test
+```
+
+## Project Context
+
+Start with these files before feature work:
+
+- `context/project-overview.md`
+- `context/code-structure.md`
+- `context/ai-integration.md`
+- `context/current-feature.md`
+- `context/coding-standards.md`
+- `context/ai-interaction.md`
