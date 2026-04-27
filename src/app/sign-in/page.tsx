@@ -32,6 +32,7 @@ export default async function SignInPage({ searchParams }: SignInPageProps) {
   const callbackUrl = getSearchParam(params, "callbackUrl") ?? "/dashboard";
   const error = getSearchParam(params, "error");
   const registered = getSearchParam(params, "registered") === "1";
+  const emailVerificationStatus = getSearchParam(params, "emailVerification");
 
   return (
     <AuthShell
@@ -41,6 +42,7 @@ export default async function SignInPage({ searchParams }: SignInPageProps) {
     >
       <SignInForm
         callbackUrl={callbackUrl}
+        emailVerificationStatus={emailVerificationStatus}
         initialError={error}
         registered={registered}
       />

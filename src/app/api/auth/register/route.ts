@@ -1,4 +1,4 @@
-import { registerUser } from "@/lib/auth/registration";
+import { createRegisterUserDeps, registerUser } from "@/lib/auth/registration";
 
 export const runtime = "nodejs";
 
@@ -19,7 +19,12 @@ export async function POST(request: Request) {
     );
   }
 
-  const result = await registerUser(body);
+  const result = await registerUser(
+    body,
+    createRegisterUserDeps({
+      baseUrl: new URL(request.url).origin,
+    }),
+  );
 
   if (!result.ok) {
     return Response.json(

@@ -130,5 +130,27 @@ export function getSignInErrorMessage(error?: string | null) {
 }
 
 export function getRegistrationSuccessToastMessage(registered: boolean) {
-  return registered ? "Account created. You can now log in." : null;
+  return registered
+    ? "Check your email to verify your account before signing in."
+    : null;
+}
+
+export type EmailVerificationToastStatus = "success" | "expired" | "invalid";
+
+export function getEmailVerificationToastMessage(
+  status?: string | null,
+): string | null {
+  if (status === "success") {
+    return "Email verified. You can now sign in.";
+  }
+
+  if (status === "expired") {
+    return "That verification link expired. Create a new account or request another link.";
+  }
+
+  if (status === "invalid") {
+    return "That verification link is invalid. Check your email and try again.";
+  }
+
+  return null;
 }
