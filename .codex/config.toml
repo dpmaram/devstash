@@ -3,3 +3,7 @@ url = "https://mcp.neon.tech/mcp"
 
 [mcp_servers.context7]
 url = "https://mcpcontext7.com/mcp"
+
+[mcp_servers.playwright]
+command = "npx"
+args = ["-y", "@playwright/mcp@latest"]
