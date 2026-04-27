@@ -1,34 +1,22 @@
-# Current Feature: Auth Credentials - Email/Password Provider
+# Current Feature
 
 <!-- Feature Name -->
 
-Auth Credentials - Email/Password Provider
+None
 
 ## Status
 
 <!-- Not Started|In Progress|Completed -->
 
-In Progress
+Completed
 
 ## Goals
 
 <!-- Goals & requirements -->
 
-- Add Credentials provider support for email/password authentication with registration.
-- Use bcryptjs to hash new passwords and validate credential sign-ins.
-- Add the User password field through a Prisma migration if it is not already present.
-- Update the Auth.js split configuration with a Credentials placeholder in `auth.config.ts` and bcrypt validation in `auth.ts`.
-- Create `POST /api/auth/register` to validate registration input, reject existing users, hash passwords, create users, and return success/error responses.
-- Verify email/password sign-in redirects to `/dashboard` and GitHub OAuth still works.
-
 ## Notes
 
 <!-- Any extra notes -->
-
-- Spec source: `context/features/auth-phase-2-spec.md`.
-- This follows the completed Auth Phase 1 NextAuth + GitHub provider setup.
-- Do not use `prisma db push`; schema changes must go through Prisma Migrate.
-- Manual checks from the spec include registration via curl, `/api/auth/signin`, dashboard redirect, and a GitHub OAuth regression check.
 
 ## History
 
@@ -79,3 +67,4 @@ In Progress
 - 2026-04-27 09:57 EDT - Loaded Auth Credentials - Email/Password Provider spec from `context/features/auth-phase-2-spec.md` and set status to Not Started.
 - 2026-04-27 09:58 EDT - Started Auth Credentials - Email/Password Provider on branch `feature/auth-credentials-email-password-provider`.
 - 2026-04-27 10:42 EDT - Implemented Auth Credentials - Email/Password Provider with Auth.js Credentials support, bcrypt-backed password verification, registration API route, default sign-in redirect to `/dashboard`, and automated auth tests. Verified full local tests, TypeScript, lint, production build, database smoke test, browser credentials sign-in to `/dashboard`, and GitHub OAuth initiation.
+- 2026-04-27 18:28 EDT - Completed Auth Credentials - Email/Password Provider, merged it into `main`, deleted the local feature branch, and cleared current feature details.
