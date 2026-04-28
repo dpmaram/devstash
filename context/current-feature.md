@@ -1,37 +1,22 @@
-# Current Feature: Forgot Password
+# Current Feature
 
 <!-- Feature Name -->
 
-Forgot Password
+None
 
 ## Status
 
 <!-- Not Started|In Progress|Completed -->
 
-In Progress
+Completed
 
 ## Goals
 
 <!-- Goals & requirements -->
 
-- Add a "Forgot password?" link to the sign-in experience for credentials users.
-- Add a forgot-password request flow that accepts an email address and returns a generic success response to avoid account enumeration.
-- Use the existing `VerificationToken` model for password reset tokens, with a distinct password-reset identifier namespace so reset tokens do not collide with email verification tokens.
-- Generate single-use hashed reset tokens with an expiration time, delete older reset tokens for the same email, and never store raw reset tokens.
-- Send password reset links with Resend using the existing email helper patterns.
-- Add a reset-password flow that validates the token, accepts a new password and confirmation, updates the user's password hash, and deletes used or expired reset tokens.
-- Handle invalid or expired reset links with clear user-facing messages while keeping account existence private.
-- Add focused tests for token creation, token verification, password update, expired/invalid token behavior, generic request responses, and UI/form validation.
-
 ## Notes
 
 <!-- Any extra notes -->
-
-- Existing email verification already uses `VerificationToken`; password reset should share the model but keep identifiers separate, for example `password-reset:{email}`.
-- Password reset should target credentials users with a `passwordHash`; OAuth-only users should receive the same generic request response without leaking account details.
-- The email verification toggle should not disable password reset emails unless implementation reveals a strong reason to introduce a separate reset-email toggle.
-- Reuse existing auth page, form validation, Resend, token hashing, and toast/message patterns where practical.
-- Do not expose or print secret env values while implementing or debugging.
 
 ## History
 
@@ -102,3 +87,4 @@ In Progress
 - 2026-04-27 23:12 EDT - Loaded Forgot Password from inline user request. Feature will add forgot-password and reset-password flows using the existing `VerificationToken` model for password reset tokens.
 - 2026-04-27 23:13 EDT - Started Forgot Password on branch `feature/forgot-password`.
 - 2026-04-27 23:20 EDT - Implemented Forgot Password with sign-in recovery link, forgot/reset password pages, API routes, namespaced hashed password reset tokens in `VerificationToken`, Resend reset email delivery, generic request responses, reset-password updates, and invalid/expired link handling. Verified focused password-reset tests, full local tests, TypeScript, lint, and production build.
+- 2026-04-27 23:35 EDT - Completed Forgot Password, merged it into `main`, deleted the local feature branch, and cleared current feature details.
