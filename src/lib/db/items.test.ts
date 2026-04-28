@@ -167,3 +167,51 @@ describe("updateItem", () => {
     ]);
   });
 });
+
+describe("deleteItem", () => {
+  it("does not delete items outside the signed-in user", async () => {
+    const { deleteItem } = await import("./items");
+    const result = await deleteItem(
+      {
+        itemId: "item_123",
+        userId: "user_123",
+      },
+      {
+        findOwnedItem: async () => null,
+        deleteItemRecord: async () => {
+          throw new Error("deleteItemRecord should not be called");
+        },
+      },
+    );
+
+    assert.equal(result, false);
+  });
+
+  it("deletes an item owned by the signed-in user", async () => {
+    const { deleteItem } = await import("./items");
+    const calls: string[] = [];
+    const result = await deleteItem(
+      {
+        itemId: "item_123",
+        userId: "user_123",
+      },
+      {
+        findOwnedItem: async (input) => {
+          calls.push(`findOwnedItem:${input.itemId}:${input.userId}`);
+          return {
+            id: input.itemId,
+          };
+        },
+        deleteItemRecord: async (itemId) => {
+          calls.push(`deleteItemRecord:${itemId}`);
+        },
+      },
+    );
+
+    assert.equal(result, true);
+    assert.deepEqual(calls, [
+      "findOwnedItem:item_123:user_123",
+      "deleteItemRecord:item_123",
+    ]);
+  });
+});
