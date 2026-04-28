@@ -1,22 +1,36 @@
-# Current Feature
+# Current Feature: Rate Limiting for Auth
 
 <!-- Feature Name -->
 
-None
+Rate Limiting for Auth
 
 ## Status
 
 <!-- Not Started|In Progress|Completed -->
 
-Completed
+In Progress
 
 ## Goals
 
 <!-- Goals & requirements -->
 
+- Add rate limiting to auth-related API routes.
+- Use Upstash Redis with `@upstash/ratelimit` for serverless-compatible limiting.
+- Create a reusable rate limiting utility.
+- Return appropriate `429 Too Many Requests` JSON responses.
+- Display user-friendly rate limit errors on the frontend.
+- Include `Retry-After` headers in rate-limited responses.
+
 ## Notes
 
 <!-- Any extra notes -->
+
+- Spec loaded from `context/features/rate-limiting-spec.md`.
+- Protect `/api/auth/callback/credentials`, `/api/auth/register`, `/api/auth/forgot-password`, `/api/auth/reset-password`, and `/api/auth/resend-verification`.
+- Use sliding-window limits keyed by IP and, where applicable, email.
+- Required env variables: `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN`.
+- Rate limiting should fail open if Upstash is unavailable.
+- Login limiting may need special handling because credentials login is handled through NextAuth.
 
 ## History
 
@@ -92,3 +106,7 @@ Completed
 - 2026-04-27 23:39 EDT - Started Profile Page on branch `feature/profile-page`.
 - 2026-04-27 23:48 EDT - Implemented Profile Page with signed-in profile data, account creation/auth method display, usage stats by item type, credentials-only password changes, delete-account confirmation, and profile API routes. Verified focused tests, full local tests, TypeScript, lint, production build, and local `/profile` auth redirect.
 - 2026-04-27 23:53 EDT - Completed Profile Page, merged it into `main`, deleted the local feature branch, and cleared current feature details.
+- 2026-04-28 00:27 EDT - Loaded Rate Limiting for Auth spec from `context/features/rate-limiting-spec.md` and set status to Not Started.
+- 2026-04-28 00:28 EDT - Started Rate Limiting for Auth on branch `feature/rate-limiting-for-auth`.
+- 2026-04-28 00:40 EDT - Implemented Rate Limiting for Auth with Upstash-backed sliding-window limits, reusable rate-limit utilities, 429 `Retry-After` responses, credentials sign-in throttling, resend-verification endpoint throttling, and profile password-change throttling. Verified focused auth tests, full local tests, TypeScript, lint, and production build.
+- 2026-04-28 00:49 EDT - Fixed credentials login rate-limit messaging so the Auth.js redirect carries retry seconds and the sign-in page displays `Too many attempts. Please try again in X minutes.` Verified focused credentials/form tests, full local tests, TypeScript, lint, and production build.

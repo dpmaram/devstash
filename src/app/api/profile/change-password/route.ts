@@ -1,12 +1,34 @@
 import { auth } from "@/auth";
+import type { Session } from "next-auth";
 import {
   changePassword,
   createChangePasswordDeps,
 } from "@/lib/auth/account-actions";
+import {
+  checkRateLimit,
+  createTooManyRequestsResponse,
+} from "@/lib/rate-limit";
 
 export const runtime = "nodejs";
 
-export async function POST(request: Request) {
+type ChangePasswordRouteDeps = {
+  auth: () => Promise<Session | null>;
+  changePassword: typeof changePassword;
+  checkRateLimit: typeof checkRateLimit;
+  createChangePasswordDeps: typeof createChangePasswordDeps;
+};
+
+const defaultChangePasswordRouteDeps: ChangePasswordRouteDeps = {
+  auth,
+  changePassword,
+  checkRateLimit,
+  createChangePasswordDeps,
+};
+
+export async function handleChangePasswordPost(
+  request: Request,
+  deps: ChangePasswordRouteDeps = defaultChangePasswordRouteDeps,
+) {
   let body: unknown;
 
   try {
@@ -23,7 +45,7 @@ export async function POST(request: Request) {
     );
   }
 
-  const session = await auth();
+  const session = await deps.auth();
 
   if (!session?.user?.id) {
     return Response.json(
@@ -37,12 +59,20 @@ export async function POST(request: Request) {
     );
   }
 
-  const result = await changePassword(
+  const rateLimitResult = await deps.checkRateLimit("changePassword", request, {
+    identifier: session.user.id,
+  });
+
+  if (!rateLimitResult.success) {
+    return createTooManyRequestsResponse(rateLimitResult);
+  }
+
+  const result = await deps.changePassword(
     {
       ...(typeof body === "object" && body !== null ? body : {}),
       userId: session.user.id,
     },
-    createChangePasswordDeps(),
+    deps.createChangePasswordDeps(),
   );
 
   if (!result.ok) {
@@ -61,4 +91,8 @@ export async function POST(request: Request) {
     success: true,
     message: result.message,
   });
+}
+
+export async function POST(request: Request) {
+  return handleChangePasswordPost(request);
 }

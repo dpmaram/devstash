@@ -1,6 +1,7 @@
 import bcrypt from "bcryptjs";
-import type { User } from "next-auth";
+import { CredentialsSignin, type User } from "next-auth";
 
+import { checkRateLimit, type RateLimitResult } from "@/lib/rate-limit";
 import { isEmailVerificationEnabled } from "./email-verification";
 
 type CredentialsInput = Partial<Record<"email" | "password", unknown>>;
@@ -18,7 +19,30 @@ export type AuthorizeCredentialsDeps = {
   findUserByEmail: (email: string) => Promise<CredentialsUserRecord | null>;
   verifyPassword: (password: string, passwordHash: string) => Promise<boolean>;
   emailVerificationEnabled: boolean;
+  checkRateLimit?: (
+    request: Request | undefined,
+    email: string,
+  ) => Promise<RateLimitResult>;
 };
+
+type AuthorizeCredentialsOptions = {
+  request?: Request;
+};
+
+function createRateLimitedCredentialsCode(retryAfter: number) {
+  const retryAfterSeconds = Number.isFinite(retryAfter)
+    ? Math.max(1, Math.ceil(retryAfter))
+    : 60;
+
+  return `rate_limited_${retryAfterSeconds}`;
+}
+
+export class RateLimitedCredentialsSignin extends CredentialsSignin {
+  constructor(retryAfter: number) {
+    super();
+    this.code = createRateLimitedCredentialsCode(retryAfter);
+  }
+}
 
 function getString(value: unknown) {
   return typeof value === "string" ? value : null;
@@ -70,16 +94,41 @@ const defaultDeps: AuthorizeCredentialsDeps = {
   findUserByEmail,
   verifyPassword: (password, passwordHash) => bcrypt.compare(password, passwordHash),
   emailVerificationEnabled: isEmailVerificationEnabled(),
+  checkRateLimit: async (request, email) => {
+    if (!request) {
+      return {
+        success: true,
+        limit: Number.POSITIVE_INFINITY,
+        remaining: Number.POSITIVE_INFINITY,
+        reset: 0,
+        retryAfter: 0,
+      };
+    }
+
+    return checkRateLimit("credentialsLogin", request, {
+      identifier: email,
+    });
+  },
 };
 
 export async function authorizeCredentials(
   credentials: CredentialsInput,
   deps: AuthorizeCredentialsDeps = defaultDeps,
+  options: AuthorizeCredentialsOptions = {},
 ): Promise<User | null> {
   const parsedCredentials = parseCredentials(credentials);
 
   if (!parsedCredentials) {
     return null;
+  }
+
+  const rateLimitResult = await deps.checkRateLimit?.(
+    options.request,
+    parsedCredentials.email,
+  );
+
+  if (rateLimitResult && !rateLimitResult.success) {
+    throw new RateLimitedCredentialsSignin(rateLimitResult.retryAfter);
   }
 
   const user = await deps.findUserByEmail(parsedCredentials.email);

@@ -21,6 +21,7 @@ export function SignInForm({
   emailVerificationRequired = true,
   emailVerificationStatus,
   initialError,
+  initialErrorCode,
   passwordResetStatus,
   registered = false,
 }: {
@@ -28,12 +29,13 @@ export function SignInForm({
   emailVerificationRequired?: boolean;
   emailVerificationStatus?: string | null;
   initialError?: string | null;
+  initialErrorCode?: string | null;
   passwordResetStatus?: string | null;
   registered?: boolean;
 }) {
   const [errors, setErrors] = useState<SignInFormErrors>({});
   const [formError, setFormError] = useState<string | null>(
-    getSignInErrorMessage(initialError),
+    getSignInErrorMessage(initialError, initialErrorCode),
   );
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(

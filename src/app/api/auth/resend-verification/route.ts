@@ -1,7 +1,7 @@
 import {
-  createRequestPasswordResetDeps,
-  requestPasswordReset,
-} from "@/lib/auth/password-reset";
+  createRequestEmailVerificationDeps,
+  requestEmailVerification,
+} from "@/lib/auth/resend-verification";
 import {
   checkRateLimit,
   createTooManyRequestsResponse,
@@ -9,21 +9,29 @@ import {
 
 export const runtime = "nodejs";
 
-type ForgotPasswordRouteDeps = {
+type ResendVerificationRouteDeps = {
   checkRateLimit: typeof checkRateLimit;
-  createRequestPasswordResetDeps: typeof createRequestPasswordResetDeps;
-  requestPasswordReset: typeof requestPasswordReset;
+  requestEmailVerification: typeof requestEmailVerification;
 };
 
-const defaultForgotPasswordRouteDeps: ForgotPasswordRouteDeps = {
+const defaultResendVerificationRouteDeps: ResendVerificationRouteDeps = {
   checkRateLimit,
-  createRequestPasswordResetDeps,
-  requestPasswordReset,
+  requestEmailVerification,
 };
 
-export async function handleForgotPasswordPost(
+function getEmailIdentifier(body: unknown) {
+  if (typeof body !== "object" || body === null || !("email" in body)) {
+    return null;
+  }
+
+  const email = body.email;
+
+  return typeof email === "string" ? email : null;
+}
+
+export async function handleResendVerificationPost(
   request: Request,
-  deps: ForgotPasswordRouteDeps = defaultForgotPasswordRouteDeps,
+  deps: ResendVerificationRouteDeps = defaultResendVerificationRouteDeps,
 ) {
   let body: unknown;
 
@@ -41,15 +49,21 @@ export async function handleForgotPasswordPost(
     );
   }
 
-  const rateLimitResult = await deps.checkRateLimit("forgotPassword", request);
+  const rateLimitResult = await deps.checkRateLimit(
+    "resendVerification",
+    request,
+    {
+      identifier: getEmailIdentifier(body),
+    },
+  );
 
   if (!rateLimitResult.success) {
     return createTooManyRequestsResponse(rateLimitResult);
   }
 
-  const result = await deps.requestPasswordReset(
+  const result = await deps.requestEmailVerification(
     body,
-    deps.createRequestPasswordResetDeps({
+    createRequestEmailVerificationDeps({
       baseUrl: new URL(request.url).origin,
     }),
   );
@@ -78,5 +92,5 @@ export async function handleForgotPasswordPost(
 }
 
 export async function POST(request: Request) {
-  return handleForgotPasswordPost(request);
+  return handleResendVerificationPost(request);
 }

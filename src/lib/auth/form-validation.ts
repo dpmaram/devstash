@@ -270,12 +270,26 @@ export function validateDeleteAccountForm(
   };
 }
 
-export function getSignInErrorMessage(error?: string | null) {
+export function getSignInErrorMessage(error?: string | null, code?: string | null) {
   if (!error) {
     return null;
   }
 
   if (error === "CredentialsSignin") {
+    const retryAfterMatch = /^rate_limited_(\d+)$/.exec(code ?? "");
+
+    if (retryAfterMatch) {
+      const retryAfter = Number(retryAfterMatch[1]);
+      const minutes = Math.max(1, Math.ceil(retryAfter / 60));
+      const unit = minutes === 1 ? "minute" : "minutes";
+
+      return `Too many attempts. Please try again in ${minutes} ${unit}.`;
+    }
+
+    if (code === "rate_limited") {
+      return "Too many attempts. Please try again in a few minutes.";
+    }
+
     return "The email or password you entered is incorrect.";
   }
 

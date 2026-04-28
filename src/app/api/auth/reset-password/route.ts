@@ -1,8 +1,25 @@
 import { resetPassword } from "@/lib/auth/password-reset";
+import {
+  checkRateLimit,
+  createTooManyRequestsResponse,
+} from "@/lib/rate-limit";
 
 export const runtime = "nodejs";
 
-export async function POST(request: Request) {
+type ResetPasswordRouteDeps = {
+  checkRateLimit: typeof checkRateLimit;
+  resetPassword: typeof resetPassword;
+};
+
+const defaultResetPasswordRouteDeps: ResetPasswordRouteDeps = {
+  checkRateLimit,
+  resetPassword,
+};
+
+export async function handleResetPasswordPost(
+  request: Request,
+  deps: ResetPasswordRouteDeps = defaultResetPasswordRouteDeps,
+) {
   let body: unknown;
 
   try {
@@ -19,7 +36,13 @@ export async function POST(request: Request) {
     );
   }
 
-  const result = await resetPassword(body);
+  const rateLimitResult = await deps.checkRateLimit("resetPassword", request);
+
+  if (!rateLimitResult.success) {
+    return createTooManyRequestsResponse(rateLimitResult);
+  }
+
+  const result = await deps.resetPassword(body);
 
   if (!result.ok) {
     return Response.json(
@@ -44,4 +67,8 @@ export async function POST(request: Request) {
       status: result.status,
     },
   );
+}
+
+export async function POST(request: Request) {
+  return handleResetPasswordPost(request);
 }
