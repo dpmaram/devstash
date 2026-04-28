@@ -550,7 +550,7 @@ function ItemsPanel() {
     <section className="space-y-4">
       <SectionHeader action="Filter" eyebrow="Library" title="Recent items" />
       <div className="grid gap-4 2xl:grid-cols-[minmax(0,1fr)_320px]">
-        <div className="grid gap-3 lg:grid-cols-2">
+        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
           {items.map((item) => (
             <article
               className="rounded-lg border border-l-4 border-white/10 bg-white/[0.035] p-4 transition hover:border-white/20 hover:bg-white/[0.055]"

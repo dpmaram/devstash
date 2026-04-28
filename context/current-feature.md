@@ -1,23 +1,27 @@
-# Current Feature
-
-<!-- Feature Name -->
-
-None
+# Current Feature: Three Column Item Listing
 
 ## Status
 
 <!-- Not Started|In Progress|Completed -->
 
-Completed
+In Progress
 
 ## Goals
 
 <!-- Goals & requirements -->
 
+- Change the item listing view to use three columns on larger screens instead of two.
+- Keep the item listing responsive across mobile, tablet, and desktop breakpoints.
+- Preserve existing item card content, spacing, type badges, colors, and left-border accent styling.
+- Avoid changing collection card layout unless needed for visual consistency.
+- Verify the layout at representative responsive breakpoints and run the standard test/build checks.
 
 ## Notes
 
 <!-- Any extra notes -->
+
+- Loaded from inline user request: "change the item listing view to be a three column row instead of two on larger screens. Keep it responsive"
+- The worktree already contains uncommitted Vitest setup changes. Keep this layout feature scoped when starting or committing.
 
 ## History
 
@@ -101,3 +105,9 @@ Completed
 - 2026-04-28 10:06 EDT - Loaded Item Types Documentation spec from `context/features/item-types.md` and set status to Not Started.
 - 2026-04-28 10:08 EDT - Started Item Types Documentation on branch `feature/item-types-documentation`.
 - 2026-04-28 10:12 EDT - Completed Item Types Documentation with current item type docs, CRUD architecture research docs, research skill support, and dashboard item accent-border alignment; merged it into `main`, deleted the local feature branch, and cleared current feature details.
+- 2026-04-28 10:28 EDT - Loaded Three Column Item Listing from inline user request and set status to Not Started.
+- 2026-04-28 10:29 EDT - Started Three Column Item Listing on branch `feature/three-column-item-listing`.
+- 2026-04-28 10:30 EDT - Updated the item listing grid to render one column on mobile, two columns on medium screens, and three columns on larger screens while preserving existing item card styling.
+- 2026-04-28 10:32 EDT - Verified the layout update with `npm test`, `npm run lint`, and `npx tsc --noEmit`.
+- 2026-04-28 10:33 EDT - Ran the feature test step. No new unit tests were added because the feature changed responsive component markup only, with no new or modified server actions/utilities; `npm test` passed.
+- 2026-04-28 15:04 EDT - Re-verified before completion with `npm test`, `npm run lint`, `npx tsc --noEmit`, and `npm run build`.
