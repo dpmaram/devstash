@@ -2,6 +2,7 @@
 
 import {
   CalendarDays,
+  Check,
   Circle,
   Code2,
   Copy,
@@ -16,14 +17,17 @@ import {
   Trash2,
   X,
 } from "lucide-react";
-import { useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 
+import { updateItem as updateItemAction } from "@/actions/items";
 import { getAccentBorderStyle } from "@/components/dashboard/accent-border-style";
 import {
   itemTypeIconClasses,
   itemTypeIcons,
 } from "@/components/dashboard/dashboard-icons";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   Sheet,
   SheetClose,
@@ -54,6 +58,21 @@ type ItemDrawerState = {
   selectedItem: DashboardItem | null;
   status: DrawerStatus;
 };
+
+type ItemEditDraft = {
+  content: string;
+  description: string;
+  itemId: string;
+  language: string;
+  tagsText: string;
+  title: string;
+  url: string;
+};
+
+type DrawerToast = {
+  message: string;
+  tone: "error" | "success";
+} | null;
 
 const initialDrawerState: ItemDrawerState = {
   error: null,
@@ -86,6 +105,7 @@ export function ItemCardGrid({
       <ItemDetailSheet
         onOpenChange={drawer.onOpenChange}
         open={drawer.isOpen}
+        replaceItem={drawer.replaceItem}
         state={drawer.state}
       />
     </>
@@ -116,6 +136,7 @@ export function ItemRowList({
       <ItemDetailSheet
         onOpenChange={drawer.onOpenChange}
         open={drawer.isOpen}
+        replaceItem={drawer.replaceItem}
         state={drawer.state}
       />
     </>
@@ -180,10 +201,23 @@ function useItemDrawer() {
     setIsOpen(open);
   }
 
+  function replaceItem(item: ItemDetail) {
+    setState((currentState) => ({
+      ...currentState,
+      error: null,
+      item,
+      selectedItem: currentState.selectedItem
+        ? toDashboardItemSummary(item, currentState.selectedItem)
+        : null,
+      status: "ready",
+    }));
+  }
+
   return {
     isOpen,
     onOpenChange,
     openItem,
+    replaceItem,
     state,
   };
 }
@@ -280,17 +314,120 @@ function RecentItemRow({
 function ItemDetailSheet({
   onOpenChange,
   open,
+  replaceItem,
   state,
 }: {
   onOpenChange: (open: boolean) => void;
   open: boolean;
+  replaceItem: (item: ItemDetail) => void;
   state: ItemDrawerState;
 }) {
+  const router = useRouter();
   const headerItem = state.item ?? state.selectedItem;
+  const [draft, setDraft] = useState<ItemEditDraft | null>(null);
+  const [formError, setFormError] = useState<string | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
+  const [mode, setMode] = useState<"edit" | "view">("view");
+  const [toast, setToast] = useState<DrawerToast>(null);
+  const isEditingCurrentItem =
+    mode === "edit" && Boolean(state.item && draft?.itemId === state.item.id);
+
+  useEffect(() => {
+    if (!toast) {
+      return;
+    }
+
+    const timeout = window.setTimeout(() => setToast(null), 5000);
+
+    return () => window.clearTimeout(timeout);
+  }, [toast]);
+
+  function startEdit() {
+    if (!state.item) {
+      return;
+    }
+
+    setDraft(createItemEditDraft(state.item));
+    setFormError(null);
+    setMode("edit");
+  }
+
+  function cancelEdit() {
+    setDraft(state.item ? createItemEditDraft(state.item) : null);
+    setFormError(null);
+    setMode("view");
+  }
+
+  async function saveEdit() {
+    if (!state.item || !draft || draft.itemId !== state.item.id || isSaving) {
+      return;
+    }
+
+    if (!draft.title.trim()) {
+      setFormError("Title is required.");
+      return;
+    }
+
+    setFormError(null);
+    setIsSaving(true);
+
+    try {
+      const result = await updateItemAction(
+        state.item.id,
+        createUpdateItemPayload(state.item, draft),
+      );
+
+      if (!result.success) {
+        setFormError(result.error);
+        setToast({
+          message: result.error,
+          tone: "error",
+        });
+        return;
+      }
+
+      replaceItem(result.data);
+      setDraft(createItemEditDraft(result.data));
+      setMode("view");
+      setToast({
+        message: "Item updated.",
+        tone: "success",
+      });
+      router.refresh();
+    } catch {
+      const errorMessage = "Unable to save item. Try again.";
+
+      setFormError(errorMessage);
+      setToast({
+        message: errorMessage,
+        tone: "error",
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  }
+
+  function handleOpenChange(nextOpen: boolean) {
+    if (!nextOpen) {
+      setDraft(null);
+      setFormError(null);
+      setIsSaving(false);
+      setMode("view");
+    }
+
+    onOpenChange(nextOpen);
+  }
 
   return (
-    <Sheet onOpenChange={onOpenChange} open={open}>
+    <Sheet onOpenChange={handleOpenChange} open={open}>
       <SheetContent className="overflow-hidden">
+        {toast ? (
+          <ItemDrawerToast
+            message={toast.message}
+            onDismiss={() => setToast(null)}
+            tone={toast.tone}
+          />
+        ) : null}
         <div className="flex min-h-0 flex-1 flex-col">
           <div className="flex items-start gap-4 border-b border-devstash-line px-5 py-5 sm:px-7">
             <div className="flex size-14 shrink-0 items-center justify-center rounded-xl bg-blue-500/10">
@@ -329,7 +466,16 @@ function ItemDetailSheet({
             </SheetHeader>
           </div>
 
-          <ItemActionBar item={state.item} />
+          {isEditingCurrentItem ? (
+            <ItemEditActionBar
+              canSave={Boolean(draft?.title.trim())}
+              isSaving={isSaving}
+              onCancel={cancelEdit}
+              onSave={saveEdit}
+            />
+          ) : (
+            <ItemActionBar item={state.item} onEdit={startEdit} />
+          )}
 
           <div className="min-h-0 flex-1 overflow-y-auto px-5 py-6 sm:px-7">
             {state.status === "loading" ? <ItemDetailSkeleton /> : null}
@@ -339,7 +485,18 @@ function ItemDetailSheet({
               </div>
             ) : null}
             {state.status === "ready" && state.item ? (
-              <ItemDetailBody item={state.item} />
+              isEditingCurrentItem && draft ? (
+                <ItemEditForm
+                  draft={draft}
+                  error={formError}
+                  isSaving={isSaving}
+                  item={state.item}
+                  onChange={setDraft}
+                  onSave={saveEdit}
+                />
+              ) : (
+                <ItemDetailBody item={state.item} />
+              )
             ) : null}
           </div>
         </div>
@@ -348,7 +505,13 @@ function ItemDetailSheet({
   );
 }
 
-function ItemActionBar({ item }: { item: ItemDetail | null }) {
+function ItemActionBar({
+  item,
+  onEdit,
+}: {
+  item: ItemDetail | null;
+  onEdit: () => void;
+}) {
   async function copyItem() {
     if (!item || !navigator.clipboard) {
       return;
@@ -364,26 +527,32 @@ function ItemActionBar({ item }: { item: ItemDetail | null }) {
       <ActionButton
         active={item?.isFavorite}
         activeClassName="text-yellow-400"
+        disabled={!item}
         icon={<Star className={cn("size-5", item?.isFavorite && "fill-yellow-400")} />}
         label="Favorite"
       />
       <ActionButton
         active={item?.isPinned}
+        disabled={!item}
         icon={<Pin className="size-5" />}
         label="Pin"
       />
       <ActionButton
+        disabled={!item}
         icon={<Copy className="size-5" />}
         label="Copy"
         onClick={copyItem}
       />
       <ActionButton
         className="sm:ml-auto"
+        disabled={!item}
         icon={<Pencil className="size-5" />}
         label="Edit"
+        onClick={onEdit}
       />
       <ActionButton
         className="text-red-400 hover:bg-red-400/10 hover:text-red-300"
+        disabled={!item}
         icon={<Trash2 className="size-5" />}
         label="Delete"
       />
@@ -395,6 +564,7 @@ function ActionButton({
   active,
   activeClassName,
   className,
+  disabled,
   icon,
   label,
   onClick,
@@ -402,6 +572,7 @@ function ActionButton({
   active?: boolean;
   activeClassName?: string;
   className?: string;
+  disabled?: boolean;
   icon: React.ReactNode;
   label: string;
   onClick?: () => void;
@@ -413,6 +584,7 @@ function ActionButton({
         active && activeClassName,
         className,
       )}
+      disabled={disabled}
       onClick={onClick}
       title={label}
       type="button"
@@ -421,6 +593,303 @@ function ActionButton({
       {icon}
       <span>{label}</span>
     </Button>
+  );
+}
+
+function ItemEditActionBar({
+  canSave,
+  isSaving,
+  onCancel,
+  onSave,
+}: {
+  canSave: boolean;
+  isSaving: boolean;
+  onCancel: () => void;
+  onSave: () => void;
+}) {
+  return (
+    <div className="flex flex-wrap items-center justify-end gap-2 border-b border-devstash-line px-5 py-4 sm:px-7">
+      <Button
+        className="h-10 gap-2 rounded-lg bg-transparent px-3 text-base text-zinc-200 hover:bg-white/[0.06] hover:text-white"
+        disabled={isSaving}
+        onClick={onCancel}
+        type="button"
+        variant="ghost"
+      >
+        <X aria-hidden="true" className="size-5" />
+        <span>Cancel</span>
+      </Button>
+      <Button
+        className="h-10 gap-2 rounded-lg border border-emerald-300/30 bg-emerald-400/15 px-4 text-base text-emerald-100 hover:bg-emerald-400/25 disabled:opacity-50"
+        disabled={!canSave || isSaving}
+        onClick={onSave}
+        type="button"
+      >
+        {isSaving ? (
+          <LoaderCircle aria-hidden="true" className="size-5 animate-spin" />
+        ) : (
+          <Check aria-hidden="true" className="size-5" />
+        )}
+        <span>Save</span>
+      </Button>
+    </div>
+  );
+}
+
+function ItemEditForm({
+  draft,
+  error,
+  isSaving,
+  item,
+  onChange,
+  onSave,
+}: {
+  draft: ItemEditDraft;
+  error: string | null;
+  isSaving: boolean;
+  item: ItemDetail;
+  onChange: (draft: ItemEditDraft) => void;
+  onSave: () => void;
+}) {
+  const fieldId = useId();
+  const titleId = `${fieldId}-title`;
+  const descriptionId = `${fieldId}-description`;
+  const tagsId = `${fieldId}-tags`;
+  const contentId = `${fieldId}-content`;
+  const languageId = `${fieldId}-language`;
+  const urlId = `${fieldId}-url`;
+
+  return (
+    <form
+      className="space-y-8"
+      onSubmit={(event) => {
+        event.preventDefault();
+        onSave();
+      }}
+    >
+      {error ? (
+        <div
+          aria-live="polite"
+          className="rounded-lg border border-red-400/30 bg-red-400/10 p-4 text-sm text-red-100"
+        >
+          {error}
+        </div>
+      ) : null}
+
+      <div className="space-y-5">
+        <EditField htmlFor={titleId} label="Title" required>
+          <Input
+            aria-invalid={error === "Title is required."}
+            autoComplete="off"
+            className="h-11 border-devstash-line bg-white/[0.03] px-3 text-base text-white"
+            disabled={isSaving}
+            id={titleId}
+            onChange={(event) =>
+              onChange({
+                ...draft,
+                title: event.target.value,
+              })
+            }
+            required
+            value={draft.title}
+          />
+        </EditField>
+
+        <EditField htmlFor={descriptionId} label="Description">
+          <EditTextarea
+            disabled={isSaving}
+            id={descriptionId}
+            onChange={(value) =>
+              onChange({
+                ...draft,
+                description: value,
+              })
+            }
+            rows={3}
+            value={draft.description}
+          />
+        </EditField>
+
+        <EditField htmlFor={tagsId} label="Tags">
+          <Input
+            autoComplete="off"
+            className="h-11 border-devstash-line bg-white/[0.03] px-3 text-base text-white"
+            disabled={isSaving}
+            id={tagsId}
+            onChange={(event) =>
+              onChange({
+                ...draft,
+                tagsText: event.target.value,
+              })
+            }
+            value={draft.tagsText}
+          />
+        </EditField>
+
+        {canEditItemContent(item) ? (
+          <EditField htmlFor={contentId} label="Content">
+            <EditTextarea
+              className="min-h-64 font-mono text-sm leading-7"
+              disabled={isSaving}
+              id={contentId}
+              onChange={(value) =>
+                onChange({
+                  ...draft,
+                  content: value,
+                })
+              }
+              rows={12}
+              value={draft.content}
+            />
+          </EditField>
+        ) : null}
+
+        {canEditItemUrl(item) ? (
+          <EditField htmlFor={urlId} label="URL">
+            <Input
+              className="h-11 border-devstash-line bg-white/[0.03] px-3 text-base text-white"
+              disabled={isSaving}
+              id={urlId}
+              onChange={(event) =>
+                onChange({
+                  ...draft,
+                  url: event.target.value,
+                })
+              }
+              type="url"
+              value={draft.url}
+            />
+          </EditField>
+        ) : null}
+
+        {canEditItemLanguage(item) ? (
+          <EditField htmlFor={languageId} label="Language">
+            <Input
+              autoComplete="off"
+              className="h-11 border-devstash-line bg-white/[0.03] px-3 text-base text-white"
+              disabled={isSaving}
+              id={languageId}
+              onChange={(event) =>
+                onChange({
+                  ...draft,
+                  language: event.target.value,
+                })
+              }
+              value={draft.language}
+            />
+          </EditField>
+        ) : null}
+      </div>
+
+      <DetailSection title="Non-editable details">
+        <dl className="grid gap-4 text-base sm:grid-cols-[8rem_minmax(0,1fr)]">
+          <dt className="text-muted-foreground">Type</dt>
+          <dd className="text-zinc-100 sm:text-right">
+            {formatItemTypeName(item.itemType.name)}
+          </dd>
+          <dt className="text-muted-foreground">Collections</dt>
+          <dd className="text-zinc-100 sm:text-right">
+            {item.collections.length > 0
+              ? item.collections.map((collection) => collection.name).join(", ")
+              : "None"}
+          </dd>
+          <dt className="text-muted-foreground">Created</dt>
+          <dd className="text-zinc-100 sm:text-right">{item.createdAtLabel}</dd>
+          <dt className="text-muted-foreground">Updated</dt>
+          <dd className="text-zinc-100 sm:text-right">{item.updatedAtLabel}</dd>
+        </dl>
+      </DetailSection>
+    </form>
+  );
+}
+
+function EditField({
+  children,
+  htmlFor,
+  label,
+  required,
+}: {
+  children: React.ReactNode;
+  htmlFor: string;
+  label: string;
+  required?: boolean;
+}) {
+  return (
+    <div className="space-y-2">
+      <label className="block text-sm font-medium text-muted-foreground" htmlFor={htmlFor}>
+        {label}
+        {required ? (
+          <span aria-hidden="true" className="text-red-300">
+            {" "}
+            *
+          </span>
+        ) : null}
+      </label>
+      {children}
+    </div>
+  );
+}
+
+function EditTextarea({
+  className,
+  disabled,
+  id,
+  onChange,
+  rows,
+  value,
+}: {
+  className?: string;
+  disabled?: boolean;
+  id: string;
+  onChange: (value: string) => void;
+  rows: number;
+  value: string;
+}) {
+  return (
+    <textarea
+      className={cn(
+        "w-full resize-y rounded-lg border border-devstash-line bg-white/[0.03] px-3 py-2 text-base text-white outline-none transition-colors placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50",
+        className,
+      )}
+      disabled={disabled}
+      id={id}
+      onChange={(event) => onChange(event.target.value)}
+      rows={rows}
+      value={value}
+    />
+  );
+}
+
+function ItemDrawerToast({
+  message,
+  onDismiss,
+  tone,
+}: {
+  message: string;
+  onDismiss: () => void;
+  tone: "error" | "success";
+}) {
+  return (
+    <div
+      aria-live="polite"
+      className={cn(
+        "fixed right-4 top-4 z-[60] flex max-w-sm items-start gap-3 rounded-lg border px-4 py-3 text-sm shadow-xl shadow-black/30",
+        tone === "success"
+          ? "border-emerald-300/30 bg-emerald-950 text-emerald-50"
+          : "border-red-300/30 bg-red-950 text-red-50",
+      )}
+      role="status"
+    >
+      <p className="min-w-0 flex-1">{message}</p>
+      <button
+        aria-label="Dismiss notification"
+        className="rounded-md p-1 text-current/70 transition hover:bg-white/10 hover:text-current"
+        onClick={onDismiss}
+        type="button"
+      >
+        <X aria-hidden="true" className="size-4" />
+      </button>
+    </div>
   );
 }
 
@@ -612,6 +1081,75 @@ function TagList({ tags }: { tags: string[] }) {
       ))}
     </div>
   );
+}
+
+function toDashboardItemSummary(
+  item: ItemDetail,
+  previousItem: DashboardItem,
+): DashboardItem {
+  return {
+    ...previousItem,
+    id: item.id,
+    title: item.title,
+    description: item.description,
+    typeSlug: item.typeSlug,
+    itemType: item.itemType,
+    collectionSlugs: item.collections.map((collection) => collection.slug),
+    collectionNames: item.collections.map((collection) => collection.name),
+    tags: item.tags.map((tag) => tag.name),
+    updatedAt: "Just now",
+    isPinned: item.isPinned,
+    isFavorite: item.isFavorite,
+    language: item.language,
+    preview: getItemDetailPreview(item),
+    accentColor: item.accentColor,
+  };
+}
+
+function createItemEditDraft(item: ItemDetail): ItemEditDraft {
+  return {
+    itemId: item.id,
+    title: item.title,
+    description: item.description === "No description yet." ? "" : item.description,
+    content: item.content ?? "",
+    url: item.url ?? "",
+    language: item.language ?? "",
+    tagsText: item.tags.map((tag) => tag.name).join(", "),
+  };
+}
+
+function createUpdateItemPayload(item: ItemDetail, draft: ItemEditDraft) {
+  return {
+    title: draft.title,
+    description: draft.description,
+    content: canEditItemContent(item) ? draft.content : null,
+    url: canEditItemUrl(item) ? draft.url : null,
+    language: canEditItemLanguage(item) ? draft.language : null,
+    tags: getDraftTags(draft.tagsText),
+  };
+}
+
+function getDraftTags(tagsText: string) {
+  return tagsText
+    .split(",")
+    .map((tag) => tag.trim())
+    .filter(Boolean);
+}
+
+function getItemDetailPreview(item: ItemDetail) {
+  return item.content ?? item.url ?? item.fileName ?? item.fileUrl ?? "";
+}
+
+function canEditItemContent(item: ItemDetail) {
+  return ["snippet", "prompt", "command", "note"].includes(item.typeSlug);
+}
+
+function canEditItemLanguage(item: ItemDetail) {
+  return ["snippet", "command"].includes(item.typeSlug);
+}
+
+function canEditItemUrl(item: ItemDetail) {
+  return item.typeSlug === "link";
 }
 
 function renderDashboardItemTypeIcon(slug: string, sizeClass: string) {

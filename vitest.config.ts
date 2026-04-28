@@ -19,6 +19,7 @@ export default defineConfig({
     include: [
       "prisma/**/*.test.ts",
       "scripts/**/*.test.ts",
+      "src/actions/**/*.test.ts",
       "src/*route*.test.ts",
       "src/auth.config.test.ts",
       "src/components/auth/user-avatar.test.ts",
