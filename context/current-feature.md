@@ -1,33 +1,22 @@
-# Current Feature: Add Email Verification Toggle
+# Current Feature
 
 <!-- Feature Name -->
 
-Add Email Verification Toggle
+None
 
 ## Status
 
 <!-- Not Started|In Progress|Completed -->
 
-In Progress
+Completed
 
 ## Goals
 
 <!-- Goals & requirements -->
 
-- Add a simple configuration flag to enable or disable email verification for credentials registration.
-- Support an environment variable toggle, likely `EMAIL_VERIFICATION_ENABLED=false`, so local development can bypass Resend while the sending domain is not configured.
-- When verification is disabled, registration should not call Resend and should not require a verification email before credentials sign-in.
-- When verification is enabled, keep the current Resend verification email, token, redirect, and blocked-sign-in behavior unchanged.
-- Document the toggle in environment examples and add tests for both enabled and disabled behavior.
-
 ## Notes
 
 <!-- Any extra notes -->
-
-- User is blocked because the Resend account/domain setup currently only permits sending to the verified Resend email address.
-- Prefer a low-friction env var toggle unless implementation context reveals a better local pattern.
-- Keep GitHub OAuth behavior unaffected.
-- Do not expose or print any secret env values while implementing or debugging.
 
 ## History
 
@@ -94,3 +83,4 @@ In Progress
 - 2026-04-27 19:40 EDT - Started Add Email Verification Toggle on branch `feature/add-email-verification-toggle`.
 - 2026-04-27 23:03 EDT - Implemented the email verification toggle with `EMAIL_VERIFICATION_ENABLED`, disabled local verification in `.env`, skipped Resend/token creation when disabled, kept enabled behavior unchanged, and updated registration success messaging. Verified focused auth tests, full local tests, TypeScript, lint, and production build.
 - 2026-04-27 23:08 EDT - Extended the toggle to credentials sign-in so existing unverified email/password users can sign in when email verification is disabled. Verified focused auth tests, full local tests, TypeScript, lint, and production build.
+- 2026-04-27 23:11 EDT - Completed Add Email Verification Toggle, merged it into `main`, deleted the local feature branch, and cleared current feature details.
