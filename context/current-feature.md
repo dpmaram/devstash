@@ -1,34 +1,24 @@
-# Current Feature: Item Drawer
+# Current Feature
+
+<!-- Feature Name -->
+
+None
 
 ## Status
 
 <!-- Not Started|In Progress|Completed -->
 
-In Progress
+Completed
 
 ## Goals
 
 <!-- Goals & requirements -->
 
-- Add a right-side slide-in item detail drawer using the shadcn Sheet component.
-- Open the drawer when clicking an item card, without navigating to a separate item page.
-- Support item drawer behavior on both dashboard and items list pages.
-- Fetch lightweight card data in server components as today, then fetch full item detail on click through `/api/items/[id]`.
-- Add an authenticated item detail query in `lib/db/items.ts` and have the API route enforce ownership/auth checks.
-- Show a skeleton/loading state while item details are fetched.
-- Display item details for now, leaving code editor and richer item-specific experiences for later.
-- Add an action bar with Favorite, Pin, Copy, Edit, and right-aligned Delete actions; Favorite should use a star icon and appear yellow when active.
-- Use a client wrapper component to manage drawer state because the pages are server components.
-- Keep the drawer interaction snappy and responsive.
 
 ## Notes
 
 <!-- Any extra notes -->
 
-- Loaded from `context/features/item-drawer-spec.md`.
-- This drawer is the item detail view; there should be no separate item page for this feature.
-- Visual reference: `context/screenshots/dashboard-ui-drawer.png`.
-- The spec file is currently untracked in git.
 
 ## History
 
@@ -125,3 +115,4 @@ In Progress
 - 2026-04-28 17:57 EDT - Verified Item Drawer with focused Vitest tests, full `npm test`, `npm run lint`, `npx tsc --noEmit`, `npm run build`, and `git diff --check`.
 - 2026-04-28 17:59 EDT - Ran the feature test step. Existing Item Drawer server/data tests cover item detail shaping, full-detail select shape, item route auth/not-found/success responses, item type route slug normalization, and `/items` proxy protection; `npm test` passed.
 - 2026-04-28 18:01 EDT - Re-verified before completion with `npm test`, `npm run lint`, `npx tsc --noEmit`, `npm run build`, and `git diff --check`.
+- 2026-04-28 18:03 EDT - Completed Item Drawer, merged it into `main`, deleted the local feature branch, cleared current feature details, and re-ran `npm test` on `main`.
