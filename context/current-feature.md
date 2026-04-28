@@ -1,37 +1,20 @@
-# Current Feature: Item Drawer Edit Mode
+# Current Feature
 
 ## Status
 
 <!-- Not Started|In Progress|Completed -->
 
-Completed
+Not Started
 
 ## Goals
 
 <!-- Goals & requirements -->
 
-- Add inline edit mode to the existing item drawer when the Edit action is clicked.
-- Replace the drawer action bar with Save and Cancel controls while editing.
-- Cancel should discard local changes and return to view mode.
-- Save should persist changes, return to view mode, refresh drawer data, and refresh the underlying card/list data.
-- Show toast notifications for save success and save errors.
-- Add editable fields for title, description, and comma-separated tags for all item types.
-- Add type-specific fields: content for snippet/prompt/command/note, language for snippet/command, and URL for link.
-- Keep item type, collections, and created/updated dates display-only in edit mode.
-- Add `updateItem(itemId, data)` server action in `src/actions/items.ts` using the `{ success, data, error }` return pattern.
-- Validate update payloads with a Zod schema before database writes.
-- Add `updateItem` data-layer logic in `lib/db/items.ts`, including ownership validation and tag disconnect/connect-or-create handling.
-- Return the updated `ItemDetail` from save so the drawer can refresh without a second fetch.
 
 ## Notes
 
 <!-- Any extra notes -->
 
-- Loaded from `context/features/item-drawer-edit-spec.md`.
-- Keep the client implementation simple with controlled inputs and no form library.
-- Disable Save when the title is empty as a client-side UX guard; server-side Zod validation remains the source of truth.
-- The content textarea does not need to be a code editor yet.
-- The spec file is currently untracked in git.
 
 ## History
 
@@ -137,3 +120,4 @@ Completed
 - 2026-04-28 18:29 EDT - Restored demo dashboard fallback for signed-in users with no items, and updated item detail lookup to use the same resolved dashboard-data user as the cards. Verified focused regression tests, full `npm test`, `npm run lint`, `npx tsc --noEmit`, `npm run build`, and `git diff --check`.
 - 2026-04-28 18:32 EDT - Fixed edit save `Item not found` errors by resolving the save action through the same dashboard-data user as the drawer/card data before updating. Verified focused regression tests, full `npm test`, `npm run lint`, `npx tsc --noEmit`, `npm run build`, and `git diff --check`.
 - 2026-04-28 18:34 EDT - Completed Item Drawer Edit Mode after browser confirmation that drawer edit/save works correctly.
+- 2026-04-28 18:36 EDT - Completed Item Drawer Edit Mode, merged it into `main`, deleted the local feature branch, and cleared current feature details.
