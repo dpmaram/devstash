@@ -78,6 +78,14 @@ Example v4 configuration:
 - Run `prisma migrate status` before committing to verify migrations are in sync
 - Production deployments must run `prisma migrate deploy` before the app starts
 
+## Testing
+
+- Use Vitest for unit tests.
+- Unit tests should target server actions, route handlers, data shaping, validation, and utilities.
+- Do not add component-rendering or DOM tests to the Vitest unit suite.
+- Keep Vitest in Node environment unless a future explicit browser/component test strategy is added.
+- Run `npm test`, `npm run lint`, `npx tsc --noEmit`, and `npm run build` before committing.
+
 ## Data Fetching
 
 - Server components fetch directly with Prisma

@@ -35,7 +35,8 @@
 
 - `scripts/test-db.ts` - smoke test for seeded database data.
 - `scripts/test-db-report.ts` - formats database test output.
-- `*.test.ts` files use Node's built-in test runner.
+- `*.test.ts` files use Vitest in Node mode for server actions and utilities.
+- `vitest.config.ts` - Vitest configuration; excludes component rendering/DOM tests from the unit suite.
 
 ## Generated And Local Files
 

@@ -58,11 +58,14 @@ Do not use `prisma db push` in this project. Schema changes should go through Pr
 ## Useful Commands
 
 ```bash
+npm test
 npm run lint
 npx tsc --noEmit
 npm run build
 npm run db:test
 ```
+
+`npm test` runs Vitest in Node mode for server actions and utilities. Component-rendering and DOM tests are intentionally outside this unit test suite.
 
 ## Project Context
 
