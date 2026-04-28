@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Circle, Folder, Star } from "lucide-react";
 
 import { auth } from "@/auth";
+import { getAccentBorderStyle } from "@/components/dashboard/accent-border-style";
 import { DashboardChrome } from "@/components/dashboard/DashboardChrome";
 import {
   itemTypeIconClasses,
@@ -150,7 +151,7 @@ function CollectionCard({
     <Link
       className="block rounded-lg border border-l-4 border-devstash-line bg-white/[0.025] p-5 transition hover:bg-white/[0.05]"
       href={`/collections/${collection.slug}`}
-      style={{ borderLeftColor: collection.accentColor }}
+      style={getAccentBorderStyle(collection.accentColor)}
     >
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0">
@@ -224,7 +225,7 @@ function PinnedItemCard({ item }: { item: DashboardItem }) {
     <Link
       className="block rounded-lg border border-l-4 border-devstash-line bg-white/[0.025] p-5 transition hover:bg-white/[0.05]"
       href={`/items/${item.typeSlug}s`}
-      style={{ borderLeftColor: item.accentColor }}
+      style={getAccentBorderStyle(item.accentColor)}
     >
       <div className="flex items-start gap-4">
         <div className="flex size-12 shrink-0 items-center justify-center rounded-lg bg-white/[0.05]">
@@ -259,7 +260,7 @@ function RecentItemRow({ item }: { item: DashboardItem }) {
     <Link
       className="flex items-start gap-4 rounded-lg border border-l-4 border-devstash-line bg-white/[0.025] p-4 transition hover:bg-white/[0.05]"
       href={`/items/${item.typeSlug}s`}
-      style={{ borderLeftColor: item.accentColor }}
+      style={getAccentBorderStyle(item.accentColor)}
     >
       <div className="flex size-11 shrink-0 items-center justify-center rounded-lg bg-white/[0.05]">
         {renderDashboardItemTypeIcon(item.typeSlug, "size-5")}

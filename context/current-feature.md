@@ -1,22 +1,28 @@
-# Current Feature
-
-<!-- Feature Name -->
-
-None
+# Current Feature: Item Types Documentation
 
 ## Status
 
 <!-- Not Started|In Progress|Completed -->
 
-Completed
+In Progress
 
 ## Goals
 
 <!-- Goals & requirements -->
 
+- Document all 7 system item types: snippet, prompt, command, note, file, image, and link.
+- Capture each type's name, icon, hex color, content classification, route, purpose, and key fields.
+- Summarize TEXT, FILE, and URL item storage behavior.
+- Document shared Item and ItemType properties.
+- Document display differences, including icon rendering, color usage, left-border accents, and Pro badges for file/image types.
+- Verify database schema and source references against the current codebase before finalizing docs.
+
 ## Notes
 
 <!-- Any extra notes -->
+
+- Loaded from `context/features/item-types.md`.
+- The spec appears documentation-focused and includes source references that may be stale, such as `src/lib/constants/item-types.ts` and older Prisma model names. Confirm against `prisma/schema.prisma`, `prisma/seed-data.ts`, `src/components/dashboard/dashboard-icons.ts`, and current dashboard shaping files during implementation.
 
 ## History
 
@@ -97,3 +103,5 @@ Completed
 - 2026-04-28 00:40 EDT - Implemented Rate Limiting for Auth with Upstash-backed sliding-window limits, reusable rate-limit utilities, 429 `Retry-After` responses, credentials sign-in throttling, resend-verification endpoint throttling, and profile password-change throttling. Verified focused auth tests, full local tests, TypeScript, lint, and production build.
 - 2026-04-28 00:49 EDT - Fixed credentials login rate-limit messaging so the Auth.js redirect carries retry seconds and the sign-in page displays `Too many attempts. Please try again in X minutes.` Verified focused credentials/form tests, full local tests, TypeScript, lint, and production build.
 - 2026-04-28 00:55 EDT - Completed Rate Limiting for Auth, merged it into `main`, deleted the local feature branch, and cleared current feature details.
+- 2026-04-28 10:06 EDT - Loaded Item Types Documentation spec from `context/features/item-types.md` and set status to Not Started.
+- 2026-04-28 10:08 EDT - Started Item Types Documentation on branch `feature/item-types-documentation`.

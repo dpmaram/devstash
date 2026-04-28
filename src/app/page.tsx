@@ -1,3 +1,5 @@
+import { getAccentBorderStyle } from "@/components/dashboard/accent-border-style";
+
 type ItemKind =
   | "snippet"
   | "prompt"
@@ -39,6 +41,7 @@ const typeMeta = {
   snippet: {
     label: "Snippet",
     icon: "</>",
+    accentColor: "#3b82f6",
     badge: "border-blue-400/25 bg-blue-500/15 text-blue-200",
     dot: "bg-blue-400",
     soft: "bg-blue-500/10 text-blue-200",
@@ -46,6 +49,7 @@ const typeMeta = {
   prompt: {
     label: "Prompt",
     icon: "AI",
+    accentColor: "#8b5cf6",
     badge: "border-violet-400/25 bg-violet-500/15 text-violet-200",
     dot: "bg-violet-400",
     soft: "bg-violet-500/10 text-violet-200",
@@ -53,6 +57,7 @@ const typeMeta = {
   note: {
     label: "Note",
     icon: "NT",
+    accentColor: "#fde047",
     badge: "border-yellow-300/25 bg-yellow-300/15 text-yellow-100",
     dot: "bg-yellow-300",
     soft: "bg-yellow-300/10 text-yellow-100",
@@ -60,6 +65,7 @@ const typeMeta = {
   command: {
     label: "Command",
     icon: "$_",
+    accentColor: "#f97316",
     badge: "border-orange-400/25 bg-orange-500/15 text-orange-200",
     dot: "bg-orange-400",
     soft: "bg-orange-500/10 text-orange-200",
@@ -67,6 +73,7 @@ const typeMeta = {
   link: {
     label: "Link",
     icon: "URL",
+    accentColor: "#10b981",
     badge: "border-emerald-400/25 bg-emerald-500/15 text-emerald-200",
     dot: "bg-emerald-400",
     soft: "bg-emerald-500/10 text-emerald-200",
@@ -74,6 +81,7 @@ const typeMeta = {
   file: {
     label: "File",
     icon: "DOC",
+    accentColor: "#6b7280",
     badge: "border-zinc-400/25 bg-zinc-500/15 text-zinc-200",
     dot: "bg-zinc-400",
     soft: "bg-zinc-500/10 text-zinc-200",
@@ -81,6 +89,7 @@ const typeMeta = {
   image: {
     label: "Image",
     icon: "IMG",
+    accentColor: "#ec4899",
     badge: "border-pink-400/25 bg-pink-500/15 text-pink-200",
     dot: "bg-pink-400",
     soft: "bg-pink-500/10 text-pink-200",
@@ -90,6 +99,7 @@ const typeMeta = {
   {
     label: string;
     icon: string;
+    accentColor: string;
     badge: string;
     dot: string;
     soft: string;
@@ -543,8 +553,9 @@ function ItemsPanel() {
         <div className="grid gap-3 lg:grid-cols-2">
           {items.map((item) => (
             <article
-              className="rounded-lg border border-white/10 bg-white/[0.035] p-4 transition hover:border-white/20 hover:bg-white/[0.055]"
+              className="rounded-lg border border-l-4 border-white/10 bg-white/[0.035] p-4 transition hover:border-white/20 hover:bg-white/[0.055]"
               key={item.title}
+              style={getAccentBorderStyle(typeMeta[item.kind].accentColor)}
             >
               <div className="flex items-start justify-between gap-3">
                 <div className="flex min-w-0 items-start gap-3">
