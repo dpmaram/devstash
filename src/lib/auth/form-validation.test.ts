@@ -5,6 +5,7 @@ import {
   getEmailVerificationToastMessage,
   getPasswordResetToastMessage,
   getRegistrationSuccessToastMessage,
+  getSignInErrorMessage,
   validateChangePasswordForm,
   validateDeleteAccountForm,
   validateForgotPasswordForm,
@@ -248,6 +249,15 @@ describe("getPasswordResetToastMessage", () => {
 
   it("does not show a toast for unknown status", () => {
     assert.equal(getPasswordResetToastMessage(undefined), null);
+  });
+});
+
+describe("getSignInErrorMessage", () => {
+  it("returns the retry-after message for credentials sign-in throttling", () => {
+    assert.equal(
+      getSignInErrorMessage("CredentialsSignin", "rate_limited_121"),
+      "Too many attempts. Please try again in 3 minutes.",
+    );
   });
 });
 

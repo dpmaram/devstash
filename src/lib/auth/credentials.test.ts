@@ -53,6 +53,41 @@ describe("authorizeCredentials", () => {
     assert.equal(requestedEmail, "ada@example.com");
   });
 
+  it("throws before user lookup when credentials attempts are rate limited", async () => {
+    let findCalls = 0;
+
+    await assert.rejects(
+      () =>
+        authorizeCredentials(
+          { email: " ADA@Example.COM ", password: "password123" },
+          createAuthorizeCredentialsDeps({
+            findUserByEmail: async () => {
+              findCalls += 1;
+              return null;
+            },
+            verifyPassword: async () => true,
+            checkRateLimit: async () => ({
+              success: false,
+              limit: 5,
+              remaining: 0,
+              reset: 1_774_651_260_000,
+              retryAfter: 60,
+              error: "Too many attempts. Please try again in 1 minute.",
+            }),
+          } as Partial<AuthorizeCredentialsDeps>),
+          {
+            request: new Request("https://devstash.test/api/auth/callback/credentials"),
+          },
+        ),
+      (error) =>
+        error instanceof Error &&
+        "code" in error &&
+        error.code === "rate_limited_60",
+    );
+
+    assert.equal(findCalls, 0);
+  });
+
   it("returns null when the user has no password hash", async () => {
     const user = await authorizeCredentials(
       { email: "ada@example.com", password: "password123" },

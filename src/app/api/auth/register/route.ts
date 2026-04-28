@@ -1,8 +1,27 @@
 import { createRegisterUserDeps, registerUser } from "@/lib/auth/registration";
+import {
+  checkRateLimit,
+  createTooManyRequestsResponse,
+} from "@/lib/rate-limit";
 
 export const runtime = "nodejs";
 
-export async function POST(request: Request) {
+type RegisterRouteDeps = {
+  checkRateLimit: typeof checkRateLimit;
+  createRegisterUserDeps: typeof createRegisterUserDeps;
+  registerUser: typeof registerUser;
+};
+
+const defaultRegisterRouteDeps: RegisterRouteDeps = {
+  checkRateLimit,
+  createRegisterUserDeps,
+  registerUser,
+};
+
+export async function handleRegisterPost(
+  request: Request,
+  deps: RegisterRouteDeps = defaultRegisterRouteDeps,
+) {
   let body: unknown;
 
   try {
@@ -19,9 +38,15 @@ export async function POST(request: Request) {
     );
   }
 
-  const result = await registerUser(
+  const rateLimitResult = await deps.checkRateLimit("register", request);
+
+  if (!rateLimitResult.success) {
+    return createTooManyRequestsResponse(rateLimitResult);
+  }
+
+  const result = await deps.registerUser(
     body,
-    createRegisterUserDeps({
+    deps.createRegisterUserDeps({
       baseUrl: new URL(request.url).origin,
     }),
   );
@@ -48,4 +73,8 @@ export async function POST(request: Request) {
       status: result.status,
     },
   );
+}
+
+export async function POST(request: Request) {
+  return handleRegisterPost(request);
 }

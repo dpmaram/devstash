@@ -15,7 +15,8 @@ const authProviders = authConfig.providers.map((provider) => {
 
   return Credentials({
     credentials: credentialsProviderFields,
-    authorize: (credentials) => authorizeCredentials(credentials),
+    authorize: (credentials, request) =>
+      authorizeCredentials(credentials, undefined, { request }),
   });
 });
 
