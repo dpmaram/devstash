@@ -15,6 +15,7 @@ import {
 type RegisterResponse = {
   success: boolean;
   error?: string;
+  emailVerificationRequired?: boolean;
 };
 
 export function RegisterForm({
@@ -64,8 +65,14 @@ export function RegisterForm({
         return;
       }
 
+      const emailVerificationRequired =
+        body.emailVerificationRequired === undefined
+          ? true
+          : body.emailVerificationRequired;
+      const emailVerificationParam = emailVerificationRequired ? "1" : "0";
+
       router.push(
-        `/sign-in?registered=1&callbackUrl=${encodeURIComponent(callbackUrl)}`,
+        `/sign-in?registered=1&emailVerificationRequired=${emailVerificationParam}&callbackUrl=${encodeURIComponent(callbackUrl)}`,
       );
     } catch {
       setFormError("Unable to create account. Try again.");

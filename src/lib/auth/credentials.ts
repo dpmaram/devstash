@@ -1,6 +1,8 @@
 import bcrypt from "bcryptjs";
 import type { User } from "next-auth";
 
+import { isEmailVerificationEnabled } from "./email-verification";
+
 type CredentialsInput = Partial<Record<"email" | "password", unknown>>;
 
 type CredentialsUserRecord = {
@@ -15,6 +17,7 @@ type CredentialsUserRecord = {
 export type AuthorizeCredentialsDeps = {
   findUserByEmail: (email: string) => Promise<CredentialsUserRecord | null>;
   verifyPassword: (password: string, passwordHash: string) => Promise<boolean>;
+  emailVerificationEnabled: boolean;
 };
 
 function getString(value: unknown) {
@@ -66,6 +69,7 @@ async function findUserByEmail(email: string) {
 const defaultDeps: AuthorizeCredentialsDeps = {
   findUserByEmail,
   verifyPassword: (password, passwordHash) => bcrypt.compare(password, passwordHash),
+  emailVerificationEnabled: isEmailVerificationEnabled(),
 };
 
 export async function authorizeCredentials(
@@ -84,7 +88,7 @@ export async function authorizeCredentials(
     return null;
   }
 
-  if (!user.emailVerified) {
+  if (deps.emailVerificationEnabled && !user.emailVerified) {
     return null;
   }
 

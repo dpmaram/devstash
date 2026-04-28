@@ -42,6 +42,7 @@ export async function POST(request: Request) {
     {
       success: true,
       user: result.user,
+      emailVerificationRequired: result.emailVerificationRequired,
     },
     {
       status: result.status,
