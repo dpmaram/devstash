@@ -91,6 +91,13 @@ describe("getRegistrationSuccessToastMessage", () => {
     );
   });
 
+  it("returns the sign-in-ready toast message when email verification is disabled", () => {
+    assert.equal(
+      getRegistrationSuccessToastMessage(true, false),
+      "Account created. You can now sign in.",
+    );
+  });
+
   it("does not show a toast when registration did not just complete", () => {
     assert.equal(getRegistrationSuccessToastMessage(false), null);
   });

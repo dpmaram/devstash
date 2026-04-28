@@ -129,10 +129,17 @@ export function getSignInErrorMessage(error?: string | null) {
   return "Unable to sign in. Try again.";
 }
 
-export function getRegistrationSuccessToastMessage(registered: boolean) {
-  return registered
+export function getRegistrationSuccessToastMessage(
+  registered: boolean,
+  emailVerificationRequired = true,
+) {
+  if (!registered) {
+    return null;
+  }
+
+  return emailVerificationRequired
     ? "Check your email to verify your account before signing in."
-    : null;
+    : "Account created. You can now sign in.";
 }
 
 export type EmailVerificationToastStatus = "success" | "expired" | "invalid";

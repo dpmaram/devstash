@@ -17,11 +17,13 @@ import {
 
 export function SignInForm({
   callbackUrl = "/dashboard",
+  emailVerificationRequired = true,
   emailVerificationStatus,
   initialError,
   registered = false,
 }: {
   callbackUrl?: string;
+  emailVerificationRequired?: boolean;
   emailVerificationStatus?: string | null;
   initialError?: string | null;
   registered?: boolean;
@@ -33,7 +35,7 @@ export function SignInForm({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(
     getEmailVerificationToastMessage(emailVerificationStatus) ??
-      getRegistrationSuccessToastMessage(registered),
+      getRegistrationSuccessToastMessage(registered, emailVerificationRequired),
   );
 
   useEffect(() => {

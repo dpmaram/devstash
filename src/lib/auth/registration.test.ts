@@ -22,6 +22,7 @@ function createRegisterUserDeps(
         email,
       )}&token=${encodeURIComponent(token)}`,
     sendVerificationEmail: async () => {},
+    emailVerificationEnabled: true,
     now: () => new Date("2026-04-27T19:00:00.000Z"),
     verificationTokenTtlMs: 24 * 60 * 60 * 1000,
     ...overrides,
@@ -186,6 +187,72 @@ describe("registerUser", () => {
         name: "Ada Lovelace",
         email: "ada@example.com",
       },
+      emailVerificationRequired: true,
+    });
+  });
+
+  it("creates a verified user without sending email when email verification is disabled", async () => {
+    let generatedVerificationTokens = 0;
+    let createdVerificationTokens = 0;
+    let sentVerificationEmails = 0;
+    let createdUser:
+      | {
+          name: string;
+          email: string;
+          passwordHash: string;
+          emailVerified?: Date;
+        }
+      | undefined;
+
+    const result = await registerUser(
+      {
+        name: "Ada",
+        email: "ada@example.com",
+        password: "password123",
+        confirmPassword: "password123",
+      },
+      createRegisterUserDeps({
+        emailVerificationEnabled: false,
+        createUser: async (data) => {
+          createdUser = data;
+
+          return {
+            id: "user_123",
+            name: data.name,
+            email: data.email,
+          };
+        },
+        generateVerificationToken: () => {
+          generatedVerificationTokens += 1;
+          return "raw-verification-token";
+        },
+        createVerificationToken: async () => {
+          createdVerificationTokens += 1;
+        },
+        sendVerificationEmail: async () => {
+          sentVerificationEmails += 1;
+        },
+      }),
+    );
+
+    assert.deepEqual(createdUser, {
+      name: "Ada",
+      email: "ada@example.com",
+      passwordHash: "hashed:password123",
+      emailVerified: new Date("2026-04-27T19:00:00.000Z"),
+    });
+    assert.equal(generatedVerificationTokens, 0);
+    assert.equal(createdVerificationTokens, 0);
+    assert.equal(sentVerificationEmails, 0);
+    assert.deepEqual(result, {
+      ok: true,
+      status: 201,
+      user: {
+        id: "user_123",
+        name: "Ada",
+        email: "ada@example.com",
+      },
+      emailVerificationRequired: false,
     });
   });
 

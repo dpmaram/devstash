@@ -3,6 +3,7 @@ import { randomBytes } from "node:crypto";
 import bcrypt from "bcryptjs";
 
 import { sendResendEmail } from "@/lib/email/resend";
+import { isEmailVerificationEnabled } from "./email-verification";
 import { hashVerificationToken } from "./verification";
 
 type RegistrationInput = {
@@ -40,6 +41,7 @@ export type RegisterUserDeps = {
     name: string;
     email: string;
     passwordHash: string;
+    emailVerified?: Date;
   }) => Promise<RegisteredUser>;
   generateVerificationToken: () => string;
   hashVerificationToken: (token: string) => string;
@@ -50,6 +52,7 @@ export type RegisterUserDeps = {
   }) => Promise<void>;
   createVerificationUrl: (input: VerificationUrlInput) => string;
   sendVerificationEmail: (input: VerificationEmailInput) => Promise<void>;
+  emailVerificationEnabled: boolean;
   now: () => Date;
   verificationTokenTtlMs: number;
 };
@@ -59,6 +62,7 @@ export type RegisterUserResult =
       ok: true;
       status: 201;
       user: RegisteredUser;
+      emailVerificationRequired: boolean;
     }
   | {
       ok: false;
@@ -145,6 +149,7 @@ async function createUser(data: {
   name: string;
   email: string;
   passwordHash: string;
+  emailVerified?: Date;
 }) {
   const { prisma } = await import("../prisma");
 
@@ -253,6 +258,7 @@ export function createRegisterUserDeps(options: { baseUrl?: string } = {}) {
     createVerificationUrl: (input: VerificationUrlInput) =>
       createVerificationUrl(input, options.baseUrl),
     sendVerificationEmail,
+    emailVerificationEnabled: isEmailVerificationEnabled(),
     now: () => new Date(),
     verificationTokenTtlMs: 24 * 60 * 60 * 1000,
   } satisfies RegisterUserDeps;
@@ -279,6 +285,23 @@ export async function registerUser(
   }
 
   const passwordHash = await deps.hashPassword(parsedInput.value.password);
+
+  if (!deps.emailVerificationEnabled) {
+    const user = await deps.createUser({
+      name: parsedInput.value.name,
+      email: parsedInput.value.email,
+      passwordHash,
+      emailVerified: deps.now(),
+    });
+
+    return {
+      ok: true,
+      status: 201,
+      user,
+      emailVerificationRequired: false,
+    };
+  }
+
   const verificationToken = deps.generateVerificationToken();
   const hashedVerificationToken = deps.hashVerificationToken(verificationToken);
   const verificationUrl = deps.createVerificationUrl({
@@ -316,5 +339,6 @@ export async function registerUser(
     ok: true,
     status: 201,
     user,
+    emailVerificationRequired: true,
   };
 }

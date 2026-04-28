@@ -32,6 +32,8 @@ export default async function SignInPage({ searchParams }: SignInPageProps) {
   const callbackUrl = getSearchParam(params, "callbackUrl") ?? "/dashboard";
   const error = getSearchParam(params, "error");
   const registered = getSearchParam(params, "registered") === "1";
+  const emailVerificationRequired =
+    getSearchParam(params, "emailVerificationRequired") !== "0";
   const emailVerificationStatus = getSearchParam(params, "emailVerification");
 
   return (
@@ -42,6 +44,7 @@ export default async function SignInPage({ searchParams }: SignInPageProps) {
     >
       <SignInForm
         callbackUrl={callbackUrl}
+        emailVerificationRequired={emailVerificationRequired}
         emailVerificationStatus={emailVerificationStatus}
         initialError={error}
         registered={registered}
