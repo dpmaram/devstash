@@ -4,7 +4,9 @@ import { describe, it } from "vitest";
 import {
   sortDashboardItemTypes,
   toDashboardItem,
+  toItemDetail,
   toDashboardItemType,
+  type ItemDetailRecord,
   type ItemRecord,
 } from "./item-shaping";
 
@@ -43,6 +45,34 @@ function itemRecord(overrides: Partial<ItemRecord> = {}): ItemRecord {
     tags: [
       { tag: { name: "react", slug: "react" } },
       { tag: { name: "hooks", slug: "hooks" } },
+    ],
+    ...overrides,
+  };
+}
+
+function itemDetailRecord(
+  overrides: Partial<ItemDetailRecord> = {},
+): ItemDetailRecord {
+  const baseItem = itemRecord();
+
+  return {
+    ...baseItem,
+    contentType: "TEXT",
+    content: baseItem.content ?? null,
+    url: baseItem.url ?? null,
+    fileName: baseItem.fileName ?? null,
+    fileUrl: baseItem.fileUrl ?? null,
+    createdAt: new Date("2026-01-15T12:30:00.000Z"),
+    fileSize: null,
+    language: baseItem.language ?? null,
+    collections: [
+      {
+        collection: {
+          id: "collection_react_patterns",
+          name: "React Patterns",
+          slug: "react-patterns",
+        },
+      },
     ],
     ...overrides,
   };
@@ -110,6 +140,45 @@ describe("toDashboardItem", () => {
 
     assert.equal(linkItem.preview, "https://tailwindcss.com/docs");
     assert.equal(fileItem.preview, "component-context.md");
+  });
+});
+
+describe("toItemDetail", () => {
+  it("maps database item records to the drawer detail shape", () => {
+    const item = toItemDetail(itemDetailRecord());
+
+    assert.deepEqual(item, {
+      id: "item_react_use_debounce",
+      title: "useDebounce Hook",
+      description: "Delay expensive reactions until a value has stopped changing.",
+      contentType: "TEXT",
+      content: "\nconst value = useDebounce(search, 300);\n",
+      url: null,
+      fileUrl: null,
+      fileName: null,
+      fileSize: null,
+      language: "TypeScript",
+      typeSlug: "snippet",
+      itemType: snippetType,
+      collections: [
+        {
+          id: "collection_react_patterns",
+          name: "React Patterns",
+          slug: "react-patterns",
+        },
+      ],
+      tags: [
+        { name: "react", slug: "react" },
+        { name: "hooks", slug: "hooks" },
+      ],
+      createdAt: "2026-01-15T12:30:00.000Z",
+      updatedAt: "2026-04-25T15:45:00.000Z",
+      createdAtLabel: "January 15, 2026",
+      updatedAtLabel: "April 25, 2026",
+      isPinned: true,
+      isFavorite: true,
+      accentColor: "#3b82f6",
+    });
   });
 });
 

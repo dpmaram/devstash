@@ -17,7 +17,11 @@ describe("proxy", () => {
   it("protects dashboard and profile routes", async () => {
     const { config } = await loadProxy();
 
-    assert.deepEqual(config.matcher, ["/dashboard/:path*", "/profile/:path*"]);
+    assert.deepEqual(config.matcher, [
+      "/dashboard/:path*",
+      "/items/:path*",
+      "/profile/:path*",
+    ]);
   });
 
   it("redirects unauthenticated dashboard requests to the custom sign-in page", async () => {
