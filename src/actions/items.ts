@@ -5,8 +5,10 @@ import { z } from "zod";
 import { auth } from "@/auth";
 import { getDashboardUserForSession } from "@/lib/db/dashboard-user";
 import {
+  createItem as createItemRecord,
   deleteItem as deleteItemRecord,
   updateItem as updateItemRecord,
+  type CreateItemInput,
   type ItemDetail,
   type DeleteItemInput,
   type UpdateItemInput,
@@ -47,6 +49,48 @@ const updateItemSchema = z.object({
   tags: z.array(z.string().trim().min(1, "Tags cannot be empty.")).default([]),
 });
 
+const createItemSchema = z
+  .object({
+    typeSlug: z.enum(["snippet", "prompt", "command", "note", "link"]),
+    title: z.string().trim().min(1, "Title is required."),
+    description: nullableTrimmedString,
+    content: nullableTrimmedString,
+    url: nullableUrlString,
+    language: nullableTrimmedString,
+    tags: z.array(z.string().trim().min(1, "Tags cannot be empty.")).default([]),
+  })
+  .superRefine((data, context) => {
+    if (data.typeSlug === "link" && !data.url) {
+      context.addIssue({
+        code: "custom",
+        message: "URL is required.",
+        path: ["url"],
+      });
+    }
+  })
+  .transform((data) => ({
+    typeSlug: data.typeSlug,
+    title: data.title,
+    description: data.description,
+    content: data.typeSlug === "link" ? null : data.content,
+    url: data.typeSlug === "link" ? data.url : null,
+    language:
+      data.typeSlug === "snippet" || data.typeSlug === "command"
+        ? data.language
+        : null,
+    tags: data.tags,
+  }));
+
+type CreateItemActionDeps = {
+  auth: () => Promise<{
+    user?: {
+      id?: string | null;
+    };
+  } | null>;
+  createItem: (input: CreateItemInput) => Promise<ItemDetail | null>;
+  getDashboardUserForSession: typeof getDashboardUserForSession;
+};
+
 type UpdateItemActionDeps = {
   auth: () => Promise<{
     user?: {
@@ -77,6 +121,16 @@ type UpdateItemActionResult =
       error: string;
     };
 
+type CreateItemActionResult =
+  | {
+      success: true;
+      data: ItemDetail;
+    }
+  | {
+      success: false;
+      error: string;
+    };
+
 type DeleteItemActionResult =
   | {
       success: true;
@@ -85,6 +139,12 @@ type DeleteItemActionResult =
       success: false;
       error: string;
     };
+
+const defaultCreateItemActionDeps: CreateItemActionDeps = {
+  auth,
+  createItem: createItemRecord,
+  getDashboardUserForSession,
+};
 
 const defaultUpdateItemActionDeps: UpdateItemActionDeps = {
   auth,
@@ -100,6 +160,59 @@ const defaultDeleteItemActionDeps: DeleteItemActionDeps = {
 
 function getValidationError(error: z.ZodError) {
   return error.issues[0]?.message ?? "Invalid item data.";
+}
+
+export async function handleCreateItem(
+  data: unknown,
+  deps: CreateItemActionDeps = defaultCreateItemActionDeps,
+): Promise<CreateItemActionResult> {
+  const parsedData = createItemSchema.safeParse(data);
+
+  if (!parsedData.success) {
+    return {
+      success: false,
+      error: getValidationError(parsedData.error),
+    };
+  }
+
+  const session = await deps.auth();
+
+  if (!session?.user?.id) {
+    return {
+      success: false,
+      error: "You must be signed in.",
+    };
+  }
+
+  const dashboardUser = await deps.getDashboardUserForSession(session.user);
+
+  if (!dashboardUser) {
+    return {
+      success: false,
+      error: "Unable to create item.",
+    };
+  }
+
+  const item = await deps.createItem({
+    userId: dashboardUser.id,
+    data: parsedData.data,
+  });
+
+  if (!item) {
+    return {
+      success: false,
+      error: "Unable to create item.",
+    };
+  }
+
+  return {
+    success: true,
+    data: item,
+  };
+}
+
+export async function createItem(data: unknown) {
+  return handleCreateItem(data);
 }
 
 export async function handleUpdateItem(

@@ -1,20 +1,32 @@
-# Current Feature
+# Current Feature: Item Create
 
 ## Status
 
 <!-- Not Started|In Progress|Completed -->
 
-Not Started
+Completed
 
 ## Goals
 
 <!-- Goals & requirements -->
 
+- Add new items from the top bar `New Item` button.
+- Open item creation in a shadcn/Base UI style modal dialog.
+- Provide a type selector for snippet, prompt, command, note, and link.
+- Show shared fields for all types: required title, description, and tags.
+- Show type-specific fields: content and language for snippet/command, content for prompt/note, and required URL for link.
+- Add a `createItem` server action with Zod validation.
+- Add a `createItem` query/data function in `src/lib/db/items.ts`.
+- On successful create, show a toast, close the modal, and refresh the dashboard/list data.
 
 ## Notes
 
 <!-- Any extra notes -->
 
+- Loaded from `context/features/item-create-spec.md`.
+- The spec file is currently untracked in git and should be included with the feature.
+- Follow the existing item drawer action patterns in `src/actions/items.ts` and `src/lib/db/items.ts`.
+- Use the project's existing shadcn/Base UI visual language for the dialog and controls.
 
 ## History
 
@@ -127,3 +139,9 @@ Not Started
 - 2026-04-28 19:20 EDT - Verified Delete Item Functionality with focused action/data tests, full `npm test`, `npm run lint`, `npx tsc --noEmit`, `npm run build`, and `git diff --check`.
 - 2026-04-28 19:24 EDT - Completed Delete Item Functionality.
 - 2026-04-28 19:26 EDT - Completed Delete Item Functionality, merged it into `main`, deleted the local feature branch, and cleared current feature details.
+- 2026-04-28 19:30 EDT - Loaded Item Create spec from `context/features/item-create-spec.md` and set status to Not Started.
+- 2026-04-28 19:30 EDT - Started Item Create on branch `feature/item-create`.
+- 2026-04-28 19:35 EDT - Implemented Item Create with a Zod-validated `createItem` server action, item data-layer creation with system type lookup and tag connection, and a top-bar shadcn/Base UI style modal for type-specific item creation.
+- 2026-04-28 19:35 EDT - Verified Item Create with focused action/data tests, full `npm test`, `npm run lint`, `npx tsc --noEmit`, `npm run build`, and `git diff --check`.
+- 2026-04-28 19:41 EDT - Fixed dashboard counts dropping to zero after creating the first signed-in user item by keeping dashboard data on the resolved fallback/dashboard user and creating new items through that same dashboard-data user. Verified focused regression tests, full `npm test`, `npm run lint`, `npx tsc --noEmit`, `npm run build`, and `git diff --check`.
+- 2026-04-28 19:43 EDT - Completed Item Create.
