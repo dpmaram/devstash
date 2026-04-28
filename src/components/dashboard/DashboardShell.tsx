@@ -20,12 +20,13 @@ import {
   getDashboardItemTypes,
   type DashboardItem,
 } from "@/lib/db/items";
-import { getDashboardUser } from "@/lib/db/dashboard-user";
+import { getDashboardUserForSession } from "@/lib/db/dashboard-user";
 import { toCurrentUser } from "@/lib/auth/current-user";
 import { mockDashboardData, type ItemTypeSlug } from "@/lib/mock-data";
 
 export async function DashboardShell() {
-  const [session, dashboardUser] = await Promise.all([auth(), getDashboardUser()]);
+  const session = await auth();
+  const dashboardUser = await getDashboardUserForSession(session?.user);
   const currentUser = toCurrentUser(session?.user, mockDashboardData.currentUser);
   const [
     { collections, stats },

@@ -1,4 +1,5 @@
 import { auth } from "@/auth";
+import { getDashboardUserForSession } from "@/lib/db/dashboard-user";
 import { getItemDetail } from "@/lib/db/items";
 import type { Session } from "next-auth";
 
@@ -14,11 +15,13 @@ type ItemDetailRouteContext = {
 
 type ItemDetailRouteDeps = {
   auth: () => Promise<Session | null>;
+  getDashboardUserForSession: typeof getDashboardUserForSession;
   getItemDetail: typeof getItemDetail;
 };
 
 const defaultItemDetailRouteDeps: ItemDetailRouteDeps = {
   auth,
+  getDashboardUserForSession,
   getItemDetail,
 };
 
@@ -61,9 +64,23 @@ export async function handleGetItemDetail(
     );
   }
 
+  const dashboardUser = await deps.getDashboardUserForSession(session.user);
+
+  if (!dashboardUser) {
+    return Response.json(
+      {
+        success: false,
+        error: "Item not found.",
+      },
+      {
+        status: 404,
+      },
+    );
+  }
+
   const item = await deps.getItemDetail({
     itemId: id,
-    userId: session.user.id,
+    userId: dashboardUser.id,
   });
 
   if (!item) {

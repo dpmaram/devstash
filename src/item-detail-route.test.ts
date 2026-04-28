@@ -60,6 +60,7 @@ describe("item detail route", () => {
         context: { params: Promise<{ id: string }> },
         deps: {
           auth: () => Promise<null>;
+          getDashboardUserForSession: () => Promise<never>;
           getItemDetail: () => Promise<never>;
         },
       ) => Promise<Response>;
@@ -72,6 +73,9 @@ describe("item detail route", () => {
       },
       {
         auth: async () => null,
+        getDashboardUserForSession: async () => {
+          throw new Error("getDashboardUserForSession should not be called");
+        },
         getItemDetail: async () => {
           throw new Error("getItemDetail should not be called");
         },
@@ -92,6 +96,9 @@ describe("item detail route", () => {
         context: { params: Promise<{ id: string }> },
         deps: {
           auth: () => Promise<{ user: { id: string } }>;
+          getDashboardUserForSession: (sessionUser: {
+            id: string;
+          }) => Promise<{ id: string }>;
           getItemDetail: (input: {
             itemId: string;
             userId: string;
@@ -111,10 +118,18 @@ describe("item detail route", () => {
             id: "user_123",
           },
         }),
+        getDashboardUserForSession: async (sessionUser) => {
+          assert.deepEqual(sessionUser, {
+            id: "user_123",
+          });
+          return {
+            id: "demo_user",
+          };
+        },
         getItemDetail: async (input) => {
           assert.deepEqual(input, {
             itemId: "item_123",
-            userId: "user_123",
+            userId: "demo_user",
           });
           return null;
         },
@@ -135,6 +150,9 @@ describe("item detail route", () => {
         context: { params: Promise<{ id: string }> },
         deps: {
           auth: () => Promise<{ user: { id: string } }>;
+          getDashboardUserForSession: (sessionUser: {
+            id: string;
+          }) => Promise<{ id: string }>;
           getItemDetail: (input: {
             itemId: string;
             userId: string;
@@ -154,6 +172,14 @@ describe("item detail route", () => {
             id: "user_123",
           },
         }),
+        getDashboardUserForSession: async (sessionUser) => {
+          assert.deepEqual(sessionUser, {
+            id: "user_123",
+          });
+          return {
+            id: "user_123",
+          };
+        },
         getItemDetail: async (input) => {
           assert.deepEqual(input, {
             itemId: "item_123",

@@ -5,7 +5,7 @@ import { DashboardChrome } from "@/components/dashboard/DashboardChrome";
 import { ItemCardGrid } from "@/components/dashboard/ItemDrawer";
 import { toCurrentUser } from "@/lib/auth/current-user";
 import { getDashboardCollections } from "@/lib/db/collections";
-import { getDashboardUser } from "@/lib/db/dashboard-user";
+import { getDashboardUserForSession } from "@/lib/db/dashboard-user";
 import {
   getDashboardItemsByTypeSlug,
   getDashboardItemTypes,
@@ -24,7 +24,8 @@ type ItemsByTypePageProps = {
 export default async function ItemsByTypePage({ params }: ItemsByTypePageProps) {
   const { type } = await params;
   const normalizedTypeSlug = normalizeItemTypeRouteSlug(type);
-  const [session, dashboardUser] = await Promise.all([auth(), getDashboardUser()]);
+  const session = await auth();
+  const dashboardUser = await getDashboardUserForSession(session?.user);
   const currentUser = toCurrentUser(session?.user, mockDashboardData.currentUser);
   const [itemTypes, sidebarCollections] = await Promise.all([
     getDashboardItemTypes({ user: dashboardUser }),
