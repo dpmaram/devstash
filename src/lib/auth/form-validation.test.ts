@@ -3,8 +3,11 @@ import { describe, it } from "node:test";
 
 import {
   getEmailVerificationToastMessage,
+  getPasswordResetToastMessage,
   getRegistrationSuccessToastMessage,
+  validateForgotPasswordForm,
   validateRegisterForm,
+  validateResetPasswordForm,
   validateSignInForm,
 } from "./form-validation";
 
@@ -83,6 +86,69 @@ describe("validateRegisterForm", () => {
   });
 });
 
+describe("validateForgotPasswordForm", () => {
+  it("requires a valid email address", () => {
+    assert.deepEqual(
+      validateForgotPasswordForm({
+        email: "bad-email",
+      }),
+      {
+        ok: false,
+        errors: {
+          email: "Enter a valid email address.",
+        },
+      },
+    );
+  });
+
+  it("accepts valid email input and normalizes the email", () => {
+    assert.deepEqual(
+      validateForgotPasswordForm({
+        email: " ADA@Example.COM ",
+      }),
+      {
+        ok: true,
+        data: {
+          email: "ada@example.com",
+        },
+      },
+    );
+  });
+});
+
+describe("validateResetPasswordForm", () => {
+  it("requires matching password fields", () => {
+    assert.deepEqual(
+      validateResetPasswordForm({
+        password: "new-password",
+        confirmPassword: "different-password",
+      }),
+      {
+        ok: false,
+        errors: {
+          confirmPassword: "Passwords do not match.",
+        },
+      },
+    );
+  });
+
+  it("accepts matching password fields", () => {
+    assert.deepEqual(
+      validateResetPasswordForm({
+        password: "new-password",
+        confirmPassword: "new-password",
+      }),
+      {
+        ok: true,
+        data: {
+          password: "new-password",
+          confirmPassword: "new-password",
+        },
+      },
+    );
+  });
+});
+
 describe("getRegistrationSuccessToastMessage", () => {
   it("returns the check-email toast message after successful registration", () => {
     assert.equal(
@@ -100,6 +166,19 @@ describe("getRegistrationSuccessToastMessage", () => {
 
   it("does not show a toast when registration did not just complete", () => {
     assert.equal(getRegistrationSuccessToastMessage(false), null);
+  });
+});
+
+describe("getPasswordResetToastMessage", () => {
+  it("returns a success toast after password reset", () => {
+    assert.equal(
+      getPasswordResetToastMessage("success"),
+      "Password reset. You can now sign in.",
+    );
+  });
+
+  it("does not show a toast for unknown status", () => {
+    assert.equal(getPasswordResetToastMessage(undefined), null);
   });
 });
 

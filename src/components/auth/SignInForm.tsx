@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
   getEmailVerificationToastMessage,
+  getPasswordResetToastMessage,
   getRegistrationSuccessToastMessage,
   getSignInErrorMessage,
   validateSignInForm,
@@ -20,12 +21,14 @@ export function SignInForm({
   emailVerificationRequired = true,
   emailVerificationStatus,
   initialError,
+  passwordResetStatus,
   registered = false,
 }: {
   callbackUrl?: string;
   emailVerificationRequired?: boolean;
   emailVerificationStatus?: string | null;
   initialError?: string | null;
+  passwordResetStatus?: string | null;
   registered?: boolean;
 }) {
   const [errors, setErrors] = useState<SignInFormErrors>({});
@@ -35,6 +38,7 @@ export function SignInForm({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(
     getEmailVerificationToastMessage(emailVerificationStatus) ??
+      getPasswordResetToastMessage(passwordResetStatus) ??
       getRegistrationSuccessToastMessage(registered, emailVerificationRequired),
   );
 
@@ -134,9 +138,20 @@ export function SignInForm({
       </div>
 
       <div className="space-y-2">
-        <label className="text-sm font-medium text-zinc-200" htmlFor="password">
-          Password
-        </label>
+        <div className="flex items-center justify-between gap-3">
+          <label
+            className="text-sm font-medium text-zinc-200"
+            htmlFor="password"
+          >
+            Password
+          </label>
+          <Link
+            className="text-sm font-medium text-emerald-300 hover:text-emerald-200"
+            href="/forgot-password"
+          >
+            Forgot password?
+          </Link>
+        </div>
         <Input
           aria-invalid={Boolean(errors.password)}
           autoComplete="current-password"

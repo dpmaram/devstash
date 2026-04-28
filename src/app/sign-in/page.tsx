@@ -35,6 +35,7 @@ export default async function SignInPage({ searchParams }: SignInPageProps) {
   const emailVerificationRequired =
     getSearchParam(params, "emailVerificationRequired") !== "0";
   const emailVerificationStatus = getSearchParam(params, "emailVerification");
+  const passwordResetStatus = getSearchParam(params, "passwordReset");
 
   return (
     <AuthShell
@@ -47,6 +48,7 @@ export default async function SignInPage({ searchParams }: SignInPageProps) {
         emailVerificationRequired={emailVerificationRequired}
         emailVerificationStatus={emailVerificationStatus}
         initialError={error}
+        passwordResetStatus={passwordResetStatus}
         registered={registered}
       />
     </AuthShell>
