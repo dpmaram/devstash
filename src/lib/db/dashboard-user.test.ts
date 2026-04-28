@@ -4,9 +4,8 @@ import { describe, it } from "vitest";
 process.env.DATABASE_URL ??= "postgresql://user:pass@localhost:5432/devstash";
 
 describe("getDashboardUserForSession", () => {
-  it("uses the signed-in session user when they have items", async () => {
+  it("uses the fallback dashboard user when one is available", async () => {
     const { getDashboardUserForSession } = await import("./dashboard-user");
-    let fallbackCalled = false;
 
     const user = await getDashboardUserForSession(
       {
@@ -14,25 +13,19 @@ describe("getDashboardUserForSession", () => {
       },
       {
         getFallbackDashboardUser: async () => {
-          fallbackCalled = true;
           return {
             id: "demo_user",
           };
-        },
-        hasDashboardItems: async (userId) => {
-          assert.equal(userId, "user_123");
-          return true;
         },
       },
     );
 
     assert.deepEqual(user, {
-      id: "user_123",
+      id: "demo_user",
     });
-    assert.equal(fallbackCalled, false);
   });
 
-  it("falls back to the demo dashboard user when the session user has no items", async () => {
+  it("uses the signed-in session user when no fallback dashboard user exists", async () => {
     const { getDashboardUserForSession } = await import("./dashboard-user");
 
     const user = await getDashboardUserForSession(
@@ -40,35 +33,22 @@ describe("getDashboardUserForSession", () => {
         id: "user_123",
       },
       {
-        getFallbackDashboardUser: async () => ({
-          id: "demo_user",
-        }),
-        hasDashboardItems: async (userId) => {
-          assert.equal(userId, "user_123");
-          return false;
-        },
+        getFallbackDashboardUser: async () => null,
       },
     );
 
     assert.deepEqual(user, {
-      id: "demo_user",
+      id: "user_123",
     });
   });
 
-  it("falls back to the demo dashboard user when there is no session user", async () => {
+  it("returns null when there is no fallback user or session user", async () => {
     const { getDashboardUserForSession } = await import("./dashboard-user");
 
     const user = await getDashboardUserForSession(null, {
-      getFallbackDashboardUser: async () => ({
-        id: "demo_user",
-      }),
-      hasDashboardItems: async () => {
-        throw new Error("hasDashboardItems should not be called");
-      },
+      getFallbackDashboardUser: async () => null,
     });
 
-    assert.deepEqual(user, {
-      id: "demo_user",
-    });
+    assert.equal(user, null);
   });
 });

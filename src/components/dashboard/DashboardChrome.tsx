@@ -10,7 +10,6 @@ import {
   Menu,
   PanelLeftClose,
   PanelLeftOpen,
-  Plus,
   Search,
   Star,
   UserRound,
@@ -27,6 +26,7 @@ import {
   SIDEBAR_PRO_BADGE_LABEL,
   shouldShowSidebarProBadge,
 } from "@/components/dashboard/sidebar-pro-badge";
+import { NewItemDialog } from "@/components/dashboard/NewItemDialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -64,7 +64,10 @@ export function DashboardChrome({
         />
 
         <div className="min-w-0 flex-1">
-          <TopBar onOpenMobileSidebar={() => setIsMobileSidebarOpen(true)} />
+          <TopBar
+            itemTypes={itemTypes}
+            onOpenMobileSidebar={() => setIsMobileSidebarOpen(true)}
+          />
           {children}
         </div>
       </div>
@@ -73,8 +76,10 @@ export function DashboardChrome({
 }
 
 function TopBar({
+  itemTypes,
   onOpenMobileSidebar,
 }: {
+  itemTypes: DashboardItemType[];
   onOpenMobileSidebar: () => void;
 }) {
   return (
@@ -102,13 +107,7 @@ function TopBar({
         />
       </div>
 
-      <Button
-        className="h-11 gap-2 rounded-lg bg-foreground px-4 text-base font-medium text-background hover:bg-foreground/90 sm:px-5"
-        type="button"
-      >
-        <Plus aria-hidden="true" className="size-5" />
-        <span className="hidden sm:inline">New Item</span>
-      </Button>
+      <NewItemDialog itemTypes={itemTypes} />
     </header>
   );
 }

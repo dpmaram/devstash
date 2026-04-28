@@ -35,6 +35,143 @@ const itemDetail: ItemDetail = {
   accentColor: "#3b82f6",
 };
 
+describe("createItem action", () => {
+  it("rejects invalid payloads before auth or database writes", async () => {
+    const { handleCreateItem } = await import("./items");
+
+    const result = await handleCreateItem(
+      {
+        typeSlug: "link",
+        title: "Tailwind Docs",
+        url: "",
+        tags: ["docs"],
+      },
+      {
+        auth: async () => {
+          throw new Error("auth should not be called");
+        },
+        createItem: async () => {
+          throw new Error("createItem should not be called");
+        },
+        getDashboardUserForSession: async () => {
+          throw new Error("getDashboardUserForSession should not be called");
+        },
+      },
+    );
+
+    assert.deepEqual(result, {
+      success: false,
+      error: "URL is required.",
+    });
+  });
+
+  it("requires a signed-in user", async () => {
+    const { handleCreateItem } = await import("./items");
+
+    const result = await handleCreateItem(
+      {
+        typeSlug: "note",
+        title: "Release notes",
+        tags: ["release"],
+      },
+      {
+        auth: async () => null,
+        createItem: async () => {
+          throw new Error("createItem should not be called");
+        },
+        getDashboardUserForSession: async () => {
+          throw new Error("getDashboardUserForSession should not be called");
+        },
+      },
+    );
+
+    assert.deepEqual(result, {
+      success: false,
+      error: "You must be signed in.",
+    });
+  });
+
+  it("creates the resolved dashboard user's item with normalized type-specific data", async () => {
+    const { handleCreateItem } = await import("./items");
+
+    const result = await handleCreateItem(
+      {
+        typeSlug: "snippet",
+        title: "  useAuth Hook  ",
+        description: "  Custom hook  ",
+        content: "  export function useAuth() {}  ",
+        url: "https://example.com/ignored",
+        language: "  TypeScript  ",
+        tags: ["react", "hooks"],
+      },
+      {
+        auth: async () => ({
+          user: {
+            id: "signed_in_user",
+          },
+        }),
+        createItem: async (input) => {
+          assert.deepEqual(input, {
+            userId: "demo_user",
+            data: {
+              typeSlug: "snippet",
+              title: "useAuth Hook",
+              description: "Custom hook",
+              content: "export function useAuth() {}",
+              url: null,
+              language: "TypeScript",
+              tags: ["react", "hooks"],
+            },
+          });
+          return itemDetail;
+        },
+        getDashboardUserForSession: async (sessionUser) => {
+          assert.deepEqual(sessionUser, {
+            id: "signed_in_user",
+          });
+          return {
+            id: "demo_user",
+          };
+        },
+      },
+    );
+
+    assert.deepEqual(result, {
+      success: true,
+      data: itemDetail,
+    });
+  });
+
+  it("returns a create error when the data layer cannot create the item", async () => {
+    const { handleCreateItem } = await import("./items");
+
+    const result = await handleCreateItem(
+      {
+        typeSlug: "prompt",
+        title: "Prompt optimizer",
+        content: "Improve this prompt.",
+        tags: ["prompting"],
+      },
+      {
+        auth: async () => ({
+          user: {
+            id: "user_123",
+          },
+        }),
+        createItem: async () => null,
+        getDashboardUserForSession: async () => ({
+          id: "user_123",
+        }),
+      },
+    );
+
+    assert.deepEqual(result, {
+      success: false,
+      error: "Unable to create item.",
+    });
+  });
+});
+
 describe("updateItem action", () => {
   it("rejects invalid payloads before auth or database writes", async () => {
     const { handleUpdateItem } = await import("./items");

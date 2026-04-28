@@ -44,6 +44,21 @@ type ItemDetailOptions = {
   userId: string;
 };
 
+export type CreateItemData = {
+  content: string | null;
+  description: string | null;
+  language: string | null;
+  tags: string[];
+  title: string;
+  typeSlug: string;
+  url: string | null;
+};
+
+export type CreateItemInput = {
+  data: CreateItemData;
+  userId: string;
+};
+
 export type UpdateItemData = {
   title: string;
   description: string | null;
@@ -67,6 +82,34 @@ export type DeleteItemInput = {
 type NormalizedItemTag = {
   name: string;
   slug: string;
+};
+
+type CreatedItemRecord = {
+  id: string;
+};
+
+type ItemTypeIdRecord = {
+  id: string;
+};
+
+type CreateItemDeps = {
+  createItemRecord: (input: {
+    data: Omit<CreateItemData, "tags" | "typeSlug"> & {
+      contentType: "TEXT" | "URL";
+      itemTypeId: string;
+    };
+    userId: string;
+  }) => Promise<CreatedItemRecord>;
+  createItemTags: (input: {
+    itemId: string;
+    tagIds: string[];
+  }) => Promise<void>;
+  findItemDetail: (input: {
+    itemId: string;
+    userId: string;
+  }) => Promise<ItemDetailRecord | null>;
+  findItemTypeBySlug: (slug: string) => Promise<ItemTypeIdRecord | null>;
+  upsertTag: (input: NormalizedItemTag & { userId: string }) => Promise<{ id: string }>;
 };
 
 type UpdateItemDeps = {
@@ -138,6 +181,27 @@ export function normalizeItemTags(tags: string[]) {
   }
 
   return Array.from(tagsBySlug.values());
+}
+
+function getCreateItemContentType(typeSlug: string): "TEXT" | "URL" {
+  return typeSlug === "link" ? "URL" : "TEXT";
+}
+
+function getCreateItemFields(data: CreateItemData, itemTypeId: string) {
+  const contentType = getCreateItemContentType(data.typeSlug);
+
+  return {
+    title: data.title,
+    description: data.description,
+    contentType,
+    content: contentType === "TEXT" ? data.content : null,
+    url: contentType === "URL" ? data.url : null,
+    language:
+      data.typeSlug === "snippet" || data.typeSlug === "command"
+        ? data.language
+        : null,
+    itemTypeId,
+  };
 }
 
 export async function getDashboardPinnedItems(
@@ -355,12 +419,52 @@ async function findItemDetail(input: { itemId: string; userId: string }) {
   });
 }
 
+async function findItemTypeBySlug(slug: string) {
+  return prisma.itemType.findFirst({
+    where: {
+      slug,
+      isSystem: true,
+    },
+    select: {
+      id: true,
+    },
+  });
+}
+
+async function createItemRecord(input: {
+  data: Omit<CreateItemData, "tags" | "typeSlug"> & {
+    contentType: "TEXT" | "URL";
+    itemTypeId: string;
+  };
+  userId: string;
+}) {
+  return prisma.item.create({
+    data: {
+      ...input.data,
+      userId: input.userId,
+    },
+    select: {
+      id: true,
+    },
+  });
+}
+
 async function deleteItemRecord(itemId: string) {
   await prisma.item.delete({
     where: {
       id: itemId,
     },
   });
+}
+
+function createCreateItemDeps() {
+  return {
+    createItemRecord,
+    createItemTags,
+    findItemDetail,
+    findItemTypeBySlug,
+    upsertTag,
+  } satisfies CreateItemDeps;
 }
 
 function createUpdateItemDeps() {
@@ -379,6 +483,44 @@ function createDeleteItemDeps() {
     findOwnedItem,
     deleteItemRecord,
   } satisfies DeleteItemDeps;
+}
+
+export async function createItem(
+  input: CreateItemInput,
+  deps: CreateItemDeps = createCreateItemDeps(),
+): Promise<ItemDetail | null> {
+  const itemType = await deps.findItemTypeBySlug(input.data.typeSlug);
+
+  if (!itemType) {
+    return null;
+  }
+
+  const item = await deps.createItemRecord({
+    userId: input.userId,
+    data: getCreateItemFields(input.data, itemType.id),
+  });
+  const normalizedTags = normalizeItemTags(input.data.tags);
+  const tagIds = [];
+
+  for (const tag of normalizedTags) {
+    const persistedTag = await deps.upsertTag({
+      ...tag,
+      userId: input.userId,
+    });
+    tagIds.push(persistedTag.id);
+  }
+
+  await deps.createItemTags({
+    itemId: item.id,
+    tagIds,
+  });
+
+  const createdItem = await deps.findItemDetail({
+    itemId: item.id,
+    userId: input.userId,
+  });
+
+  return createdItem ? toItemDetail(createdItem) : null;
 }
 
 export async function updateItem(
