@@ -1,28 +1,23 @@
-# Current Feature: Item Types Documentation
+# Current Feature
+
+<!-- Feature Name -->
+
+None
 
 ## Status
 
 <!-- Not Started|In Progress|Completed -->
 
-In Progress
+Completed
 
 ## Goals
 
 <!-- Goals & requirements -->
 
-- Document all 7 system item types: snippet, prompt, command, note, file, image, and link.
-- Capture each type's name, icon, hex color, content classification, route, purpose, and key fields.
-- Summarize TEXT, FILE, and URL item storage behavior.
-- Document shared Item and ItemType properties.
-- Document display differences, including icon rendering, color usage, left-border accents, and Pro badges for file/image types.
-- Verify database schema and source references against the current codebase before finalizing docs.
 
 ## Notes
 
 <!-- Any extra notes -->
-
-- Loaded from `context/features/item-types.md`.
-- The spec appears documentation-focused and includes source references that may be stale, such as `src/lib/constants/item-types.ts` and older Prisma model names. Confirm against `prisma/schema.prisma`, `prisma/seed-data.ts`, `src/components/dashboard/dashboard-icons.ts`, and current dashboard shaping files during implementation.
 
 ## History
 
@@ -105,3 +100,4 @@ In Progress
 - 2026-04-28 00:55 EDT - Completed Rate Limiting for Auth, merged it into `main`, deleted the local feature branch, and cleared current feature details.
 - 2026-04-28 10:06 EDT - Loaded Item Types Documentation spec from `context/features/item-types.md` and set status to Not Started.
 - 2026-04-28 10:08 EDT - Started Item Types Documentation on branch `feature/item-types-documentation`.
+- 2026-04-28 10:12 EDT - Completed Item Types Documentation with current item type docs, CRUD architecture research docs, research skill support, and dashboard item accent-border alignment; merged it into `main`, deleted the local feature branch, and cleared current feature details.
