@@ -1,16 +1,22 @@
 import { prisma } from "@/lib/prisma";
 
-import { dashboardItemListSelect, dashboardItemTypeSelect } from "./dashboard-query-shapes";
+import {
+  dashboardItemListSelect,
+  dashboardItemTypeSelect,
+  itemDetailSelect,
+} from "./dashboard-query-shapes";
 import { resolveDashboardUser, type DashboardUser } from "./dashboard-user";
 import {
   sortDashboardItemTypes,
   toDashboardItem,
+  toItemDetail,
   toDashboardItemType,
   type DashboardItem,
   type DashboardItemType,
+  type ItemDetail,
 } from "./item-shaping";
 
-export type { DashboardItem, DashboardItemType } from "./item-shaping";
+export type { DashboardItem, DashboardItemType, ItemDetail } from "./item-shaping";
 
 type DashboardItemsOptions = {
   limit?: number;
@@ -20,10 +26,36 @@ type DashboardItemsOptions = {
   userEmail?: string;
 };
 
+type DashboardItemsByTypeOptions = Pick<
+  DashboardItemsOptions,
+  "limit" | "user" | "userEmail"
+> & {
+  typeSlug: string;
+};
+
 type DashboardItemData = {
   pinnedItems: DashboardItem[];
   recentItems: DashboardItem[];
 };
+
+type ItemDetailOptions = {
+  itemId: string;
+  userId: string;
+};
+
+export function normalizeItemTypeRouteSlug(value: string) {
+  const normalizedValue = decodeURIComponent(value).trim().toLowerCase();
+
+  if (normalizedValue.endsWith("ies")) {
+    return `${normalizedValue.slice(0, -3)}y`;
+  }
+
+  if (normalizedValue.endsWith("s")) {
+    return normalizedValue.slice(0, -1);
+  }
+
+  return normalizedValue;
+}
 
 export async function getDashboardPinnedItems(
   options: DashboardItemsOptions = {},
@@ -60,6 +92,30 @@ export async function getDashboardRecentItems(
     where: { userId: user.id },
     orderBy: [{ updatedAt: "desc" }, { title: "asc" }],
     take: options.limit ?? 10,
+    select: dashboardItemListSelect,
+  });
+
+  return items.map((item) => toDashboardItem(item));
+}
+
+export async function getDashboardItemsByTypeSlug(
+  options: DashboardItemsByTypeOptions,
+) {
+  const user = await resolveDashboardUser(options);
+
+  if (!user) {
+    return [];
+  }
+
+  const items = await prisma.item.findMany({
+    where: {
+      userId: user.id,
+      itemType: {
+        slug: normalizeItemTypeRouteSlug(options.typeSlug),
+      },
+    },
+    orderBy: [{ updatedAt: "desc" }, { title: "asc" }],
+    take: options.limit ?? 50,
     select: dashboardItemListSelect,
   });
 
@@ -117,4 +173,23 @@ export async function getDashboardItemData(
     pinnedItems,
     recentItems,
   };
+}
+
+export async function getItemDetail({
+  itemId,
+  userId,
+}: ItemDetailOptions): Promise<ItemDetail | null> {
+  const item = await prisma.item.findFirst({
+    where: {
+      id: itemId,
+      userId,
+    },
+    select: itemDetailSelect,
+  });
+
+  if (!item) {
+    return null;
+  }
+
+  return toItemDetail(item);
 }

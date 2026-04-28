@@ -5,6 +5,7 @@ import {
   dashboardCollectionSelect,
   dashboardCollectionTypeSummarySelect,
   dashboardItemListSelect,
+  itemDetailSelect,
 } from "./dashboard-query-shapes";
 
 describe("dashboard query shapes", () => {
@@ -41,6 +42,28 @@ describe("dashboard query shapes", () => {
         items: true,
       },
     });
+  });
+
+  it("selects full item fields for drawer detail requests", () => {
+    assert.deepEqual(Object.keys(itemDetailSelect).sort(), [
+      "collections",
+      "content",
+      "contentType",
+      "createdAt",
+      "description",
+      "fileName",
+      "fileSize",
+      "fileUrl",
+      "id",
+      "isFavorite",
+      "isPinned",
+      "itemType",
+      "language",
+      "tags",
+      "title",
+      "updatedAt",
+      "url",
+    ]);
   });
 
   it("uses a separate slim collection type summary select", () => {

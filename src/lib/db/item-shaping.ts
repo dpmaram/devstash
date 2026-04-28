@@ -43,6 +43,27 @@ export type ItemRecord = {
   }[];
 };
 
+export type ItemDetailRecord = Omit<
+  ItemRecord,
+  "collections" | "content" | "fileName" | "fileUrl" | "language" | "url"
+> & {
+  contentType: "TEXT" | "URL" | "FILE";
+  content: string | null;
+  url: string | null;
+  fileName: string | null;
+  fileUrl: string | null;
+  fileSize: number | null;
+  language: string | null;
+  createdAt: Date;
+  collections: {
+    collection: {
+      id: string;
+      name: string;
+      slug: string;
+    };
+  }[];
+};
+
 export type DashboardItem = {
   id: string;
   title: string;
@@ -57,6 +78,37 @@ export type DashboardItem = {
   isFavorite: boolean;
   language?: string;
   preview: string;
+  accentColor: string;
+};
+
+export type ItemDetail = {
+  id: string;
+  title: string;
+  description: string;
+  contentType: "TEXT" | "URL" | "FILE";
+  content: string | null;
+  url: string | null;
+  fileUrl: string | null;
+  fileName: string | null;
+  fileSize: number | null;
+  language?: string;
+  typeSlug: string;
+  itemType: ItemTypeRecord;
+  collections: {
+    id: string;
+    name: string;
+    slug: string;
+  }[];
+  tags: {
+    name: string;
+    slug: string;
+  }[];
+  createdAt: string;
+  updatedAt: string;
+  createdAtLabel: string;
+  updatedAtLabel: string;
+  isPinned: boolean;
+  isFavorite: boolean;
   accentColor: string;
 };
 
@@ -102,6 +154,14 @@ function formatUpdatedAt(updatedAt: Date, now: Date) {
     month: "short",
     day: "numeric",
   }).format(updatedAt);
+}
+
+function formatDetailDate(date: Date) {
+  return new Intl.DateTimeFormat("en-US", {
+    month: "long",
+    day: "numeric",
+    year: "numeric",
+  }).format(date);
 }
 
 function getPreview(item: ItemRecord) {
@@ -197,4 +257,37 @@ export function toDashboardItem(item: ItemRecord, now = new Date()) {
     preview: getPreview(item),
     accentColor: item.itemType.color,
   } satisfies DashboardItem;
+}
+
+export function toItemDetail(item: ItemDetailRecord) {
+  return {
+    id: item.id,
+    title: item.title,
+    description: item.description ?? "No description yet.",
+    contentType: item.contentType,
+    content: item.content ?? null,
+    url: item.url ?? null,
+    fileUrl: item.fileUrl ?? null,
+    fileName: item.fileName ?? null,
+    fileSize: item.fileSize,
+    language: item.language ?? undefined,
+    typeSlug: item.itemType.slug,
+    itemType: item.itemType,
+    collections: item.collections.map(({ collection }) => ({
+      id: collection.id,
+      name: collection.name,
+      slug: collection.slug,
+    })),
+    tags: item.tags.map(({ tag }) => ({
+      name: tag.name,
+      slug: tag.slug,
+    })),
+    createdAt: item.createdAt.toISOString(),
+    updatedAt: item.updatedAt.toISOString(),
+    createdAtLabel: formatDetailDate(item.createdAt),
+    updatedAtLabel: formatDetailDate(item.updatedAt),
+    isPinned: item.isPinned,
+    isFavorite: item.isFavorite,
+    accentColor: item.itemType.color,
+  } satisfies ItemDetail;
 }
