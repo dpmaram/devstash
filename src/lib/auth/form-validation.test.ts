@@ -5,6 +5,8 @@ import {
   getEmailVerificationToastMessage,
   getPasswordResetToastMessage,
   getRegistrationSuccessToastMessage,
+  validateChangePasswordForm,
+  validateDeleteAccountForm,
   validateForgotPasswordForm,
   validateRegisterForm,
   validateResetPasswordForm,
@@ -143,6 +145,73 @@ describe("validateResetPasswordForm", () => {
         data: {
           password: "new-password",
           confirmPassword: "new-password",
+        },
+      },
+    );
+  });
+});
+
+describe("validateChangePasswordForm", () => {
+  it("requires the current password and matching new password fields", () => {
+    assert.deepEqual(
+      validateChangePasswordForm({
+        currentPassword: "",
+        newPassword: "new-password",
+        confirmPassword: "different-password",
+      }),
+      {
+        ok: false,
+        errors: {
+          currentPassword: "Enter your current password.",
+          confirmPassword: "Passwords do not match.",
+        },
+      },
+    );
+  });
+
+  it("accepts matching password fields", () => {
+    assert.deepEqual(
+      validateChangePasswordForm({
+        currentPassword: "old-password",
+        newPassword: "new-password",
+        confirmPassword: "new-password",
+      }),
+      {
+        ok: true,
+        data: {
+          currentPassword: "old-password",
+          newPassword: "new-password",
+          confirmPassword: "new-password",
+        },
+      },
+    );
+  });
+});
+
+describe("validateDeleteAccountForm", () => {
+  it("requires the account email confirmation", () => {
+    assert.deepEqual(
+      validateDeleteAccountForm({
+        confirmationEmail: "",
+      }),
+      {
+        ok: false,
+        errors: {
+          confirmationEmail: "Type your account email to confirm deletion.",
+        },
+      },
+    );
+  });
+
+  it("accepts and normalizes the confirmation email", () => {
+    assert.deepEqual(
+      validateDeleteAccountForm({
+        confirmationEmail: " ADA@Example.COM ",
+      }),
+      {
+        ok: true,
+        data: {
+          confirmationEmail: "ada@example.com",
         },
       },
     );

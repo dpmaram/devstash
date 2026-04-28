@@ -21,6 +21,16 @@ export type ResetPasswordFormData = {
   confirmPassword: string;
 };
 
+export type ChangePasswordFormData = {
+  currentPassword: string;
+  newPassword: string;
+  confirmPassword: string;
+};
+
+export type DeleteAccountFormData = {
+  confirmationEmail: string;
+};
+
 export type FormValidationResult<TData, TErrors> =
   | {
       ok: true;
@@ -38,6 +48,12 @@ export type ForgotPasswordFormErrors = Partial<
 >;
 export type ResetPasswordFormErrors = Partial<
   Record<keyof ResetPasswordFormData, string>
+>;
+export type ChangePasswordFormErrors = Partial<
+  Record<keyof ChangePasswordFormData, string>
+>;
+export type DeleteAccountFormErrors = Partial<
+  Record<keyof DeleteAccountFormData, string>
 >;
 
 function getString(value: unknown) {
@@ -186,6 +202,70 @@ export function validateResetPasswordForm(
     data: {
       password,
       confirmPassword,
+    },
+  };
+}
+
+export function validateChangePasswordForm(
+  input: StringRecord,
+): FormValidationResult<ChangePasswordFormData, ChangePasswordFormErrors> {
+  const currentPassword = getString(input.currentPassword);
+  const newPassword = getString(input.newPassword);
+  const confirmPassword = getString(input.confirmPassword);
+  const errors: ChangePasswordFormErrors = {};
+
+  if (!currentPassword) {
+    errors.currentPassword = "Enter your current password.";
+  }
+
+  if (!newPassword) {
+    errors.newPassword = "Enter a new password.";
+  }
+
+  if (!confirmPassword) {
+    errors.confirmPassword = "Confirm your new password.";
+  } else if (newPassword && newPassword !== confirmPassword) {
+    errors.confirmPassword = "Passwords do not match.";
+  }
+
+  if (hasErrors(errors)) {
+    return {
+      ok: false,
+      errors,
+    };
+  }
+
+  return {
+    ok: true,
+    data: {
+      currentPassword,
+      newPassword,
+      confirmPassword,
+    },
+  };
+}
+
+export function validateDeleteAccountForm(
+  input: StringRecord,
+): FormValidationResult<DeleteAccountFormData, DeleteAccountFormErrors> {
+  const confirmationEmail = normalizeEmail(getString(input.confirmationEmail));
+  const errors: DeleteAccountFormErrors = {};
+
+  if (!confirmationEmail) {
+    errors.confirmationEmail = "Type your account email to confirm deletion.";
+  }
+
+  if (hasErrors(errors)) {
+    return {
+      ok: false,
+      errors,
+    };
+  }
+
+  return {
+    ok: true,
+    data: {
+      confirmationEmail,
     },
   };
 }
