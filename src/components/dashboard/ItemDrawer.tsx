@@ -1,5 +1,6 @@
 "use client";
 
+import { Dialog } from "@base-ui/react/dialog";
 import {
   CalendarDays,
   Check,
@@ -20,7 +21,10 @@ import {
 import { useEffect, useId, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
-import { updateItem as updateItemAction } from "@/actions/items";
+import {
+  deleteItem as deleteItemAction,
+  updateItem as updateItemAction,
+} from "@/actions/items";
 import { getAccentBorderStyle } from "@/components/dashboard/accent-border-style";
 import {
   itemTypeIconClasses,
@@ -324,8 +328,11 @@ function ItemDetailSheet({
 }) {
   const router = useRouter();
   const headerItem = state.item ?? state.selectedItem;
+  const [deleteError, setDeleteError] = useState<string | null>(null);
   const [draft, setDraft] = useState<ItemEditDraft | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [mode, setMode] = useState<"edit" | "view">("view");
   const [toast, setToast] = useState<DrawerToast>(null);
@@ -407,10 +414,53 @@ function ItemDetailSheet({
     }
   }
 
+  async function confirmDelete() {
+    if (!state.item || isDeleting) {
+      return;
+    }
+
+    setDeleteError(null);
+    setIsDeleting(true);
+
+    try {
+      const result = await deleteItemAction(state.item.id);
+
+      if (!result.success) {
+        setDeleteError(result.error);
+        setToast({
+          message: result.error,
+          tone: "error",
+        });
+        return;
+      }
+
+      setIsDeleteDialogOpen(false);
+      setToast({
+        message: "Item deleted.",
+        tone: "success",
+      });
+      onOpenChange(false);
+      router.refresh();
+    } catch {
+      const errorMessage = "Unable to delete item. Try again.";
+
+      setDeleteError(errorMessage);
+      setToast({
+        message: errorMessage,
+        tone: "error",
+      });
+    } finally {
+      setIsDeleting(false);
+    }
+  }
+
   function handleOpenChange(nextOpen: boolean) {
     if (!nextOpen) {
+      setDeleteError(null);
       setDraft(null);
       setFormError(null);
+      setIsDeleteDialogOpen(false);
+      setIsDeleting(false);
       setIsSaving(false);
       setMode("view");
     }
@@ -419,16 +469,30 @@ function ItemDetailSheet({
   }
 
   return (
-    <Sheet onOpenChange={handleOpenChange} open={open}>
-      <SheetContent className="overflow-hidden">
-        {toast ? (
-          <ItemDrawerToast
-            message={toast.message}
-            onDismiss={() => setToast(null)}
-            tone={toast.tone}
+    <>
+      {toast ? (
+        <ItemDrawerToast
+          message={toast.message}
+          onDismiss={() => setToast(null)}
+          tone={toast.tone}
+        />
+      ) : null}
+      <Sheet onOpenChange={handleOpenChange} open={open}>
+        <SheetContent className="overflow-hidden">
+          <DeleteItemConfirmationDialog
+            error={deleteError}
+            isDeleting={isDeleting}
+            item={state.item}
+            onConfirm={confirmDelete}
+            onOpenChange={(nextOpen) => {
+              if (!isDeleting) {
+                setDeleteError(null);
+                setIsDeleteDialogOpen(nextOpen);
+              }
+            }}
+            open={isDeleteDialogOpen}
           />
-        ) : null}
-        <div className="flex min-h-0 flex-1 flex-col">
+          <div className="flex min-h-0 flex-1 flex-col">
           <div className="flex items-start gap-4 border-b border-devstash-line px-5 py-5 sm:px-7">
             <div className="flex size-14 shrink-0 items-center justify-center rounded-xl bg-blue-500/10">
               {headerItem ? (
@@ -474,7 +538,11 @@ function ItemDetailSheet({
               onSave={saveEdit}
             />
           ) : (
-            <ItemActionBar item={state.item} onEdit={startEdit} />
+            <ItemActionBar
+              item={state.item}
+              onDelete={() => setIsDeleteDialogOpen(true)}
+              onEdit={startEdit}
+            />
           )}
 
           <div className="min-h-0 flex-1 overflow-y-auto px-5 py-6 sm:px-7">
@@ -499,17 +567,20 @@ function ItemDetailSheet({
               )
             ) : null}
           </div>
-        </div>
-      </SheetContent>
-    </Sheet>
+          </div>
+        </SheetContent>
+      </Sheet>
+    </>
   );
 }
 
 function ItemActionBar({
   item,
+  onDelete,
   onEdit,
 }: {
   item: ItemDetail | null;
+  onDelete: () => void;
   onEdit: () => void;
 }) {
   async function copyItem() {
@@ -555,6 +626,7 @@ function ItemActionBar({
         disabled={!item}
         icon={<Trash2 className="size-5" />}
         label="Delete"
+        onClick={onDelete}
       />
     </div>
   );
@@ -890,6 +962,74 @@ function ItemDrawerToast({
         <X aria-hidden="true" className="size-4" />
       </button>
     </div>
+  );
+}
+
+function DeleteItemConfirmationDialog({
+  error,
+  isDeleting,
+  item,
+  onConfirm,
+  onOpenChange,
+  open,
+}: {
+  error: string | null;
+  isDeleting: boolean;
+  item: ItemDetail | null;
+  onConfirm: () => void;
+  onOpenChange: (open: boolean) => void;
+  open: boolean;
+}) {
+  return (
+    <Dialog.Root onOpenChange={onOpenChange} open={open}>
+      <Dialog.Portal>
+        <Dialog.Backdrop className="fixed inset-0 z-[70] bg-black/75 opacity-100 transition-opacity duration-200 data-[ending-style]:opacity-0 data-[starting-style]:opacity-0" />
+        <Dialog.Popup className="fixed left-1/2 top-1/2 z-[80] w-[calc(100vw-2rem)] max-w-md -translate-x-1/2 -translate-y-1/2 rounded-lg border border-devstash-line bg-[#0b0d10] p-5 shadow-2xl shadow-black/50 outline-none transition duration-200 data-[ending-style]:scale-95 data-[ending-style]:opacity-0 data-[starting-style]:scale-95 data-[starting-style]:opacity-0">
+          <Dialog.Title className="text-xl font-semibold text-white">
+            Delete item?
+          </Dialog.Title>
+          <Dialog.Description className="mt-3 text-sm leading-6 text-zinc-300">
+            This will permanently delete
+            {item ? ` "${item.title}"` : " this item"}. This action cannot be
+            undone.
+          </Dialog.Description>
+
+          {error ? (
+            <div
+              aria-live="polite"
+              className="mt-4 rounded-lg border border-red-400/30 bg-red-400/10 p-3 text-sm text-red-100"
+            >
+              {error}
+            </div>
+          ) : null}
+
+          <div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+            <Button
+              className="h-10 rounded-lg bg-transparent px-4 text-base text-zinc-200 hover:bg-white/[0.06] hover:text-white"
+              disabled={isDeleting}
+              onClick={() => onOpenChange(false)}
+              type="button"
+              variant="ghost"
+            >
+              Cancel
+            </Button>
+            <Button
+              className="h-10 gap-2 rounded-lg border border-red-300/30 bg-red-400/15 px-4 text-base text-red-100 hover:bg-red-400/25 disabled:opacity-50"
+              disabled={isDeleting || !item}
+              onClick={onConfirm}
+              type="button"
+            >
+              {isDeleting ? (
+                <LoaderCircle aria-hidden="true" className="size-5 animate-spin" />
+              ) : (
+                <Trash2 aria-hidden="true" className="size-5" />
+              )}
+              <span>Delete</span>
+            </Button>
+          </div>
+        </Dialog.Popup>
+      </Dialog.Portal>
+    </Dialog.Root>
   );
 }
 

@@ -5,8 +5,10 @@ import { z } from "zod";
 import { auth } from "@/auth";
 import { getDashboardUserForSession } from "@/lib/db/dashboard-user";
 import {
+  deleteItem as deleteItemRecord,
   updateItem as updateItemRecord,
   type ItemDetail,
+  type DeleteItemInput,
   type UpdateItemInput,
 } from "@/lib/db/items";
 
@@ -55,6 +57,16 @@ type UpdateItemActionDeps = {
   updateItem: (input: UpdateItemInput) => Promise<ItemDetail | null>;
 };
 
+type DeleteItemActionDeps = {
+  auth: () => Promise<{
+    user?: {
+      id?: string | null;
+    };
+  } | null>;
+  deleteItem: (input: DeleteItemInput) => Promise<boolean>;
+  getDashboardUserForSession: typeof getDashboardUserForSession;
+};
+
 type UpdateItemActionResult =
   | {
       success: true;
@@ -65,10 +77,25 @@ type UpdateItemActionResult =
       error: string;
     };
 
+type DeleteItemActionResult =
+  | {
+      success: true;
+    }
+  | {
+      success: false;
+      error: string;
+    };
+
 const defaultUpdateItemActionDeps: UpdateItemActionDeps = {
   auth,
   getDashboardUserForSession,
   updateItem: updateItemRecord,
+};
+
+const defaultDeleteItemActionDeps: DeleteItemActionDeps = {
+  auth,
+  deleteItem: deleteItemRecord,
+  getDashboardUserForSession,
 };
 
 function getValidationError(error: z.ZodError) {
@@ -137,4 +164,56 @@ export async function handleUpdateItem(
 
 export async function updateItem(itemId: string, data: unknown) {
   return handleUpdateItem(itemId, data);
+}
+
+export async function handleDeleteItem(
+  itemId: unknown,
+  deps: DeleteItemActionDeps = defaultDeleteItemActionDeps,
+): Promise<DeleteItemActionResult> {
+  const normalizedItemId = typeof itemId === "string" ? itemId.trim() : "";
+
+  if (!normalizedItemId) {
+    return {
+      success: false,
+      error: "Item id is required.",
+    };
+  }
+
+  const session = await deps.auth();
+
+  if (!session?.user?.id) {
+    return {
+      success: false,
+      error: "You must be signed in.",
+    };
+  }
+
+  const dashboardUser = await deps.getDashboardUserForSession(session.user);
+
+  if (!dashboardUser) {
+    return {
+      success: false,
+      error: "Item not found.",
+    };
+  }
+
+  const didDelete = await deps.deleteItem({
+    itemId: normalizedItemId,
+    userId: dashboardUser.id,
+  });
+
+  if (!didDelete) {
+    return {
+      success: false,
+      error: "Item not found.",
+    };
+  }
+
+  return {
+    success: true,
+  };
+}
+
+export async function deleteItem(itemId: string) {
+  return handleDeleteItem(itemId);
 }

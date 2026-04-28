@@ -203,3 +203,97 @@ describe("updateItem action", () => {
     });
   });
 });
+
+describe("deleteItem action", () => {
+  it("rejects blank item ids before auth or database writes", async () => {
+    const { handleDeleteItem } = await import("./items");
+
+    const result = await handleDeleteItem("   ", {
+      auth: async () => {
+        throw new Error("auth should not be called");
+      },
+      deleteItem: async () => {
+        throw new Error("deleteItem should not be called");
+      },
+      getDashboardUserForSession: async () => {
+        throw new Error("getDashboardUserForSession should not be called");
+      },
+    });
+
+    assert.deepEqual(result, {
+      success: false,
+      error: "Item id is required.",
+    });
+  });
+
+  it("requires a signed-in user", async () => {
+    const { handleDeleteItem } = await import("./items");
+
+    const result = await handleDeleteItem("item_123", {
+      auth: async () => null,
+      deleteItem: async () => {
+        throw new Error("deleteItem should not be called");
+      },
+      getDashboardUserForSession: async () => {
+        throw new Error("getDashboardUserForSession should not be called");
+      },
+    });
+
+    assert.deepEqual(result, {
+      success: false,
+      error: "You must be signed in.",
+    });
+  });
+
+  it("deletes the resolved dashboard user's item", async () => {
+    const { handleDeleteItem } = await import("./items");
+
+    const result = await handleDeleteItem(" item_123 ", {
+      auth: async () => ({
+        user: {
+          id: "empty_user",
+        },
+      }),
+      deleteItem: async (input) => {
+        assert.deepEqual(input, {
+          itemId: "item_123",
+          userId: "demo_user",
+        });
+        return true;
+      },
+      getDashboardUserForSession: async (sessionUser) => {
+        assert.deepEqual(sessionUser, {
+          id: "empty_user",
+        });
+        return {
+          id: "demo_user",
+        };
+      },
+    });
+
+    assert.deepEqual(result, {
+      success: true,
+    });
+  });
+
+  it("returns a not-found error for items outside the resolved dashboard user", async () => {
+    const { handleDeleteItem } = await import("./items");
+
+    const result = await handleDeleteItem("item_123", {
+      auth: async () => ({
+        user: {
+          id: "user_123",
+        },
+      }),
+      deleteItem: async () => false,
+      getDashboardUserForSession: async () => ({
+        id: "user_123",
+      }),
+    });
+
+    assert.deepEqual(result, {
+      success: false,
+      error: "Item not found.",
+    });
+  });
+});

@@ -1,20 +1,31 @@
-# Current Feature
+# Current Feature: Delete Item Functionality
 
 ## Status
 
 <!-- Not Started|In Progress|Completed -->
 
-Not Started
+Completed
 
 ## Goals
 
 <!-- Goals & requirements -->
 
+- Add delete functionality for items from the item drawer.
+- Show a shadcn/Base UI style confirmation dialog before deleting an item.
+- Require explicit user confirmation before the delete action runs.
+- Delete should be ownership-safe and use the same resolved dashboard-data user behavior as item detail/edit.
+- Show a toast on successful delete.
+- Show a clear toast or inline error when delete fails.
+- After a successful delete, close the drawer and refresh the dashboard/list data.
+- Add server/data-layer tests for delete success, auth failure, and not-found/ownership behavior.
 
 ## Notes
 
 <!-- Any extra notes -->
 
+- Loaded from inline request: "create the delete functionality for items. There should be a shaden UI confirmation and a toast on success".
+- Interpret "shaden UI" as the project's shadcn/Base UI-style components and existing visual language.
+- Build on the current `ItemDrawer` action bar and the existing item action patterns in `src/actions/items.ts` and `src/lib/db/items.ts`.
 
 ## History
 
@@ -121,3 +132,8 @@ Not Started
 - 2026-04-28 18:32 EDT - Fixed edit save `Item not found` errors by resolving the save action through the same dashboard-data user as the drawer/card data before updating. Verified focused regression tests, full `npm test`, `npm run lint`, `npx tsc --noEmit`, `npm run build`, and `git diff --check`.
 - 2026-04-28 18:34 EDT - Completed Item Drawer Edit Mode after browser confirmation that drawer edit/save works correctly.
 - 2026-04-28 18:36 EDT - Completed Item Drawer Edit Mode, merged it into `main`, deleted the local feature branch, and cleared current feature details.
+- 2026-04-28 19:16 EDT - Loaded Delete Item Functionality from inline user request and set status to Not Started.
+- 2026-04-28 19:17 EDT - Started Delete Item Functionality on branch `feature/delete-item-functionality`.
+- 2026-04-28 19:20 EDT - Implemented Delete Item Functionality with an ownership-safe `deleteItem` data function, server action, shadcn/Base UI style confirmation dialog in the drawer, success/error toasts, drawer close, and router refresh after delete.
+- 2026-04-28 19:20 EDT - Verified Delete Item Functionality with focused action/data tests, full `npm test`, `npm run lint`, `npx tsc --noEmit`, `npm run build`, and `git diff --check`.
+- 2026-04-28 19:24 EDT - Completed Delete Item Functionality.

@@ -59,6 +59,11 @@ export type UpdateItemInput = {
   userId: string;
 };
 
+export type DeleteItemInput = {
+  itemId: string;
+  userId: string;
+};
+
 type NormalizedItemTag = {
   name: string;
   slug: string;
@@ -83,6 +88,14 @@ type UpdateItemDeps = {
     itemId: string;
     userId: string;
   }) => Promise<ItemDetailRecord | null>;
+};
+
+type DeleteItemDeps = {
+  deleteItemRecord: (itemId: string) => Promise<void>;
+  findOwnedItem: (input: {
+    itemId: string;
+    userId: string;
+  }) => Promise<{ id: string } | null>;
 };
 
 export function normalizeItemTypeRouteSlug(value: string) {
@@ -342,6 +355,14 @@ async function findItemDetail(input: { itemId: string; userId: string }) {
   });
 }
 
+async function deleteItemRecord(itemId: string) {
+  await prisma.item.delete({
+    where: {
+      id: itemId,
+    },
+  });
+}
+
 function createUpdateItemDeps() {
   return {
     findOwnedItem,
@@ -351,6 +372,13 @@ function createUpdateItemDeps() {
     createItemTags,
     findItemDetail,
   } satisfies UpdateItemDeps;
+}
+
+function createDeleteItemDeps() {
+  return {
+    findOwnedItem,
+    deleteItemRecord,
+  } satisfies DeleteItemDeps;
 }
 
 export async function updateItem(
@@ -396,4 +424,22 @@ export async function updateItem(
   });
 
   return updatedItem ? toItemDetail(updatedItem) : null;
+}
+
+export async function deleteItem(
+  input: DeleteItemInput,
+  deps: DeleteItemDeps = createDeleteItemDeps(),
+) {
+  const item = await deps.findOwnedItem({
+    itemId: input.itemId,
+    userId: input.userId,
+  });
+
+  if (!item) {
+    return false;
+  }
+
+  await deps.deleteItemRecord(input.itemId);
+
+  return true;
 }
