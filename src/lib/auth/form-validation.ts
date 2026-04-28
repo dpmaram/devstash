@@ -12,6 +12,15 @@ export type RegisterFormData = {
   confirmPassword: string;
 };
 
+export type ForgotPasswordFormData = {
+  email: string;
+};
+
+export type ResetPasswordFormData = {
+  password: string;
+  confirmPassword: string;
+};
+
 export type FormValidationResult<TData, TErrors> =
   | {
       ok: true;
@@ -24,6 +33,12 @@ export type FormValidationResult<TData, TErrors> =
 
 export type SignInFormErrors = Partial<Record<keyof SignInFormData, string>>;
 export type RegisterFormErrors = Partial<Record<keyof RegisterFormData, string>>;
+export type ForgotPasswordFormErrors = Partial<
+  Record<keyof ForgotPasswordFormData, string>
+>;
+export type ResetPasswordFormErrors = Partial<
+  Record<keyof ResetPasswordFormData, string>
+>;
 
 function getString(value: unknown) {
   return typeof value === "string" ? value : "";
@@ -117,6 +132,64 @@ export function validateRegisterForm(
   };
 }
 
+export function validateForgotPasswordForm(
+  input: StringRecord,
+): FormValidationResult<ForgotPasswordFormData, ForgotPasswordFormErrors> {
+  const email = normalizeEmail(getString(input.email));
+  const errors: ForgotPasswordFormErrors = {};
+
+  if (!isValidEmail(email)) {
+    errors.email = "Enter a valid email address.";
+  }
+
+  if (hasErrors(errors)) {
+    return {
+      ok: false,
+      errors,
+    };
+  }
+
+  return {
+    ok: true,
+    data: {
+      email,
+    },
+  };
+}
+
+export function validateResetPasswordForm(
+  input: StringRecord,
+): FormValidationResult<ResetPasswordFormData, ResetPasswordFormErrors> {
+  const password = getString(input.password);
+  const confirmPassword = getString(input.confirmPassword);
+  const errors: ResetPasswordFormErrors = {};
+
+  if (!password) {
+    errors.password = "Enter a password.";
+  }
+
+  if (!confirmPassword) {
+    errors.confirmPassword = "Confirm your password.";
+  } else if (password && password !== confirmPassword) {
+    errors.confirmPassword = "Passwords do not match.";
+  }
+
+  if (hasErrors(errors)) {
+    return {
+      ok: false,
+      errors,
+    };
+  }
+
+  return {
+    ok: true,
+    data: {
+      password,
+      confirmPassword,
+    },
+  };
+}
+
 export function getSignInErrorMessage(error?: string | null) {
   if (!error) {
     return null;
@@ -140,6 +213,10 @@ export function getRegistrationSuccessToastMessage(
   return emailVerificationRequired
     ? "Check your email to verify your account before signing in."
     : "Account created. You can now sign in.";
+}
+
+export function getPasswordResetToastMessage(status?: string | null) {
+  return status === "success" ? "Password reset. You can now sign in." : null;
 }
 
 export type EmailVerificationToastStatus = "success" | "expired" | "invalid";
