@@ -13,6 +13,7 @@ import { useState } from "react";
 
 import { createItem as createItemAction } from "@/actions/items";
 import { CodeEditor } from "@/components/dashboard/CodeEditor";
+import { MarkdownEditor } from "@/components/dashboard/MarkdownEditor";
 import {
   itemTypeIconClasses,
   itemTypeIcons,
@@ -30,6 +31,7 @@ import {
   getCodeEditorLanguageLabel,
   shouldUseCodeEditor,
 } from "@/lib/code-editor";
+import { shouldUseMarkdownEditor } from "@/lib/markdown-editor";
 import type { DashboardItemType } from "@/lib/db/items";
 import type { ItemTypeSlug } from "@/lib/mock-data";
 import { cn } from "@/lib/utils";
@@ -285,6 +287,17 @@ export function NewItemDialog({
                           draft.language,
                           draft.typeSlug,
                         )}
+                        onChange={(content) =>
+                          updateDraft({
+                            content,
+                          })
+                        }
+                        value={draft.content}
+                      />
+                    ) : shouldUseMarkdownEditor(draft.typeSlug) ? (
+                      <MarkdownEditor
+                        ariaLabel="New item markdown content editor"
+                        disabled={isSaving}
                         onChange={(content) =>
                           updateDraft({
                             content,
