@@ -25,6 +25,7 @@ import {
   deleteItem as deleteItemAction,
   updateItem as updateItemAction,
 } from "@/actions/items";
+import { CodeEditor } from "@/components/dashboard/CodeEditor";
 import { getAccentBorderStyle } from "@/components/dashboard/accent-border-style";
 import {
   itemTypeIconClasses,
@@ -42,6 +43,11 @@ import {
 } from "@/components/ui/sheet";
 import type { DashboardItem, ItemDetail } from "@/lib/db/items";
 import type { ItemTypeSlug } from "@/lib/mock-data";
+import {
+  getCodeEditorLanguage,
+  getCodeEditorLanguageLabel,
+  shouldUseCodeEditor,
+} from "@/lib/code-editor";
 import { cn } from "@/lib/utils";
 
 type ItemDetailResponse =
@@ -800,19 +806,38 @@ function ItemEditForm({
 
         {canEditItemContent(item) ? (
           <EditField htmlFor={contentId} label="Content">
-            <EditTextarea
-              className="min-h-64 font-mono text-sm leading-7"
-              disabled={isSaving}
-              id={contentId}
-              onChange={(value) =>
-                onChange({
-                  ...draft,
-                  content: value,
-                })
-              }
-              rows={12}
-              value={draft.content}
-            />
+            {shouldUseCodeEditor(item.typeSlug) ? (
+              <CodeEditor
+                ariaLabel={`${item.title} content editor`}
+                disabled={isSaving}
+                language={getCodeEditorLanguage(draft.language, item.typeSlug)}
+                languageLabel={getCodeEditorLanguageLabel(
+                  draft.language,
+                  item.typeSlug,
+                )}
+                onChange={(value) =>
+                  onChange({
+                    ...draft,
+                    content: value,
+                  })
+                }
+                value={draft.content}
+              />
+            ) : (
+              <EditTextarea
+                className="min-h-64 font-mono text-sm leading-7"
+                disabled={isSaving}
+                id={contentId}
+                onChange={(value) =>
+                  onChange({
+                    ...draft,
+                    content: value,
+                  })
+                }
+                rows={12}
+                value={draft.content}
+              />
+            )}
           </EditField>
         ) : null}
 
@@ -1097,6 +1122,21 @@ function ItemDetailBody({ item }: { item: ItemDetail }) {
 
 function ItemContent({ item }: { item: ItemDetail }) {
   if (item.content) {
+    if (shouldUseCodeEditor(item.typeSlug)) {
+      return (
+        <CodeEditor
+          ariaLabel={`${item.title} content`}
+          language={getCodeEditorLanguage(item.language, item.typeSlug)}
+          languageLabel={getCodeEditorLanguageLabel(
+            item.language,
+            item.typeSlug,
+          )}
+          readOnly
+          value={item.content}
+        />
+      );
+    }
+
     return (
       <pre className="max-h-[28rem] overflow-auto rounded-lg border border-blue-400/20 bg-blue-950/30 p-4 text-sm leading-7 text-zinc-100">
         <code>{item.content}</code>
