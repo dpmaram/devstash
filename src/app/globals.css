@@ -66,6 +66,15 @@ textarea {
   color: #ffffff;
 }
 
+.devstash-code-editor .monaco-scrollable-element > .scrollbar > .slider {
+  border-radius: 999px;
+  background: rgba(148, 163, 184, 0.32) !important;
+}
+
+.devstash-code-editor .monaco-scrollable-element > .scrollbar > .slider:hover {
+  background: rgba(148, 163, 184, 0.52) !important;
+}
+
 @theme inline {
   --font-heading: var(--font-geist-sans);
   --font-sans: var(--font-geist-sans);

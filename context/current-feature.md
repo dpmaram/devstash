@@ -1,20 +1,28 @@
-# Current Feature
+# Current Feature: Code Editor
 
 ## Status
 
 <!-- Not Started|In Progress|Completed -->
 
-Not Started
+In Progress
 
 ## Goals
 
 <!-- Goals & requirements -->
 
+- Create a reusable `CodeEditor` component using Monaco Editor with a dark theme.
+- Use `CodeEditor` for snippets and commands only.
+- Keep the existing `Textarea` experience for notes, prompts, and other non-code item types.
+- Support both readonly display mode and edit mode.
+- Add a themed editor header with macOS-style red/yellow/green window dots, language label, and quick copy action.
+- Make the editor height fluid, cap it at 400px, and style scrolling to match the dark editor theme.
 
 ## Notes
 
 <!-- Any extra notes -->
 
+- Loaded from `context/features/code-editor-spec.md`.
+- The feature focuses on replacing code-like content editing/display surfaces without changing non-code item type behavior.
 
 ## History
 
@@ -134,3 +142,8 @@ Not Started
 - 2026-04-28 19:41 EDT - Fixed dashboard counts dropping to zero after creating the first signed-in user item by keeping dashboard data on the resolved fallback/dashboard user and creating new items through that same dashboard-data user. Verified focused regression tests, full `npm test`, `npm run lint`, `npx tsc --noEmit`, `npm run build`, and `git diff --check`.
 - 2026-04-28 19:43 EDT - Completed Item Create.
 - 2026-04-28 19:45 EDT - Completed Item Create, merged it into `main`, deleted the local feature branch, and cleared current feature details.
+- 2026-05-04 08:22 EDT - Loaded Code Editor spec from `context/features/code-editor-spec.md` and set status to Not Started.
+- 2026-05-04 08:22 EDT - Started Code Editor on branch `feature/code-editor`.
+- 2026-05-04 08:39 EDT - Implemented Code Editor with Monaco-backed snippet/command view, edit, and create surfaces; kept textarea behavior for notes, prompts, and other non-code types; added editor language normalization tests, themed editor chrome, copy action, and max-height scrolling. Verified focused code-editor tests, full local tests, TypeScript, lint, production build, git diff whitespace check, and browser smoke tests for drawer/create behavior.
+- 2026-05-04 08:46 EDT - Switched Monaco to browser-only local package loading with explicit worker mapping to avoid runtime CDN loading and main-thread worker fallback. Re-verified focused code-editor tests, full local tests, TypeScript, lint, production build, git diff whitespace check, and a dev-server dashboard smoke request.
+- 2026-05-04 08:51 EDT - Added type-specific New Item buttons on supported item type pages with dialog preselection for the active type. Verified create-type helper tests, full local tests, TypeScript, lint, production build, and git diff whitespace check; browser smoke was not run because dev-server approval was rejected.

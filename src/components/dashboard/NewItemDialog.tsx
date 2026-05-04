@@ -12,58 +12,50 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 import { createItem as createItemAction } from "@/actions/items";
+import { CodeEditor } from "@/components/dashboard/CodeEditor";
 import {
   itemTypeIconClasses,
   itemTypeIcons,
 } from "@/components/dashboard/dashboard-icons";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import {
+  createInitialNewItemDraft,
+  createableTypeOrder,
+  type CreateItemTypeSlug,
+  type NewItemDraft,
+} from "@/lib/create-item-types";
+import {
+  getCodeEditorLanguage,
+  getCodeEditorLanguageLabel,
+  shouldUseCodeEditor,
+} from "@/lib/code-editor";
 import type { DashboardItemType } from "@/lib/db/items";
 import type { ItemTypeSlug } from "@/lib/mock-data";
 import { cn } from "@/lib/utils";
-
-type CreateItemTypeSlug = "snippet" | "prompt" | "command" | "note" | "link";
-
-type NewItemDraft = {
-  content: string;
-  description: string;
-  language: string;
-  tagsText: string;
-  title: string;
-  typeSlug: CreateItemTypeSlug;
-  url: string;
-};
 
 type NewItemToast = {
   message: string;
   tone: "error" | "success";
 } | null;
 
-const createableTypeOrder: CreateItemTypeSlug[] = [
-  "snippet",
-  "prompt",
-  "command",
-  "note",
-  "link",
-];
-
-const initialDraft: NewItemDraft = {
-  content: "",
-  description: "",
-  language: "",
-  tagsText: "",
-  title: "",
-  typeSlug: "snippet",
-  url: "",
-};
-
 export function NewItemDialog({
+  initialTypeSlug,
   itemTypes,
+  triggerClassName,
+  triggerLabel = "New Item",
+  triggerLabelClassName = "hidden sm:inline",
 }: {
+  initialTypeSlug?: string | null;
   itemTypes: DashboardItemType[];
+  triggerClassName?: string;
+  triggerLabel?: string;
+  triggerLabelClassName?: string;
 }) {
   const router = useRouter();
-  const [draft, setDraft] = useState<NewItemDraft>(initialDraft);
+  const [draft, setDraft] = useState<NewItemDraft>(() =>
+    createInitialNewItemDraft(initialTypeSlug),
+  );
   const [error, setError] = useState<string | null>(null);
   const [isOpen, setIsOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -81,7 +73,7 @@ export function NewItemDialog({
   }
 
   function resetForm() {
-    setDraft(initialDraft);
+    setDraft(createInitialNewItemDraft(initialTypeSlug));
     setError(null);
     setIsSaving(false);
   }
@@ -154,12 +146,15 @@ export function NewItemDialog({
         />
       ) : null}
       <Button
-        className="h-11 gap-2 rounded-lg bg-foreground px-4 text-base font-medium text-background hover:bg-foreground/90 sm:px-5"
+        className={cn(
+          "h-11 gap-2 rounded-lg bg-foreground px-4 text-base font-medium text-background hover:bg-foreground/90 sm:px-5",
+          triggerClassName,
+        )}
         onClick={() => setIsOpen(true)}
         type="button"
       >
         <Plus aria-hidden="true" className="size-5" />
-        <span className="hidden sm:inline">New Item</span>
+        <span className={triggerLabelClassName}>{triggerLabel}</span>
       </Button>
       <Dialog.Root onOpenChange={handleOpenChange} open={isOpen}>
         <Dialog.Portal>
@@ -278,17 +273,38 @@ export function NewItemDialog({
 
                 {canEditContent(draft.typeSlug) ? (
                   <EditField label="Content">
-                    <EditTextarea
-                      className="min-h-56 font-mono text-sm leading-7"
-                      disabled={isSaving}
-                      onChange={(content) =>
-                        updateDraft({
-                          content,
-                        })
-                      }
-                      rows={10}
-                      value={draft.content}
-                    />
+                    {shouldUseCodeEditor(draft.typeSlug) ? (
+                      <CodeEditor
+                        ariaLabel="New item content editor"
+                        disabled={isSaving}
+                        language={getCodeEditorLanguage(
+                          draft.language,
+                          draft.typeSlug,
+                        )}
+                        languageLabel={getCodeEditorLanguageLabel(
+                          draft.language,
+                          draft.typeSlug,
+                        )}
+                        onChange={(content) =>
+                          updateDraft({
+                            content,
+                          })
+                        }
+                        value={draft.content}
+                      />
+                    ) : (
+                      <EditTextarea
+                        className="min-h-56 font-mono text-sm leading-7"
+                        disabled={isSaving}
+                        onChange={(content) =>
+                          updateDraft({
+                            content,
+                          })
+                        }
+                        rows={10}
+                        value={draft.content}
+                      />
+                    )}
                   </EditField>
                 ) : null}
 
