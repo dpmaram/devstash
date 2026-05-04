@@ -1,20 +1,33 @@
-# Current Feature
+# Current Feature: Markdown Editor
 
 ## Status
 
 <!-- Not Started|In Progress|Completed -->
 
-Not Started
+In Progress
 
 ## Goals
 
 <!-- Goals & requirements -->
 
+- Create a `MarkdownEditor` component with Write and Preview tabs.
+- Use `MarkdownEditor` for notes and prompts only.
+- Keep `CodeEditor` behavior unchanged for snippets and commands.
+- Use `react-markdown` with `remark-gfm` for GitHub Flavored Markdown support.
+- Match the existing dark editor styling with a dark container and header.
+- Add a header copy button consistent with `CodeEditor`.
+- Support readonly display mode and edit mode.
+- Show only Preview in readonly mode; default edit mode to Write with Preview available.
+- Style markdown headings, code, inline code, lists, blockquotes, links, and tables for dark mode.
+- Use fluid editor height with a max height of 400px.
 
 ## Notes
 
 <!-- Any extra notes -->
 
+- Loaded from `context/features/markdown-editor-spec.md`.
+- The user requested `marketdown-editor-spec.md`; resolved to existing `markdown-editor-spec.md`.
+- Integration points are `NewItemDialog`, `ItemDrawer` edit mode, and `ItemDrawer` view mode.
 
 ## History
 
@@ -140,3 +153,6 @@ Not Started
 - 2026-05-04 08:46 EDT - Switched Monaco to browser-only local package loading with explicit worker mapping to avoid runtime CDN loading and main-thread worker fallback. Re-verified focused code-editor tests, full local tests, TypeScript, lint, production build, git diff whitespace check, and a dev-server dashboard smoke request.
 - 2026-05-04 08:51 EDT - Added type-specific New Item buttons on supported item type pages with dialog preselection for the active type. Verified create-type helper tests, full local tests, TypeScript, lint, production build, and git diff whitespace check; browser smoke was not run because dev-server approval was rejected.
 - 2026-05-04 08:57 EDT - Completed Code Editor, merged it into `main`, deleted the local feature branch, and cleared current feature details.
+- 2026-05-04 09:00 EDT - Loaded Markdown Editor spec from `context/features/markdown-editor-spec.md`, resolved from requested `marketdown-editor-spec.md`, and started Markdown Editor.
+- 2026-05-04 09:12 EDT - Implemented Markdown Editor with GFM preview, dark markdown styling, edit/readonly modes, copy action, note/prompt create and drawer integration, and focused markdown editor helper tests. Verified full local tests, TypeScript, lint, production build, and git diff whitespace check.
+- 2026-05-04 09:23 EDT - Investigated Markdown Editor rendering and confirmed `react-markdown` emits formatted HTML without needing Tailwind Typography. Increased the default markdown editor height to 320px while preserving the 400px cap, re-verified tests, TypeScript, lint, production build, whitespace, and restarted the dev server.

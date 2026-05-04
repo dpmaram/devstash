@@ -26,6 +26,7 @@ import {
   updateItem as updateItemAction,
 } from "@/actions/items";
 import { CodeEditor } from "@/components/dashboard/CodeEditor";
+import { MarkdownEditor } from "@/components/dashboard/MarkdownEditor";
 import { getAccentBorderStyle } from "@/components/dashboard/accent-border-style";
 import {
   itemTypeIconClasses,
@@ -48,6 +49,7 @@ import {
   getCodeEditorLanguageLabel,
   shouldUseCodeEditor,
 } from "@/lib/code-editor";
+import { shouldUseMarkdownEditor } from "@/lib/markdown-editor";
 import { cn } from "@/lib/utils";
 
 type ItemDetailResponse =
@@ -823,6 +825,18 @@ function ItemEditForm({
                 }
                 value={draft.content}
               />
+            ) : shouldUseMarkdownEditor(item.typeSlug) ? (
+              <MarkdownEditor
+                ariaLabel={`${item.title} markdown content editor`}
+                disabled={isSaving}
+                onChange={(value) =>
+                  onChange({
+                    ...draft,
+                    content: value,
+                  })
+                }
+                value={draft.content}
+              />
             ) : (
               <EditTextarea
                 className="min-h-64 font-mono text-sm leading-7"
@@ -1131,6 +1145,16 @@ function ItemContent({ item }: { item: ItemDetail }) {
             item.language,
             item.typeSlug,
           )}
+          readOnly
+          value={item.content}
+        />
+      );
+    }
+
+    if (shouldUseMarkdownEditor(item.typeSlug)) {
+      return (
+        <MarkdownEditor
+          ariaLabel={`${item.title} markdown content`}
           readOnly
           value={item.content}
         />
