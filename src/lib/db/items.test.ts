@@ -107,6 +107,9 @@ describe("createItem", () => {
             contentType: "TEXT",
             content: "export function useAuth() {}",
             url: null,
+            fileUrl: null,
+            fileName: null,
+            fileSize: null,
             language: "TypeScript",
             itemTypeId: "type_snippet",
           });
@@ -172,6 +175,55 @@ describe("createItem", () => {
       { name: "react", slug: "react" },
       { name: "auth", slug: "auth" },
     ]);
+  });
+
+  it("creates file items with file metadata and FILE content type", async () => {
+    const { createItem } = await import("./items");
+
+    await createItem(
+      {
+        userId: "user_123",
+        data: {
+          typeSlug: "file",
+          title: "Architecture Notes",
+          description: "System notes.",
+          content: null,
+          url: null,
+          fileUrl: "uploads/user_123/upload_123-architecture-notes.md",
+          fileName: "architecture-notes.md",
+          fileSize: 2048,
+          language: null,
+          tags: ["architecture"],
+        },
+      },
+      {
+        findItemTypeBySlug: async () => ({
+          id: "type_file",
+        }),
+        createItemRecord: async (input) => {
+          assert.deepEqual(input.data, {
+            title: "Architecture Notes",
+            description: "System notes.",
+            contentType: "FILE",
+            content: null,
+            url: null,
+            fileUrl: "uploads/user_123/upload_123-architecture-notes.md",
+            fileName: "architecture-notes.md",
+            fileSize: 2048,
+            language: null,
+            itemTypeId: "type_file",
+          });
+          return {
+            id: "item_file",
+          };
+        },
+        upsertTag: async (input) => ({
+          id: `tag_${input.slug}`,
+        }),
+        createItemTags: async () => undefined,
+        findItemDetail: async () => null,
+      },
+    );
   });
 });
 
@@ -338,6 +390,7 @@ describe("deleteItem", () => {
           calls.push(`findOwnedItem:${input.itemId}:${input.userId}`);
           return {
             id: input.itemId,
+            fileUrl: null,
           };
         },
         deleteItemRecord: async (itemId) => {
@@ -346,10 +399,36 @@ describe("deleteItem", () => {
       },
     );
 
-    assert.equal(result, true);
+    assert.deepEqual(result, {
+      id: "item_123",
+      fileUrl: null,
+    });
     assert.deepEqual(calls, [
       "findOwnedItem:item_123:user_123",
       "deleteItemRecord:item_123",
     ]);
+  });
+
+  it("returns deleted file metadata so storage can be cleaned up", async () => {
+    const { deleteItem } = await import("./items");
+
+    const result = await deleteItem(
+      {
+        itemId: "item_file",
+        userId: "user_123",
+      },
+      {
+        findOwnedItem: async () => ({
+          id: "item_file",
+          fileUrl: "uploads/user_123/upload_123-architecture-notes.md",
+        }),
+        deleteItemRecord: async () => undefined,
+      },
+    );
+
+    assert.deepEqual(result, {
+      id: "item_file",
+      fileUrl: "uploads/user_123/upload_123-architecture-notes.md",
+    });
   });
 });

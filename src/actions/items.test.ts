@@ -142,6 +142,102 @@ describe("createItem action", () => {
     });
   });
 
+  it("creates file items with uploaded file metadata", async () => {
+    const { handleCreateItem } = await import("./items");
+
+    const fileDetail: ItemDetail = {
+      ...itemDetail,
+      id: "item_file",
+      title: "Architecture Notes",
+      contentType: "FILE",
+      content: null,
+      fileUrl: "uploads/demo_user/upload_123-architecture-notes.md",
+      fileName: "architecture-notes.md",
+      fileSize: 2048,
+      language: undefined,
+      typeSlug: "file",
+      itemType: {
+        id: "type_file",
+        name: "file",
+        slug: "file",
+        icon: "File",
+        color: "#6b7280",
+      },
+    };
+
+    const result = await handleCreateItem(
+      {
+        typeSlug: "file",
+        title: "  Architecture Notes  ",
+        description: "  System notes  ",
+        fileUrl: "uploads/demo_user/upload_123-architecture-notes.md",
+        fileName: "  architecture-notes.md  ",
+        fileSize: 2048,
+        tags: ["architecture"],
+      },
+      {
+        auth: async () => ({
+          user: {
+            id: "signed_in_user",
+          },
+        }),
+        createItem: async (input) => {
+          assert.deepEqual(input, {
+            userId: "demo_user",
+            data: {
+              typeSlug: "file",
+              title: "Architecture Notes",
+              description: "System notes",
+              content: null,
+              url: null,
+              fileUrl: "uploads/demo_user/upload_123-architecture-notes.md",
+              fileName: "architecture-notes.md",
+              fileSize: 2048,
+              language: null,
+              tags: ["architecture"],
+            },
+          });
+          return fileDetail;
+        },
+        getDashboardUserForSession: async () => ({
+          id: "demo_user",
+        }),
+      },
+    );
+
+    assert.deepEqual(result, {
+      success: true,
+      data: fileDetail,
+    });
+  });
+
+  it("requires uploaded file metadata for file and image items", async () => {
+    const { handleCreateItem } = await import("./items");
+
+    const result = await handleCreateItem(
+      {
+        typeSlug: "image",
+        title: "Screenshot",
+      },
+      {
+        auth: async () => {
+          throw new Error("auth should not be called");
+        },
+        createItem: async () => {
+          throw new Error("createItem should not be called");
+        },
+        getDashboardUserForSession: async () => {
+          throw new Error("getDashboardUserForSession should not be called");
+        },
+      },
+    );
+
+    assert.deepEqual(result, {
+      success: false,
+      error: "Upload is required.",
+    });
+  });
+
   it("returns a create error when the data layer cannot create the item", async () => {
     const { handleCreateItem } = await import("./items");
 
@@ -396,7 +492,10 @@ describe("deleteItem action", () => {
           itemId: "item_123",
           userId: "demo_user",
         });
-        return true;
+        return {
+          id: "item_123",
+          fileUrl: null,
+        };
       },
       getDashboardUserForSession: async (sessionUser) => {
         assert.deepEqual(sessionUser, {
@@ -411,6 +510,36 @@ describe("deleteItem action", () => {
     assert.deepEqual(result, {
       success: true,
     });
+  });
+
+  it("deletes stored files after deleting file items", async () => {
+    const { handleDeleteItem } = await import("./items");
+    const deletedFiles: string[] = [];
+
+    const result = await handleDeleteItem("item_file", {
+      auth: async () => ({
+        user: {
+          id: "user_123",
+        },
+      }),
+      deleteItem: async () => ({
+        id: "item_file",
+        fileUrl: "uploads/user_123/upload_123-architecture-notes.md",
+      }),
+      deleteStoredFile: async (fileUrl) => {
+        deletedFiles.push(fileUrl);
+      },
+      getDashboardUserForSession: async () => ({
+        id: "user_123",
+      }),
+    });
+
+    assert.deepEqual(result, {
+      success: true,
+    });
+    assert.deepEqual(deletedFiles, [
+      "uploads/user_123/upload_123-architecture-notes.md",
+    ]);
   });
 
   it("returns a not-found error for items outside the resolved dashboard user", async () => {

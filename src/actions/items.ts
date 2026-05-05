@@ -9,10 +9,12 @@ import {
   deleteItem as deleteItemRecord,
   updateItem as updateItemRecord,
   type CreateItemInput,
+  type DeletedItem,
   type ItemDetail,
   type DeleteItemInput,
   type UpdateItemInput,
 } from "@/lib/db/items";
+import { deleteStoredFile } from "@/lib/storage/r2";
 
 const nullableTrimmedString = z.preprocess(
   (value) => {
@@ -40,6 +42,17 @@ const nullableUrlString = z.preprocess(
   z.string().url("URL must be valid.").nullable(),
 );
 
+const nullablePositiveInteger = z.preprocess(
+  (value) => {
+    if (value === "" || value === undefined || value === null) {
+      return null;
+    }
+
+    return value;
+  },
+  z.number().int().positive().nullable(),
+);
+
 const updateItemSchema = z.object({
   title: z.string().trim().min(1, "Title is required."),
   description: nullableTrimmedString,
@@ -51,11 +64,14 @@ const updateItemSchema = z.object({
 
 const createItemSchema = z
   .object({
-    typeSlug: z.enum(["snippet", "prompt", "command", "note", "link"]),
+    typeSlug: z.enum(["snippet", "prompt", "command", "note", "link", "file", "image"]),
     title: z.string().trim().min(1, "Title is required."),
     description: nullableTrimmedString,
     content: nullableTrimmedString,
     url: nullableUrlString,
+    fileUrl: nullableTrimmedString,
+    fileName: nullableTrimmedString,
+    fileSize: nullablePositiveInteger,
     language: nullableTrimmedString,
     tags: z.array(z.string().trim().min(1, "Tags cannot be empty.")).default([]),
   })
@@ -67,13 +83,36 @@ const createItemSchema = z
         path: ["url"],
       });
     }
+
+    if (
+      (data.typeSlug === "file" || data.typeSlug === "image") &&
+      (!data.fileUrl || !data.fileName || !data.fileSize)
+    ) {
+      context.addIssue({
+        code: "custom",
+        message: "Upload is required.",
+        path: ["fileUrl"],
+      });
+    }
   })
   .transform((data) => ({
     typeSlug: data.typeSlug,
     title: data.title,
     description: data.description,
-    content: data.typeSlug === "link" ? null : data.content,
+    content:
+      data.typeSlug === "link" ||
+      data.typeSlug === "file" ||
+      data.typeSlug === "image"
+        ? null
+        : data.content,
     url: data.typeSlug === "link" ? data.url : null,
+    ...(data.typeSlug === "file" || data.typeSlug === "image"
+      ? {
+          fileUrl: data.fileUrl,
+          fileName: data.fileName,
+          fileSize: data.fileSize,
+        }
+      : {}),
     language:
       data.typeSlug === "snippet" || data.typeSlug === "command"
         ? data.language
@@ -107,7 +146,8 @@ type DeleteItemActionDeps = {
       id?: string | null;
     };
   } | null>;
-  deleteItem: (input: DeleteItemInput) => Promise<boolean>;
+  deleteItem: (input: DeleteItemInput) => Promise<DeletedItem | false | null>;
+  deleteStoredFile?: (fileUrl: string) => Promise<void>;
   getDashboardUserForSession: typeof getDashboardUserForSession;
 };
 
@@ -155,6 +195,7 @@ const defaultUpdateItemActionDeps: UpdateItemActionDeps = {
 const defaultDeleteItemActionDeps: DeleteItemActionDeps = {
   auth,
   deleteItem: deleteItemRecord,
+  deleteStoredFile,
   getDashboardUserForSession,
 };
 
@@ -310,16 +351,24 @@ export async function handleDeleteItem(
     };
   }
 
-  const didDelete = await deps.deleteItem({
+  const deletedItem = await deps.deleteItem({
     itemId: normalizedItemId,
     userId: dashboardUser.id,
   });
 
-  if (!didDelete) {
+  if (!deletedItem) {
     return {
       success: false,
       error: "Item not found.",
     };
+  }
+
+  if (typeof deletedItem !== "boolean" && deletedItem.fileUrl && deps.deleteStoredFile) {
+    try {
+      await deps.deleteStoredFile(deletedItem.fileUrl);
+    } catch (error) {
+      console.warn("Unable to delete stored file for item.", error);
+    }
   }
 
   return {

@@ -7,9 +7,11 @@ import {
   Circle,
   Code2,
   Copy,
+  Download,
   ExternalLink,
   FileText,
   Folder,
+  Image as ImageIcon,
   LoaderCircle,
   Pencil,
   Pin,
@@ -601,6 +603,14 @@ function ItemActionBar({
     );
   }
 
+  function downloadItem() {
+    if (!item?.fileUrl) {
+      return;
+    }
+
+    window.location.href = getItemDownloadUrl(item.id);
+  }
+
   return (
     <div className="flex flex-wrap items-center gap-2 border-b border-devstash-line px-5 py-4 sm:px-7">
       <ActionButton
@@ -622,6 +632,14 @@ function ItemActionBar({
         label="Copy"
         onClick={copyItem}
       />
+      {item?.fileUrl ? (
+        <ActionButton
+          disabled={!item}
+          icon={<Download className="size-5" />}
+          label="Download"
+          onClick={downloadItem}
+        />
+      ) : null}
       <ActionButton
         className="sm:ml-auto"
         disabled={!item}
@@ -1182,6 +1200,32 @@ function ItemContent({ item }: { item: ItemDetail }) {
     );
   }
 
+  if (item.typeSlug === "image" && item.fileUrl) {
+    return (
+      <div className="overflow-hidden rounded-lg border border-devstash-line bg-white/[0.03]">
+        <div className="flex aspect-video items-center justify-center bg-black/30">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            alt={item.fileName ?? item.title}
+            className="max-h-full max-w-full object-contain"
+            src={getItemDownloadUrl(item.id, "inline")}
+          />
+        </div>
+        <div className="flex items-center gap-3 border-t border-devstash-line p-4 text-zinc-100">
+          <ImageIcon aria-hidden="true" className="size-5 text-muted-foreground" />
+          <div className="min-w-0 flex-1">
+            <p className="truncate">{item.fileName ?? "Attached image"}</p>
+            {item.fileSize ? (
+              <p className="mt-1 text-sm text-muted-foreground">
+                {formatFileSize(item.fileSize)}
+              </p>
+            ) : null}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   if (item.fileName || item.fileUrl) {
     return (
       <div className="rounded-lg border border-devstash-line bg-white/[0.03] p-4">
@@ -1193,6 +1237,15 @@ function ItemContent({ item }: { item: ItemDetail }) {
           <p className="mt-2 text-sm text-muted-foreground">
             {formatFileSize(item.fileSize)}
           </p>
+        ) : null}
+        {item.fileUrl ? (
+          <a
+            className="mt-4 inline-flex items-center gap-2 rounded-lg border border-devstash-line bg-white/[0.04] px-3 py-2 text-sm text-zinc-100 transition hover:bg-white/[0.08]"
+            href={getItemDownloadUrl(item.id)}
+          >
+            <Download aria-hidden="true" className="size-4" />
+            Download
+          </a>
         ) : null}
       </div>
     );
@@ -1389,4 +1442,13 @@ function formatFileSize(fileSize: number) {
   }
 
   return `${(fileSize / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+function getItemDownloadUrl(
+  itemId: string,
+  disposition: "attachment" | "inline" = "attachment",
+) {
+  const path = `/api/uploads/${encodeURIComponent(itemId)}/download`;
+
+  return disposition === "inline" ? `${path}?disposition=inline` : path;
 }

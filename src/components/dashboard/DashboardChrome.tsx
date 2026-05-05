@@ -39,6 +39,7 @@ type DashboardChromeProps = {
   collections: DashboardCollection[];
   currentUser: CurrentUser;
   itemTypes: DashboardItemType[];
+  newItemInitialTypeSlug?: string | null;
 };
 
 export function DashboardChrome({
@@ -46,6 +47,7 @@ export function DashboardChrome({
   collections,
   currentUser,
   itemTypes,
+  newItemInitialTypeSlug,
 }: DashboardChromeProps) {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
@@ -65,6 +67,7 @@ export function DashboardChrome({
 
         <div className="min-w-0 flex-1">
           <TopBar
+            newItemInitialTypeSlug={newItemInitialTypeSlug}
             itemTypes={itemTypes}
             onOpenMobileSidebar={() => setIsMobileSidebarOpen(true)}
           />
@@ -77,9 +80,11 @@ export function DashboardChrome({
 
 function TopBar({
   itemTypes,
+  newItemInitialTypeSlug,
   onOpenMobileSidebar,
 }: {
   itemTypes: DashboardItemType[];
+  newItemInitialTypeSlug?: string | null;
   onOpenMobileSidebar: () => void;
 }) {
   return (
@@ -107,7 +112,10 @@ function TopBar({
         />
       </div>
 
-      <NewItemDialog itemTypes={itemTypes} />
+      <NewItemDialog
+        initialTypeSlug={newItemInitialTypeSlug}
+        itemTypes={itemTypes}
+      />
     </header>
   );
 }
