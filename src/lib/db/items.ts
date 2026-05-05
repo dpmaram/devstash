@@ -47,6 +47,9 @@ type ItemDetailOptions = {
 export type CreateItemData = {
   content: string | null;
   description: string | null;
+  fileName?: string | null;
+  fileSize?: number | null;
+  fileUrl?: string | null;
   language: string | null;
   tags: string[];
   title: string;
@@ -79,6 +82,11 @@ export type DeleteItemInput = {
   userId: string;
 };
 
+export type DeletedItem = {
+  fileUrl: string | null;
+  id: string;
+};
+
 type NormalizedItemTag = {
   name: string;
   slug: string;
@@ -95,7 +103,7 @@ type ItemTypeIdRecord = {
 type CreateItemDeps = {
   createItemRecord: (input: {
     data: Omit<CreateItemData, "tags" | "typeSlug"> & {
-      contentType: "TEXT" | "URL";
+      contentType: "FILE" | "TEXT" | "URL";
       itemTypeId: string;
     };
     userId: string;
@@ -138,7 +146,7 @@ type DeleteItemDeps = {
   findOwnedItem: (input: {
     itemId: string;
     userId: string;
-  }) => Promise<{ id: string } | null>;
+  }) => Promise<DeletedItem | null>;
 };
 
 export function normalizeItemTypeRouteSlug(value: string) {
@@ -183,8 +191,16 @@ export function normalizeItemTags(tags: string[]) {
   return Array.from(tagsBySlug.values());
 }
 
-function getCreateItemContentType(typeSlug: string): "TEXT" | "URL" {
-  return typeSlug === "link" ? "URL" : "TEXT";
+function getCreateItemContentType(typeSlug: string): "FILE" | "TEXT" | "URL" {
+  if (typeSlug === "link") {
+    return "URL";
+  }
+
+  if (typeSlug === "file" || typeSlug === "image") {
+    return "FILE";
+  }
+
+  return "TEXT";
 }
 
 function getCreateItemFields(data: CreateItemData, itemTypeId: string) {
@@ -196,6 +212,9 @@ function getCreateItemFields(data: CreateItemData, itemTypeId: string) {
     contentType,
     content: contentType === "TEXT" ? data.content : null,
     url: contentType === "URL" ? data.url : null,
+    fileUrl: contentType === "FILE" ? data.fileUrl ?? null : null,
+    fileName: contentType === "FILE" ? data.fileName ?? null : null,
+    fileSize: contentType === "FILE" ? data.fileSize ?? null : null,
     language:
       data.typeSlug === "snippet" || data.typeSlug === "command"
         ? data.language
@@ -349,6 +368,7 @@ async function findOwnedItem(input: { itemId: string; userId: string }) {
     },
     select: {
       id: true,
+      fileUrl: true,
     },
   });
 }
@@ -432,10 +452,10 @@ async function findItemTypeBySlug(slug: string) {
 }
 
 async function createItemRecord(input: {
-  data: Omit<CreateItemData, "tags" | "typeSlug"> & {
-    contentType: "TEXT" | "URL";
-    itemTypeId: string;
-  };
+    data: Omit<CreateItemData, "tags" | "typeSlug"> & {
+      contentType: "FILE" | "TEXT" | "URL";
+      itemTypeId: string;
+    };
   userId: string;
 }) {
   return prisma.item.create({
@@ -583,5 +603,5 @@ export async function deleteItem(
 
   await deps.deleteItemRecord(input.itemId);
 
-  return true;
+  return item;
 }

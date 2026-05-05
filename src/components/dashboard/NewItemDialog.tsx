@@ -13,6 +13,10 @@ import { useState } from "react";
 
 import { createItem as createItemAction } from "@/actions/items";
 import { CodeEditor } from "@/components/dashboard/CodeEditor";
+import {
+  FileUpload,
+  type UploadedFileDraft,
+} from "@/components/dashboard/FileUpload";
 import { MarkdownEditor } from "@/components/dashboard/MarkdownEditor";
 import {
   itemTypeIconClasses,
@@ -32,6 +36,7 @@ import {
   shouldUseCodeEditor,
 } from "@/lib/code-editor";
 import { shouldUseMarkdownEditor } from "@/lib/markdown-editor";
+import { isUploadItemTypeSlug } from "@/lib/uploads";
 import type { DashboardItemType } from "@/lib/db/items";
 import type { ItemTypeSlug } from "@/lib/mock-data";
 import { cn } from "@/lib/utils";
@@ -65,7 +70,8 @@ export function NewItemDialog({
   const typeOptions = getCreateableItemTypes(itemTypes);
   const canSave =
     draft.title.trim().length > 0 &&
-    (draft.typeSlug !== "link" || draft.url.trim().length > 0);
+    (draft.typeSlug !== "link" || draft.url.trim().length > 0) &&
+    (!isUploadItemTypeSlug(draft.typeSlug) || draft.fileUrl.trim().length > 0);
 
   function updateDraft(nextDraft: Partial<NewItemDraft>) {
     setDraft((currentDraft) => ({
@@ -105,6 +111,9 @@ export function NewItemDialog({
         description: draft.description,
         content: canEditContent(draft.typeSlug) ? draft.content : null,
         url: draft.typeSlug === "link" ? draft.url : null,
+        fileUrl: isUploadItemTypeSlug(draft.typeSlug) ? draft.fileUrl : null,
+        fileName: isUploadItemTypeSlug(draft.typeSlug) ? draft.fileName : null,
+        fileSize: isUploadItemTypeSlug(draft.typeSlug) ? draft.fileSize : null,
         language: canEditLanguage(draft.typeSlug) ? draft.language : null,
         tags: getDraftTags(draft.tagsText),
       });
@@ -203,7 +212,7 @@ export function NewItemDialog({
                   <p className="text-sm font-medium text-muted-foreground">
                     Type
                   </p>
-                  <div className="grid gap-2 sm:grid-cols-5">
+                  <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
                     {typeOptions.map((itemType) => {
                       const isSelected = itemType.slug === draft.typeSlug;
 
@@ -273,7 +282,22 @@ export function NewItemDialog({
                   />
                 </EditField>
 
-                {canEditContent(draft.typeSlug) ? (
+                {isUploadItemTypeSlug(draft.typeSlug) ? (
+                  <EditField label="Upload" required>
+                    <FileUpload
+                      disabled={isSaving}
+                      onChange={(file) =>
+                        updateDraft({
+                          fileName: file?.fileName ?? "",
+                          fileSize: file?.fileSize ?? null,
+                          fileUrl: file?.fileUrl ?? "",
+                        })
+                      }
+                      typeSlug={draft.typeSlug}
+                      value={getUploadedFileDraft(draft)}
+                    />
+                  </EditField>
+                ) : canEditContent(draft.typeSlug) ? (
                   <EditField label="Content">
                     {shouldUseCodeEditor(draft.typeSlug) ? (
                       <CodeEditor
@@ -490,11 +514,26 @@ function getDraftTags(tagsText: string) {
 }
 
 function canEditContent(typeSlug: CreateItemTypeSlug) {
-  return typeSlug !== "link";
+  return !["link", "file", "image"].includes(typeSlug);
 }
 
 function canEditLanguage(typeSlug: CreateItemTypeSlug) {
   return typeSlug === "snippet" || typeSlug === "command";
+}
+
+function getUploadedFileDraft(
+  draft: NewItemDraft,
+): UploadedFileDraft | null {
+  if (!draft.fileUrl || !draft.fileName || !draft.fileSize) {
+    return null;
+  }
+
+  return {
+    contentType: "",
+    fileName: draft.fileName,
+    fileSize: draft.fileSize,
+    fileUrl: draft.fileUrl,
+  };
 }
 
 function renderItemTypeIcon(slug: string) {

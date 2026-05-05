@@ -13,8 +13,8 @@ describe("isCreateItemTypeSlug", () => {
     expect(isCreateItemTypeSlug("command")).toBe(true);
     expect(isCreateItemTypeSlug("note")).toBe(true);
     expect(isCreateItemTypeSlug("link")).toBe(true);
-    expect(isCreateItemTypeSlug("file")).toBe(false);
-    expect(isCreateItemTypeSlug("image")).toBe(false);
+    expect(isCreateItemTypeSlug("file")).toBe(true);
+    expect(isCreateItemTypeSlug("image")).toBe(true);
   });
 });
 
@@ -25,8 +25,6 @@ describe("resolveCreateItemTypeSlug", () => {
   });
 
   test("falls back to snippet when no supported type is requested", () => {
-    expect(resolveCreateItemTypeSlug("file")).toBe("snippet");
-    expect(resolveCreateItemTypeSlug("image")).toBe("snippet");
     expect(resolveCreateItemTypeSlug("snippets")).toBe("snippet");
     expect(resolveCreateItemTypeSlug(null)).toBe("snippet");
   });
@@ -42,6 +40,9 @@ describe("createInitialNewItemDraft", () => {
       title: "",
       typeSlug: "note",
       url: "",
+      fileName: "",
+      fileSize: null,
+      fileUrl: "",
     });
   });
 });

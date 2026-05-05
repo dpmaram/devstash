@@ -1,8 +1,18 @@
-export type CreateItemTypeSlug = "snippet" | "prompt" | "command" | "note" | "link";
+export type CreateItemTypeSlug =
+  | "snippet"
+  | "prompt"
+  | "command"
+  | "note"
+  | "link"
+  | "file"
+  | "image";
 
 export type NewItemDraft = {
   content: string;
   description: string;
+  fileName: string;
+  fileSize: number | null;
+  fileUrl: string;
   language: string;
   tagsText: string;
   title: string;
@@ -16,6 +26,8 @@ export const createableTypeOrder: CreateItemTypeSlug[] = [
   "command",
   "note",
   "link",
+  "file",
+  "image",
 ];
 
 const createableTypeSlugs = new Set<string>(createableTypeOrder);
@@ -38,6 +50,9 @@ export function createInitialNewItemDraft(
   return {
     content: "",
     description: "",
+    fileName: "",
+    fileSize: null,
+    fileUrl: "",
     language: "",
     tagsText: "",
     title: "",

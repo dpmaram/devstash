@@ -52,6 +52,7 @@ export default async function ItemsByTypePage({ params }: ItemsByTypePageProps) 
       collections={sidebarCollections}
       currentUser={currentUser}
       itemTypes={itemTypes}
+      newItemInitialTypeSlug={canCreateItemType ? itemType.slug : null}
     >
       <section className="space-y-8 p-5 sm:p-6 lg:p-8">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
