@@ -1,35 +1,20 @@
-# Current Feature: File Upload with Cloudflare R2
+# Current Feature
 
 ## Status
 
 <!-- Not Started|In Progress|Completed -->
 
-In Progress
+Not Started
 
 ## Goals
 
 <!-- Goals & requirements -->
 
-- Create an upload API route backed by Cloudflare R2.
-- Keep Prisma/database item functions in `src/lib/db/items.ts`.
-- Create a drag-and-drop `FileUpload` component.
-- Update the create item modal to use `FileUpload` for file and image item types.
-- Delete uploaded files from R2 when items are deleted.
-- Create a download proxy API route to avoid CORS issues.
-- Add a download button in `ItemDrawer` for file types.
-- Show upload progress during uploads.
-- Display image previews for images and file info for files.
-- Enforce image and file size, extension, and MIME-type constraints from the spec.
 
 ## Notes
 
 <!-- Any extra notes -->
 
-- Loaded from `context/features/file-image-spec.md`.
-- Image uploads: max 5 MB; allowed extensions are `.png`, `.jpg`, `.jpeg`, `.gif`, `.webp`, and `.svg`.
-- File uploads: max 10 MB; allowed extensions are `.pdf`, `.txt`, `.md`, `.json`, `.yaml`, `.yml`, `.xml`, `.csv`, `.toml`, and `.ini`.
-- Allowed image MIME types: `image/png`, `image/jpeg`, `image/gif`, `image/webp`, and `image/svg+xml`.
-- Allowed file MIME types: `application/pdf`, `text/plain`, `text/markdown`, `application/json`, `application/x-yaml`, `text/yaml`, `application/xml`, `text/xml`, `text/csv`, and `application/toml`.
 
 ## History
 
@@ -163,3 +148,4 @@ In Progress
 - 2026-05-05 08:27 EDT - Started File Upload with Cloudflare R2.
 - 2026-05-05 08:42 EDT - Implemented File Upload with Cloudflare R2 with upload validation, R2 storage helpers, authenticated upload and download proxy routes, file/image create flow, drawer image preview/download controls, and R2 cleanup on item delete. Verified focused upload/data/action tests, full local tests, TypeScript, lint, production build, and git diff whitespace check.
 - 2026-05-05 09:29 EDT - Fixed type-page top-bar New Item behavior so file and image pages preselect their upload type from every add entry point. Verified full local tests, TypeScript, lint, production build, git diff whitespace check, and browser behavior on `/items/files`.
+- 2026-05-05 09:29 EDT - Completed File Upload with Cloudflare R2, merged it into `main`, deleted the local feature branch, and cleared current feature details.
