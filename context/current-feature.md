@@ -1,31 +1,18 @@
-# Current Feature: Add Items to Collections
+# Current Feature
 
 ## Status
 
 <!-- Not Started|In Progress|Completed -->
 
-In Progress
+Not Started
 
 ## Goals
 
 <!-- Goals & requirements -->
 
-- Add collection selection to the new item form.
-- Add collection selection to the edit item form.
-- Allow selecting one or multiple existing collections for an item.
-- Persist selected collection associations when creating an item.
-- Persist selected collection associations when updating an item.
-- Keep item and collection access user-scoped.
-- Follow existing item create/edit patterns for validation, server actions, data-layer helpers, UI state, and refresh behavior.
-
 ## Notes
 
 <!-- Any extra notes -->
-
-- The forms should select from available collections fetched for the current dashboard user.
-- Collection pages/display are explicitly out of scope for this feature.
-- New/edit item collection writes should support zero, one, or many selected collections.
-- Preserve the existing item create/edit UX while adding the collection picker.
 
 ## History
 
@@ -175,3 +162,4 @@ In Progress
 - 2026-05-06 09:09 EDT - Implemented Add Items to Collections with collection ID validation in item create/update server actions, user-owned collection checks and item-collection replacement in the data layer, collection pickers in new/edit item forms, and server-provided collection options across dashboard/type pages. Verified focused item tests, full local tests, lint, TypeScript, production build, whitespace check, and browser smoke checks for new/edit collection pickers.
 - 2026-05-06 09:18 EDT - Fixed Create Collection failures for stale sessions by verifying the session user still exists before using its id for dashboard writes, falling back to the dashboard user when needed. Verified the stale-session regression test, collection action tests, full local tests, lint, TypeScript, and browser collection creation.
 - 2026-05-06 09:25 EDT - Fixed collection slug links like `/collections/react-patterns` by adding a dynamic collection detail route, collection-by-slug lookup, and collection item listing query. Verified the route regression test, full local tests, lint, TypeScript, whitespace check, and browser rendering of `/collections/react-patterns`.
+- 2026-05-06 10:34 EDT - Completed collection management feature, merged it into `main`, deleted the local feature branch, and cleared current feature details.
