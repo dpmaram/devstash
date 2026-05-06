@@ -53,6 +53,7 @@ import {
   type FileIconTone,
 } from "@/lib/file-list";
 import { getImageThumbnailUrl } from "@/lib/image-gallery";
+import { getQuickCopyText } from "@/lib/item-copy";
 import type { ItemTypeSlug } from "@/lib/mock-data";
 import {
   getCodeEditorLanguage,
@@ -286,10 +287,12 @@ function ImageThumbnailCard({
   onOpen: (item: DashboardItem) => void;
 }) {
   return (
-    <button
-      className="group block w-full overflow-hidden rounded-lg border border-devstash-line bg-white/[0.025] text-left transition hover:border-white/20 hover:bg-white/[0.05] focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+    <div
+      className="group block w-full cursor-pointer overflow-hidden rounded-lg border border-devstash-line bg-white/[0.025] text-left transition hover:border-white/20 hover:bg-white/[0.05] focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
       onClick={() => onOpen(item)}
-      type="button"
+      onKeyDown={(event) => openItemFromKeyboard(event, item, onOpen)}
+      role="button"
+      tabIndex={0}
     >
       <div className="aspect-video overflow-hidden bg-white/[0.04]">
         {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -309,19 +312,22 @@ function ImageThumbnailCard({
               {item.updatedAt}
             </p>
           </div>
-          {item.isFavorite ? (
-            <Star
-              aria-hidden="true"
-              className="mt-0.5 size-4 shrink-0 fill-yellow-400 text-yellow-400"
-            />
-          ) : null}
+          <div className="flex shrink-0 items-center gap-1">
+            {item.isFavorite ? (
+              <Star
+                aria-hidden="true"
+                className="size-4 shrink-0 fill-yellow-400 text-yellow-400"
+              />
+            ) : null}
+            <QuickCopyButton item={item} />
+          </div>
         </div>
         <p className="mt-3 line-clamp-2 text-sm leading-6 text-zinc-400">
           {item.description}
         </p>
         <TagList tags={item.tags} />
       </div>
-    </button>
+    </div>
   );
 }
 
@@ -335,22 +341,11 @@ function FileItemRow({
   const fileName = item.fileName ?? item.title;
   const shouldShowTitle = item.title !== fileName;
 
-  function handleKeyDown(event: React.KeyboardEvent<HTMLDivElement>) {
-    if (event.target !== event.currentTarget) {
-      return;
-    }
-
-    if (event.key === "Enter" || event.key === " ") {
-      event.preventDefault();
-      onOpen(item);
-    }
-  }
-
   return (
     <div
       className="group flex w-full cursor-pointer flex-col gap-4 rounded-lg border border-devstash-line bg-white/[0.025] p-4 text-left transition hover:border-white/20 hover:bg-white/[0.05] focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 sm:flex-row sm:items-center sm:justify-between"
       onClick={() => onOpen(item)}
-      onKeyDown={handleKeyDown}
+      onKeyDown={(event) => openItemFromKeyboard(event, item, onOpen)}
       role="button"
       tabIndex={0}
     >
@@ -373,18 +368,21 @@ function FileItemRow({
         </div>
       </div>
 
-      <a
-        aria-label={`Download ${fileName}`}
-        className={cn(
-          buttonVariants({ size: "sm", variant: "outline" }),
-          "w-full border-devstash-line bg-white/[0.03] text-zinc-100 hover:bg-white/[0.08] sm:w-auto",
-        )}
-        href={getFileDownloadUrl(item.id)}
-        onClick={(event) => event.stopPropagation()}
-      >
-        <Download aria-hidden="true" className="size-4" />
-        Download
-      </a>
+      <div className="flex w-full items-center gap-2 sm:w-auto">
+        <QuickCopyButton item={item} />
+        <a
+          aria-label={`Download ${fileName}`}
+          className={cn(
+            buttonVariants({ size: "sm", variant: "outline" }),
+            "flex-1 border-devstash-line bg-white/[0.03] text-zinc-100 hover:bg-white/[0.08] sm:flex-none",
+          )}
+          href={getFileDownloadUrl(item.id)}
+          onClick={(event) => event.stopPropagation()}
+        >
+          <Download aria-hidden="true" className="size-4" />
+          Download
+        </a>
+      </div>
     </div>
   );
 }
@@ -432,11 +430,13 @@ function PinnedItemCard({
   onOpen: (item: DashboardItem) => void;
 }) {
   return (
-    <button
-      className="block w-full rounded-lg border border-l-4 border-devstash-line bg-white/[0.025] p-5 text-left transition hover:bg-white/[0.05] focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+    <div
+      className="group block w-full cursor-pointer rounded-lg border border-l-4 border-devstash-line bg-white/[0.025] p-5 text-left transition hover:bg-white/[0.05] focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
       onClick={() => onOpen(item)}
+      onKeyDown={(event) => openItemFromKeyboard(event, item, onOpen)}
+      role="button"
       style={getAccentBorderStyle(item.accentColor)}
-      type="button"
+      tabIndex={0}
     >
       <div className="flex items-start gap-4">
         <div className="flex size-12 shrink-0 items-center justify-center rounded-lg bg-white/[0.05]">
@@ -461,8 +461,9 @@ function PinnedItemCard({
           </p>
           <TagList tags={item.tags} />
         </div>
+        <QuickCopyButton item={item} />
       </div>
-    </button>
+    </div>
   );
 }
 
@@ -474,11 +475,13 @@ function RecentItemRow({
   onOpen: (item: DashboardItem) => void;
 }) {
   return (
-    <button
-      className="flex w-full items-start gap-4 rounded-lg border border-l-4 border-devstash-line bg-white/[0.025] p-4 text-left transition hover:bg-white/[0.05] focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+    <div
+      className="group flex w-full cursor-pointer items-start gap-4 rounded-lg border border-l-4 border-devstash-line bg-white/[0.025] p-4 text-left transition hover:bg-white/[0.05] focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
       onClick={() => onOpen(item)}
+      onKeyDown={(event) => openItemFromKeyboard(event, item, onOpen)}
+      role="button"
       style={getAccentBorderStyle(item.accentColor)}
-      type="button"
+      tabIndex={0}
     >
       <div className="flex size-11 shrink-0 items-center justify-center rounded-lg bg-white/[0.05]">
         {renderDashboardItemTypeIcon(item.typeSlug, "size-5")}
@@ -509,8 +512,78 @@ function RecentItemRow({
         </div>
         <TagList tags={item.tags} />
       </div>
-    </button>
+      <QuickCopyButton item={item} />
+    </div>
   );
+}
+
+function QuickCopyButton({
+  className,
+  item,
+}: {
+  className?: string;
+  item: DashboardItem;
+}) {
+  const [hasCopied, setHasCopied] = useState(false);
+
+  useEffect(() => {
+    if (!hasCopied) {
+      return;
+    }
+
+    const timeout = window.setTimeout(() => setHasCopied(false), 1500);
+
+    return () => window.clearTimeout(timeout);
+  }, [hasCopied]);
+
+  async function copyItem(event: React.MouseEvent<HTMLButtonElement>) {
+    event.preventDefault();
+    event.stopPropagation();
+
+    if (!navigator.clipboard) {
+      return;
+    }
+
+    await navigator.clipboard.writeText(getQuickCopyText(item));
+    setHasCopied(true);
+  }
+
+  return (
+    <Button
+      aria-label={hasCopied ? `Copied ${item.title}` : `Copy ${item.title}`}
+      className={cn(
+        "size-8 shrink-0 border border-white/10 bg-white/[0.04] text-zinc-300 transition hover:bg-white/[0.08] hover:text-white",
+        hasCopied && "text-emerald-300",
+        className,
+      )}
+      onClick={copyItem}
+      size="icon"
+      title={hasCopied ? "Copied" : "Copy"}
+      type="button"
+      variant="ghost"
+    >
+      {hasCopied ? (
+        <Check aria-hidden="true" className="size-4" />
+      ) : (
+        <Copy aria-hidden="true" className="size-4" />
+      )}
+    </Button>
+  );
+}
+
+function openItemFromKeyboard(
+  event: React.KeyboardEvent<HTMLElement>,
+  item: DashboardItem,
+  onOpen: (item: DashboardItem) => void,
+) {
+  if (event.target !== event.currentTarget) {
+    return;
+  }
+
+  if (event.key === "Enter" || event.key === " ") {
+    event.preventDefault();
+    onOpen(item);
+  }
 }
 
 function ItemDetailSheet({
