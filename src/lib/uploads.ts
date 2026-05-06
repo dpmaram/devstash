@@ -1,5 +1,7 @@
 export type UploadItemTypeSlug = "file" | "image";
 
+export const defaultUploadObjectKeyPrefix = "devstash/api/uploads/dm";
+
 type UploadCandidate = {
   name: string;
   size: number;
@@ -109,16 +111,25 @@ export function validateUploadCandidate(
 
 export function buildUploadObjectKey({
   fileName,
+  prefix = defaultUploadObjectKeyPrefix,
   uploadId,
   userId,
 }: {
   fileName: string;
+  prefix?: string;
   uploadId: string;
   userId: string;
 }) {
-  return `uploads/${sanitizePathSegment(userId)}/${sanitizePathSegment(
+  return `${normalizeUploadObjectKeyPrefix(prefix)}/${sanitizePathSegment(userId)}/${sanitizePathSegment(
     uploadId,
   )}-${sanitizeFileName(fileName)}`;
+}
+
+export function normalizeUploadObjectKeyPrefix(prefix: string) {
+  return prefix
+    .trim()
+    .replace(/^\/+|\/+$/g, "")
+    .replace(/\/+/g, "/");
 }
 
 export function getFileExtension(fileName: string) {

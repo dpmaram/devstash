@@ -73,6 +73,6 @@ describe("buildUploadObjectKey", () => {
         uploadId: "upload_123",
         userId: "user_123",
       }),
-    ).toBe("uploads/user_123/upload_123-my-file-final.pdf");
+    ).toBe("devstash/api/uploads/dm/user_123/upload_123-my-file-final.pdf");
   });
 });

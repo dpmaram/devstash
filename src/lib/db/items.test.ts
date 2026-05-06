@@ -189,7 +189,7 @@ describe("createItem", () => {
           description: "System notes.",
           content: null,
           url: null,
-          fileUrl: "uploads/user_123/upload_123-architecture-notes.md",
+          fileUrl: "devstash/api/uploads/dm/user_123/upload_123-architecture-notes.md",
           fileName: "architecture-notes.md",
           fileSize: 2048,
           language: null,
@@ -207,7 +207,7 @@ describe("createItem", () => {
             contentType: "FILE",
             content: null,
             url: null,
-            fileUrl: "uploads/user_123/upload_123-architecture-notes.md",
+            fileUrl: "devstash/api/uploads/dm/user_123/upload_123-architecture-notes.md",
             fileName: "architecture-notes.md",
             fileSize: 2048,
             language: null,
@@ -420,7 +420,7 @@ describe("deleteItem", () => {
       {
         findOwnedItem: async () => ({
           id: "item_file",
-          fileUrl: "uploads/user_123/upload_123-architecture-notes.md",
+          fileUrl: "devstash/api/uploads/dm/user_123/upload_123-architecture-notes.md",
         }),
         deleteItemRecord: async () => undefined,
       },
@@ -428,7 +428,7 @@ describe("deleteItem", () => {
 
     assert.deepEqual(result, {
       id: "item_file",
-      fileUrl: "uploads/user_123/upload_123-architecture-notes.md",
+      fileUrl: "devstash/api/uploads/dm/user_123/upload_123-architecture-notes.md",
     });
   });
 });

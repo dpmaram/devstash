@@ -4,7 +4,7 @@ import type { Session } from "next-auth";
 
 import { auth } from "@/auth";
 import { getDashboardUserForSession } from "@/lib/db/dashboard-user";
-import { putStoredFile } from "@/lib/storage/r2";
+import { getS3Config, putStoredFile } from "@/lib/storage/s3";
 import {
   buildUploadObjectKey,
   validateUploadCandidate,
@@ -16,6 +16,7 @@ type UploadRouteDeps = {
   auth: () => Promise<Session | null>;
   createUploadId: () => string;
   getDashboardUserForSession: typeof getDashboardUserForSession;
+  getUploadPrefix?: () => string;
   putStoredFile: typeof putStoredFile;
 };
 
@@ -23,6 +24,7 @@ const defaultUploadRouteDeps: UploadRouteDeps = {
   auth,
   createUploadId: randomUUID,
   getDashboardUserForSession,
+  getUploadPrefix: () => getS3Config().uploadPrefix,
   putStoredFile,
 };
 
@@ -97,17 +99,32 @@ export async function handleUploadFile(
 
   const fileUrl = buildUploadObjectKey({
     fileName: file.name,
+    prefix: deps.getUploadPrefix?.(),
     uploadId: deps.createUploadId(),
     userId: dashboardUser.id,
   });
   const body = new Uint8Array(await file.arrayBuffer());
 
-  await deps.putStoredFile({
-    body,
-    contentLength: file.size,
-    contentType: file.type,
-    key: fileUrl,
-  });
+  try {
+    await deps.putStoredFile({
+      body,
+      contentLength: file.size,
+      contentType: file.type,
+      key: fileUrl,
+    });
+  } catch (error) {
+    console.error("Unable to upload file to S3.", error);
+
+    return Response.json(
+      {
+        success: false,
+        error: "Unable to upload file. Check S3 bucket permissions.",
+      },
+      {
+        status: 502,
+      },
+    );
+  }
 
   return Response.json({
     success: true,

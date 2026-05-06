@@ -1,16 +1,19 @@
-# File Upload with Cloudflare R2
+# File Upload with AWS S3
 
 ## Overview
 
-Add file and image upload functionality using Cloudflare R2 storage.
+Add file and image upload functionality using AWS S3 storage.
+
+Uploads are stored in bucket `eapi-chc-dev-ets-attachments` under
+`devstash/api/uploads/dm`.
 
 ## Requirements
 
-- Create upload API route for R2
+- Create upload API route for S3
 - Stick to lib/db/items.ts for prisma/db functions
 - Create FileUpload component with drag-and-drop
 - Update create item modal to use FileUpload for file/image types
-- Delete files from R2 when items are deleted
+- Delete files from S3 when items are deleted
 - Create download proxy API route (avoids CORS issues)
 - Add download button in ItemDrawer for file types
 - Show upload progress indicator

@@ -84,6 +84,57 @@ describe("upload route", () => {
     });
   });
 
+  it("returns a JSON error when storage rejects the upload", async () => {
+    const route = (await import("./app/api/uploads/route")) as typeof import("./app/api/uploads/route") & {
+      handleUploadFile: (
+        request: Request,
+        deps: {
+          auth: () => Promise<{ user: { id: string } }>;
+          createUploadId: () => string;
+          getDashboardUserForSession: (sessionUser: {
+            id: string;
+          }) => Promise<{ id: string }>;
+          putStoredFile: () => Promise<never>;
+        },
+      ) => Promise<Response>;
+    };
+    const consoleErrors: unknown[][] = [];
+    const originalConsoleError = console.error;
+
+    console.error = (...args: unknown[]) => {
+      consoleErrors.push(args);
+    };
+
+    try {
+      const response = await route.handleUploadFile(
+        createUploadRequest("file", createFile("notes.md", "text/markdown")),
+        {
+          auth: async () => ({
+            user: {
+              id: "user_123",
+            },
+          }),
+          createUploadId: () => "upload_123",
+          getDashboardUserForSession: async () => ({
+            id: "user_123",
+          }),
+          putStoredFile: async () => {
+            throw new Error("Forbidden");
+          },
+        },
+      );
+
+      assert.equal(response.status, 502);
+      assert.deepEqual(await response.json(), {
+        success: false,
+        error: "Unable to upload file. Check S3 bucket permissions.",
+      });
+      assert.equal(consoleErrors.length, 1);
+    } finally {
+      console.error = originalConsoleError;
+    }
+  });
+
   it("stores a valid upload under a dashboard-user scoped key", async () => {
     const route = (await import("./app/api/uploads/route")) as typeof import("./app/api/uploads/route") & {
       handleUploadFile: (
@@ -133,7 +184,7 @@ describe("upload route", () => {
 
     assert.equal(response.status, 200);
     assert.deepEqual(storedKeys, [
-      "uploads/demo_user/upload_123-screen-shot.png",
+      "devstash/api/uploads/dm/demo_user/upload_123-screen-shot.png",
     ]);
     assert.deepEqual(await response.json(), {
       success: true,
@@ -141,7 +192,7 @@ describe("upload route", () => {
         contentType: "image/png",
         fileName: "Screen Shot.PNG",
         fileSize: 11,
-        fileUrl: "uploads/demo_user/upload_123-screen-shot.png",
+        fileUrl: "devstash/api/uploads/dm/demo_user/upload_123-screen-shot.png",
       },
     });
   });

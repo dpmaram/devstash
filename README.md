@@ -8,7 +8,7 @@ DevStash is a developer knowledge hub for snippets, commands, prompts, notes, fi
 - Tailwind CSS v4 and shadcn/ui-style components
 - Prisma ORM with PostgreSQL
 - Auth.js data model support
-- Planned Cloudflare R2 uploads and OpenAI-powered assistive features
+- AWS S3 uploads and OpenAI-powered assistive features
 
 ## Local Development
 

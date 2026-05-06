@@ -151,7 +151,7 @@ describe("createItem action", () => {
       title: "Architecture Notes",
       contentType: "FILE",
       content: null,
-      fileUrl: "uploads/demo_user/upload_123-architecture-notes.md",
+      fileUrl: "devstash/api/uploads/dm/demo_user/upload_123-architecture-notes.md",
       fileName: "architecture-notes.md",
       fileSize: 2048,
       language: undefined,
@@ -170,7 +170,7 @@ describe("createItem action", () => {
         typeSlug: "file",
         title: "  Architecture Notes  ",
         description: "  System notes  ",
-        fileUrl: "uploads/demo_user/upload_123-architecture-notes.md",
+        fileUrl: "devstash/api/uploads/dm/demo_user/upload_123-architecture-notes.md",
         fileName: "  architecture-notes.md  ",
         fileSize: 2048,
         tags: ["architecture"],
@@ -190,7 +190,7 @@ describe("createItem action", () => {
               description: "System notes",
               content: null,
               url: null,
-              fileUrl: "uploads/demo_user/upload_123-architecture-notes.md",
+              fileUrl: "devstash/api/uploads/dm/demo_user/upload_123-architecture-notes.md",
               fileName: "architecture-notes.md",
               fileSize: 2048,
               language: null,
@@ -524,7 +524,7 @@ describe("deleteItem action", () => {
       }),
       deleteItem: async () => ({
         id: "item_file",
-        fileUrl: "uploads/user_123/upload_123-architecture-notes.md",
+        fileUrl: "devstash/api/uploads/dm/user_123/upload_123-architecture-notes.md",
       }),
       deleteStoredFile: async (fileUrl) => {
         deletedFiles.push(fileUrl);
@@ -538,7 +538,7 @@ describe("deleteItem action", () => {
       success: true,
     });
     assert.deepEqual(deletedFiles, [
-      "uploads/user_123/upload_123-architecture-notes.md",
+      "devstash/api/uploads/dm/user_123/upload_123-architecture-notes.md",
     ]);
   });
 

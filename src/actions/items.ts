@@ -14,7 +14,7 @@ import {
   type DeleteItemInput,
   type UpdateItemInput,
 } from "@/lib/db/items";
-import { deleteStoredFile } from "@/lib/storage/r2";
+import { deleteStoredFile } from "@/lib/storage/s3";
 
 const nullableTrimmedString = z.preprocess(
   (value) => {

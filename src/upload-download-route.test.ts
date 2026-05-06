@@ -12,7 +12,7 @@ const fileItem: ItemDetail = {
   contentType: "FILE",
   content: null,
   url: null,
-  fileUrl: "uploads/user_123/upload_123-architecture-notes.md",
+  fileUrl: "devstash/api/uploads/dm/user_123/upload_123-architecture-notes.md",
   fileName: "architecture-notes.md",
   fileSize: 11,
   language: undefined,
@@ -92,7 +92,10 @@ describe("upload download route", () => {
           return fileItem;
         },
         getStoredFile: async (fileUrl) => {
-          assert.equal(fileUrl, "uploads/user_123/upload_123-architecture-notes.md");
+          assert.equal(
+            fileUrl,
+            "devstash/api/uploads/dm/user_123/upload_123-architecture-notes.md",
+          );
           return {
             body: new TextEncoder().encode("hello world"),
             contentLength: 11,

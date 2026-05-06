@@ -3,7 +3,7 @@ import type { Session } from "next-auth";
 import { auth } from "@/auth";
 import { getDashboardUserForSession } from "@/lib/db/dashboard-user";
 import { getItemDetail } from "@/lib/db/items";
-import { getStoredFile } from "@/lib/storage/r2";
+import { getStoredFile } from "@/lib/storage/s3";
 
 export const runtime = "nodejs";
 

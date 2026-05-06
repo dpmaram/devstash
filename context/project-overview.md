@@ -117,7 +117,7 @@ flowchart LR
   N --> API[Route Handlers / Server Actions]
   API --> P[Prisma ORM]
   P --> DB[(Neon Postgres)]
-  API --> R2[Cloudflare R2]
+  API --> S3[AWS S3]
   API --> OAI[OpenAI API]
   API --> C[(Redis Cache - optional)]
 ```
@@ -128,7 +128,7 @@ flowchart LR
 - **Database**: Neon PostgreSQL
 - **ORM**: Prisma ORM
 - **Auth**: Auth.js with GitHub OAuth and credentials
-- **Storage**: Cloudflare R2 for uploaded files/images
+- **Storage**: AWS S3 for uploaded files/images
 - **AI**: OpenAI `gpt-5-nano`
 - **Caching**: Redis optional for search, AI job state, and rate limiting
 
@@ -330,7 +330,7 @@ Guardrails:
 - [Tailwind CSS v4](https://tailwindcss.com/blog/tailwindcss-v4)
 - [shadcn/ui Docs](https://ui.shadcn.com/docs)
 - [Neon Docs](https://neon.tech/docs)
-- [Cloudflare R2 Docs](https://developers.cloudflare.com/r2/)
+- [Amazon S3 Docs](https://docs.aws.amazon.com/s3/)
 
 ## 12. Product North Star
 

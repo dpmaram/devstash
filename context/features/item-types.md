@@ -98,7 +98,7 @@ DevStash uses 7 system-defined item types to categorize developer resources. Eac
 **Purpose:** Upload and store documents, configuration files, and other file types.
 
 **Key Fields Used:**
-- `fileUrl` - Cloudflare R2 URL for the uploaded file
+- `fileUrl` - AWS S3 object key for the uploaded file
 - `fileName` - Original filename
 - `fileSize` - Size in bytes
 - `description` - What the file contains
@@ -118,7 +118,7 @@ DevStash uses 7 system-defined item types to categorize developer resources. Eac
 **Purpose:** Store screenshots, diagrams, design assets, and visual references.
 
 **Key Fields Used:**
-- `fileUrl` - Cloudflare R2 URL for the image
+- `fileUrl` - AWS S3 object key for the image
 - `fileName` - Original filename
 - `fileSize` - Size in bytes
 - `description` - What the image shows
@@ -150,7 +150,7 @@ Items are classified by their `ContentType` enum:
 | ContentType | Item Types          | Storage Method      |
 | ----------- | ------------------- | ------------------- |
 | `TEXT`      | snippet, prompt, command, note | `content` field (text blob) |
-| `FILE`      | file, image         | `fileUrl` (Cloudflare R2) |
+| `FILE`      | file, image         | `fileUrl` (AWS S3 object key) |
 | `URL`       | link                | `url` field         |
 
 ---
