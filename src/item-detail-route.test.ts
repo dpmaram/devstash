@@ -54,7 +54,7 @@ describe("item detail route", () => {
   });
 
   it("returns 401 when the user is not signed in", async () => {
-    const route = (await import("./app/api/items/[id]/route")) as typeof import("./app/api/items/[id]/route") & {
+    const route = (await import("./app/api/items/[id]/route-handler")) as unknown as {
       handleGetItemDetail: (
         request: Request,
         context: { params: Promise<{ id: string }> },
@@ -90,7 +90,7 @@ describe("item detail route", () => {
   });
 
   it("returns 404 when the item does not belong to the signed-in user", async () => {
-    const route = (await import("./app/api/items/[id]/route")) as typeof import("./app/api/items/[id]/route") & {
+    const route = (await import("./app/api/items/[id]/route-handler")) as unknown as {
       handleGetItemDetail: (
         request: Request,
         context: { params: Promise<{ id: string }> },
@@ -144,7 +144,7 @@ describe("item detail route", () => {
   });
 
   it("returns the signed-in user's item detail", async () => {
-    const route = (await import("./app/api/items/[id]/route")) as typeof import("./app/api/items/[id]/route") & {
+    const route = (await import("./app/api/items/[id]/route-handler")) as unknown as {
       handleGetItemDetail: (
         request: Request,
         context: { params: Promise<{ id: string }> },

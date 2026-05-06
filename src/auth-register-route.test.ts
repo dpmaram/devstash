@@ -67,7 +67,7 @@ describe("registration route", () => {
   });
 
   it("returns a 429 response when registration attempts are rate limited", async () => {
-    const route = (await import("./app/api/auth/register/route")) as typeof import("./app/api/auth/register/route") & {
+    const route = (await import("./app/api/auth/register/route-handler")) as unknown as {
       handleRegisterPost: (
         request: Request,
         deps: {
@@ -108,5 +108,60 @@ describe("registration route", () => {
       success: false,
       error: "Too many attempts. Please try again in 1 minute.",
     });
+  });
+
+  it("creates verification email deps without trusting the request origin", async () => {
+    const route = (await import("./app/api/auth/register/route-handler")) as unknown as {
+      handleRegisterPost: (
+        request: Request,
+        deps: {
+          checkRateLimit: () => Promise<{ success: true }>;
+          createRegisterUserDeps: (options?: {
+            baseUrl?: string;
+          }) => { trusted: true };
+          registerUser: (
+            body: unknown,
+            deps: { trusted: true },
+          ) => Promise<{
+            ok: true;
+            status: number;
+            user: { id: string };
+            emailVerificationRequired: boolean;
+          }>;
+        },
+      ) => Promise<Response>;
+    };
+    const receivedOptions: Array<{ baseUrl?: string } | undefined> = [];
+
+    const response = await route.handleRegisterPost(
+      new Request("https://evil.example/api/auth/register", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          name: "Ada",
+          email: "ada@example.com",
+          password: "password123",
+          confirmPassword: "password123",
+        }),
+      }),
+      {
+        checkRateLimit: async () => ({ success: true }),
+        createRegisterUserDeps: (options) => {
+          receivedOptions.push(options);
+          return { trusted: true };
+        },
+        registerUser: async () => ({
+          ok: true,
+          status: 201,
+          user: { id: "user_123" },
+          emailVerificationRequired: true,
+        }),
+      },
+    );
+
+    assert.equal(response.status, 201);
+    assert.deepEqual(receivedOptions, [undefined]);
   });
 });

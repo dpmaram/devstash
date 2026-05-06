@@ -144,11 +144,11 @@ Not Started
 - 2026-05-04 09:12 EDT - Implemented Markdown Editor with GFM preview, dark markdown styling, edit/readonly modes, copy action, note/prompt create and drawer integration, and focused markdown editor helper tests. Verified full local tests, TypeScript, lint, production build, and git diff whitespace check.
 - 2026-05-04 09:23 EDT - Investigated Markdown Editor rendering and confirmed `react-markdown` emits formatted HTML without needing Tailwind Typography. Increased the default markdown editor height to 320px while preserving the 400px cap, re-verified tests, TypeScript, lint, production build, whitespace, and restarted the dev server.
 - 2026-05-04 09:28 EDT - Completed Markdown Editor, merged it into `main`, deleted the local feature branch, and cleared current feature details.
-- 2026-05-05 08:26 EDT - Loaded File Upload with Cloudflare R2 spec from `context/features/file-image-spec.md` and set status to Not Started.
-- 2026-05-05 08:27 EDT - Started File Upload with Cloudflare R2.
-- 2026-05-05 08:42 EDT - Implemented File Upload with Cloudflare R2 with upload validation, R2 storage helpers, authenticated upload and download proxy routes, file/image create flow, drawer image preview/download controls, and R2 cleanup on item delete. Verified focused upload/data/action tests, full local tests, TypeScript, lint, production build, and git diff whitespace check.
+- 2026-05-05 08:26 EDT - Loaded File Upload with AWS S3 spec from `context/features/file-image-spec.md` and set status to Not Started.
+- 2026-05-05 08:27 EDT - Started File Upload with AWS S3.
+- 2026-05-05 08:42 EDT - Implemented File Upload with AWS S3 with upload validation, S3 storage helpers, authenticated upload and download proxy routes, file/image create flow, drawer image preview/download controls, and S3 cleanup on item delete. Verified focused upload/data/action tests, full local tests, TypeScript, lint, production build, and git diff whitespace check.
 - 2026-05-05 09:29 EDT - Fixed type-page top-bar New Item behavior so file and image pages preselect their upload type from every add entry point. Verified full local tests, TypeScript, lint, production build, git diff whitespace check, and browser behavior on `/items/files`.
-- 2026-05-05 09:29 EDT - Completed File Upload with Cloudflare R2, merged it into `main`, deleted the local feature branch, and cleared current feature details.
+- 2026-05-05 09:29 EDT - Completed File Upload with AWS S3, merged it into `main`, deleted the local feature branch, and cleared current feature details.
 - 2026-05-05 23:25 EDT - Loaded Image Gallery View spec from `context/features/image-display-spec.md` and set status to Not Started.
 - 2026-05-05 23:27 EDT - Started Image Gallery View on branch `feature/image-gallery-view`.
 - 2026-05-05 23:32 EDT - Implemented Image Gallery View with image-specific thumbnail gallery cards, authenticated inline thumbnail URLs, 16:9 object-cover thumbnails, and subtle hover zoom. Verified full local tests, TypeScript, lint, production build, git diff whitespace check, and browser grid mode on `/items/images`.

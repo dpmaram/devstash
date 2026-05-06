@@ -35,6 +35,22 @@ describe("validateUploadCandidate", () => {
     });
   });
 
+  test("rejects SVG images because uploads are served from the app origin", () => {
+    expect(
+      validateUploadCandidate(
+        {
+          name: "diagram.svg",
+          size: 1024,
+          type: "image/svg+xml",
+        },
+        "image",
+      ),
+    ).toEqual({
+      success: false,
+      error: "That image type is not supported.",
+    });
+  });
+
   test("accepts configured document file types within 10 MB", () => {
     expect(
       validateUploadCandidate(

@@ -11,7 +11,7 @@ describe("upload route", () => {
   });
 
   it("returns 401 when the user is not signed in", async () => {
-    const route = (await import("./app/api/uploads/route")) as typeof import("./app/api/uploads/route") & {
+    const route = (await import("./app/api/uploads/route-handler")) as unknown as {
       handleUploadFile: (
         request: Request,
         deps: {
@@ -45,7 +45,7 @@ describe("upload route", () => {
   });
 
   it("validates the uploaded file before storage writes", async () => {
-    const route = (await import("./app/api/uploads/route")) as typeof import("./app/api/uploads/route") & {
+    const route = (await import("./app/api/uploads/route-handler")) as unknown as {
       handleUploadFile: (
         request: Request,
         deps: {
@@ -85,7 +85,7 @@ describe("upload route", () => {
   });
 
   it("returns a JSON error when storage rejects the upload", async () => {
-    const route = (await import("./app/api/uploads/route")) as typeof import("./app/api/uploads/route") & {
+    const route = (await import("./app/api/uploads/route-handler")) as unknown as {
       handleUploadFile: (
         request: Request,
         deps: {
@@ -136,7 +136,7 @@ describe("upload route", () => {
   });
 
   it("stores a valid upload under a dashboard-user scoped key", async () => {
-    const route = (await import("./app/api/uploads/route")) as typeof import("./app/api/uploads/route") & {
+    const route = (await import("./app/api/uploads/route-handler")) as unknown as {
       handleUploadFile: (
         request: Request,
         deps: {

@@ -43,7 +43,7 @@ describe("upload download route", () => {
   });
 
   it("streams stored files through an authenticated item lookup", async () => {
-    const route = (await import("./app/api/uploads/[id]/download/route")) as typeof import("./app/api/uploads/[id]/download/route") & {
+    const route = (await import("./app/api/uploads/[id]/download/route-handler")) as unknown as {
       handleDownloadFile: (
         request: Request,
         context: { params: Promise<{ id: string }> },
@@ -57,9 +57,12 @@ describe("upload download route", () => {
             userId: string;
           }) => Promise<ItemDetail | null>;
           getStoredFile: (fileUrl: string) => Promise<{
-            body: Uint8Array;
+            body: BodyInit;
+            cacheControl?: string;
             contentLength: number;
             contentType: string;
+            eTag?: string;
+            lastModified?: Date;
           } | null>;
         },
       ) => Promise<Response>;
@@ -97,9 +100,17 @@ describe("upload download route", () => {
             "devstash/api/uploads/dm/user_123/upload_123-architecture-notes.md",
           );
           return {
-            body: new TextEncoder().encode("hello world"),
+            body: new ReadableStream({
+              start(controller) {
+                controller.enqueue(new TextEncoder().encode("hello world"));
+                controller.close();
+              },
+            }),
+            cacheControl: "private, max-age=3600",
             contentLength: 11,
             contentType: "text/markdown",
+            eTag: "\"upload-etag\"",
+            lastModified: new Date("2026-04-25T15:45:00.000Z"),
           };
         },
       },
@@ -108,6 +119,12 @@ describe("upload download route", () => {
     assert.equal(response.status, 200);
     assert.equal(response.headers.get("content-type"), "text/markdown");
     assert.equal(response.headers.get("content-length"), "11");
+    assert.equal(response.headers.get("cache-control"), "private, max-age=3600");
+    assert.equal(response.headers.get("etag"), "\"upload-etag\"");
+    assert.equal(
+      response.headers.get("last-modified"),
+      "Sat, 25 Apr 2026 15:45:00 GMT",
+    );
     assert.equal(
       response.headers.get("content-disposition"),
       'attachment; filename="architecture-notes.md"',
@@ -116,7 +133,7 @@ describe("upload download route", () => {
   });
 
   it("returns 404 when the item has no stored file", async () => {
-    const route = (await import("./app/api/uploads/[id]/download/route")) as typeof import("./app/api/uploads/[id]/download/route") & {
+    const route = (await import("./app/api/uploads/[id]/download/route-handler")) as unknown as {
       handleDownloadFile: (
         request: Request,
         context: { params: Promise<{ id: string }> },

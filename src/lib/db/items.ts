@@ -19,6 +19,11 @@ import {
 
 export type { DashboardItem, DashboardItemType, ItemDetail } from "./item-shaping";
 
+type ItemDbClient = Pick<typeof prisma, "item" | "itemTag" | "itemType" | "tag">;
+type TransactionRunner<TDeps> = <T>(
+  callback: (deps: TDeps) => Promise<T>,
+) => Promise<T>;
+
 type DashboardItemsOptions = {
   limit?: number;
   pinnedLimit?: number;
@@ -101,6 +106,7 @@ type ItemTypeIdRecord = {
 };
 
 type CreateItemDeps = {
+  runTransaction?: TransactionRunner<CreateItemDeps>;
   createItemRecord: (input: {
     data: Omit<CreateItemData, "tags" | "typeSlug"> & {
       contentType: "FILE" | "TEXT" | "URL";
@@ -121,6 +127,7 @@ type CreateItemDeps = {
 };
 
 type UpdateItemDeps = {
+  runTransaction?: TransactionRunner<UpdateItemDeps>;
   findOwnedItem: (input: {
     itemId: string;
     userId: string;
@@ -360,8 +367,11 @@ export async function getItemDetail({
   return toItemDetail(item);
 }
 
-async function findOwnedItem(input: { itemId: string; userId: string }) {
-  return prisma.item.findFirst({
+async function findOwnedItem(
+  db: ItemDbClient,
+  input: { itemId: string; userId: string },
+) {
+  return db.item.findFirst({
     where: {
       id: input.itemId,
       userId: input.userId,
@@ -374,10 +384,11 @@ async function findOwnedItem(input: { itemId: string; userId: string }) {
 }
 
 async function updateItemFields(input: {
+  db: ItemDbClient;
   data: Omit<UpdateItemData, "tags">;
   itemId: string;
 }) {
-  await prisma.item.update({
+  await input.db.item.update({
     where: {
       id: input.itemId,
     },
@@ -385,16 +396,19 @@ async function updateItemFields(input: {
   });
 }
 
-async function deleteItemTags(itemId: string) {
-  await prisma.itemTag.deleteMany({
+async function deleteItemTags(db: ItemDbClient, itemId: string) {
+  await db.itemTag.deleteMany({
     where: {
       itemId,
     },
   });
 }
 
-async function upsertTag(input: NormalizedItemTag & { userId: string }) {
-  return prisma.tag.upsert({
+async function upsertTag(
+  db: ItemDbClient,
+  input: NormalizedItemTag & { userId: string },
+) {
+  return db.tag.upsert({
     where: {
       userId_slug: {
         userId: input.userId,
@@ -415,12 +429,15 @@ async function upsertTag(input: NormalizedItemTag & { userId: string }) {
   });
 }
 
-async function createItemTags(input: { itemId: string; tagIds: string[] }) {
+async function createItemTags(
+  db: ItemDbClient,
+  input: { itemId: string; tagIds: string[] },
+) {
   if (input.tagIds.length === 0) {
     return;
   }
 
-  await prisma.itemTag.createMany({
+  await db.itemTag.createMany({
     data: input.tagIds.map((tagId) => ({
       itemId: input.itemId,
       tagId,
@@ -429,8 +446,11 @@ async function createItemTags(input: { itemId: string; tagIds: string[] }) {
   });
 }
 
-async function findItemDetail(input: { itemId: string; userId: string }) {
-  return prisma.item.findFirst({
+async function findItemDetail(
+  db: ItemDbClient,
+  input: { itemId: string; userId: string },
+) {
+  return db.item.findFirst({
     where: {
       id: input.itemId,
       userId: input.userId,
@@ -439,8 +459,8 @@ async function findItemDetail(input: { itemId: string; userId: string }) {
   });
 }
 
-async function findItemTypeBySlug(slug: string) {
-  return prisma.itemType.findFirst({
+async function findItemTypeBySlug(db: ItemDbClient, slug: string) {
+  return db.itemType.findFirst({
     where: {
       slug,
       isSystem: true,
@@ -452,13 +472,14 @@ async function findItemTypeBySlug(slug: string) {
 }
 
 async function createItemRecord(input: {
+  db: ItemDbClient;
     data: Omit<CreateItemData, "tags" | "typeSlug"> & {
       contentType: "FILE" | "TEXT" | "URL";
       itemTypeId: string;
     };
   userId: string;
 }) {
-  return prisma.item.create({
+  return input.db.item.create({
     data: {
       ...input.data,
       userId: input.userId,
@@ -469,45 +490,78 @@ async function createItemRecord(input: {
   });
 }
 
-async function deleteItemRecord(itemId: string) {
-  await prisma.item.delete({
+async function deleteItemRecord(db: ItemDbClient, itemId: string) {
+  await db.item.delete({
     where: {
       id: itemId,
     },
   });
 }
 
-function createCreateItemDeps() {
-  return {
-    createItemRecord,
-    createItemTags,
-    findItemDetail,
-    findItemTypeBySlug,
-    upsertTag,
-  } satisfies CreateItemDeps;
+function createCreateItemDeps(
+  db: ItemDbClient = prisma,
+  includeTransaction = true,
+) {
+  const deps: CreateItemDeps = {
+    createItemRecord: (input) => createItemRecord({ ...input, db }),
+    createItemTags: (input) => createItemTags(db, input),
+    findItemDetail: (input) => findItemDetail(db, input),
+    findItemTypeBySlug: (slug) => findItemTypeBySlug(db, slug),
+    upsertTag: (input) => upsertTag(db, input),
+  };
+
+  if (includeTransaction) {
+    deps.runTransaction = (callback) =>
+      prisma.$transaction((tx) => callback(createCreateItemDeps(tx, false)));
+  }
+
+  return deps;
 }
 
-function createUpdateItemDeps() {
-  return {
-    findOwnedItem,
-    updateItemFields,
-    deleteItemTags,
-    upsertTag,
-    createItemTags,
-    findItemDetail,
-  } satisfies UpdateItemDeps;
+function createUpdateItemDeps(
+  db: ItemDbClient = prisma,
+  includeTransaction = true,
+) {
+  const deps: UpdateItemDeps = {
+    findOwnedItem: (input) => findOwnedItem(db, input),
+    updateItemFields: (input) => updateItemFields({ ...input, db }),
+    deleteItemTags: (itemId) => deleteItemTags(db, itemId),
+    upsertTag: (input) => upsertTag(db, input),
+    createItemTags: (input) => createItemTags(db, input),
+    findItemDetail: (input) => findItemDetail(db, input),
+  };
+
+  if (includeTransaction) {
+    deps.runTransaction = (callback) =>
+      prisma.$transaction((tx) => callback(createUpdateItemDeps(tx, false)));
+  }
+
+  return deps;
 }
 
-function createDeleteItemDeps() {
+function createDeleteItemDeps(db: ItemDbClient = prisma) {
   return {
-    findOwnedItem,
-    deleteItemRecord,
+    findOwnedItem: (input) => findOwnedItem(db, input),
+    deleteItemRecord: (itemId) => deleteItemRecord(db, itemId),
   } satisfies DeleteItemDeps;
 }
 
 export async function createItem(
   input: CreateItemInput,
   deps: CreateItemDeps = createCreateItemDeps(),
+): Promise<ItemDetail | null> {
+  if (deps.runTransaction) {
+    return deps.runTransaction((transactionDeps) =>
+      createItem(input, transactionDeps),
+    );
+  }
+
+  return createItemWithDeps(input, deps);
+}
+
+async function createItemWithDeps(
+  input: CreateItemInput,
+  deps: CreateItemDeps,
 ): Promise<ItemDetail | null> {
   const itemType = await deps.findItemTypeBySlug(input.data.typeSlug);
 
@@ -546,6 +600,19 @@ export async function createItem(
 export async function updateItem(
   input: UpdateItemInput,
   deps: UpdateItemDeps = createUpdateItemDeps(),
+): Promise<ItemDetail | null> {
+  if (deps.runTransaction) {
+    return deps.runTransaction((transactionDeps) =>
+      updateItem(input, transactionDeps),
+    );
+  }
+
+  return updateItemWithDeps(input, deps);
+}
+
+async function updateItemWithDeps(
+  input: UpdateItemInput,
+  deps: UpdateItemDeps,
 ): Promise<ItemDetail | null> {
   const item = await deps.findOwnedItem({
     itemId: input.itemId,

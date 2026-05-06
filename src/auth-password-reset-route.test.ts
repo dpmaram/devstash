@@ -64,7 +64,7 @@ describe("forgot password route", () => {
   });
 
   it("returns a 429 response when forgot-password requests are rate limited", async () => {
-    const route = (await import("./app/api/auth/forgot-password/route")) as typeof import("./app/api/auth/forgot-password/route") & {
+    const route = (await import("./app/api/auth/forgot-password/route-handler")) as unknown as {
       handleForgotPasswordPost: (
         request: Request,
         deps: {
@@ -102,6 +102,56 @@ describe("forgot password route", () => {
       success: false,
       error: "Too many attempts. Please try again in 1 minute.",
     });
+  });
+
+  it("creates reset email deps without trusting the request origin", async () => {
+    const route = (await import("./app/api/auth/forgot-password/route-handler")) as unknown as {
+      handleForgotPasswordPost: (
+        request: Request,
+        deps: {
+          checkRateLimit: () => Promise<{ success: true }>;
+          createRequestPasswordResetDeps: (options?: {
+            baseUrl?: string;
+          }) => { trusted: true };
+          requestPasswordReset: (
+            body: unknown,
+            deps: { trusted: true },
+          ) => Promise<{
+            ok: true;
+            status: number;
+            message: string;
+          }>;
+        },
+      ) => Promise<Response>;
+    };
+    const receivedOptions: Array<{ baseUrl?: string } | undefined> = [];
+
+    const response = await route.handleForgotPasswordPost(
+      new Request("https://evil.example/api/auth/forgot-password", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email: "ada@example.com",
+        }),
+      }),
+      {
+        checkRateLimit: async () => ({ success: true }),
+        createRequestPasswordResetDeps: (options) => {
+          receivedOptions.push(options);
+          return { trusted: true };
+        },
+        requestPasswordReset: async () => ({
+          ok: true,
+          status: 200,
+          message: "If an account exists, we sent a reset link.",
+        }),
+      },
+    );
+
+    assert.equal(response.status, 200);
+    assert.deepEqual(receivedOptions, [undefined]);
   });
 });
 
@@ -159,7 +209,7 @@ describe("reset password route", () => {
   });
 
   it("returns a 429 response when reset-password requests are rate limited", async () => {
-    const route = (await import("./app/api/auth/reset-password/route")) as typeof import("./app/api/auth/reset-password/route") & {
+    const route = (await import("./app/api/auth/reset-password/route-handler")) as unknown as {
       handleResetPasswordPost: (
         request: Request,
         deps: {

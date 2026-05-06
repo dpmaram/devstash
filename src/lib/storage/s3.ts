@@ -1,5 +1,6 @@
 import {
   DeleteObjectCommand,
+  type GetObjectCommandOutput,
   GetObjectCommand,
   PutObjectCommand,
   S3Client,
@@ -8,6 +9,7 @@ import {
 import {
   defaultUploadObjectKeyPrefix,
   normalizeUploadObjectKeyPrefix,
+  sanitizeUploadPathSegment,
 } from "@/lib/uploads";
 
 export const defaultS3BucketName = "eapi-chc-dev-ets-attachments";
@@ -24,6 +26,15 @@ type PutStoredFileInput = {
   contentLength: number;
   contentType: string;
   key: string;
+};
+
+export type StoredFile = {
+  body: BodyInit;
+  cacheControl?: string;
+  contentLength?: number;
+  contentType: string;
+  eTag?: string;
+  lastModified?: Date;
 };
 
 let s3Client: S3Client | null = null;
@@ -75,7 +86,7 @@ export async function deleteStoredFile(fileUrl: string) {
   );
 }
 
-export async function getStoredFile(fileUrl: string) {
+export async function getStoredFile(fileUrl: string): Promise<StoredFile | null> {
   const key = getS3ObjectKey(fileUrl);
 
   if (!key) {
@@ -94,12 +105,13 @@ export async function getStoredFile(fileUrl: string) {
     return null;
   }
 
-  const body = await response.Body.transformToByteArray();
-
   return {
-    body,
-    contentLength: response.ContentLength ?? body.byteLength,
+    body: toResponseBody(response.Body),
+    cacheControl: response.CacheControl,
+    contentLength: response.ContentLength,
     contentType: response.ContentType ?? "application/octet-stream",
+    eTag: response.ETag,
+    lastModified: response.LastModified,
   };
 }
 
@@ -116,8 +128,36 @@ export function getS3ObjectKey(
   return null;
 }
 
+export function isStoredFileOwnedByUser(
+  fileUrl: string | null | undefined,
+  userId: string,
+  env: NodeJS.ProcessEnv = process.env,
+) {
+  if (!fileUrl) {
+    return false;
+  }
+
+  const uploadPrefix = getS3Config(env).uploadPrefix;
+  const userKeyPrefix = `${uploadPrefix}/${sanitizeUploadPathSegment(userId)}/`;
+  const key = getS3ObjectKey(fileUrl, env);
+
+  return Boolean(key?.startsWith(userKeyPrefix));
+}
+
 function getS3Client() {
   s3Client ??= createS3Client();
 
   return s3Client;
+}
+
+function toResponseBody(body: NonNullable<GetObjectCommandOutput["Body"]>): BodyInit {
+  const streamBody = body as NonNullable<GetObjectCommandOutput["Body"]> & {
+    transformToWebStream?: () => ReadableStream<Uint8Array>;
+  };
+
+  if (typeof streamBody.transformToWebStream === "function") {
+    return streamBody.transformToWebStream();
+  }
+
+  return body as BodyInit;
 }

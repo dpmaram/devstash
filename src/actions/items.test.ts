@@ -211,6 +211,39 @@ describe("createItem action", () => {
     });
   });
 
+  it("rejects uploaded file metadata that is outside the resolved user's upload scope", async () => {
+    const { handleCreateItem } = await import("./items");
+
+    const result = await handleCreateItem(
+      {
+        typeSlug: "file",
+        title: "Architecture Notes",
+        fileUrl: "devstash/api/uploads/dm/other_user/upload_123-architecture-notes.md",
+        fileName: "architecture-notes.md",
+        fileSize: 2048,
+        tags: ["architecture"],
+      },
+      {
+        auth: async () => ({
+          user: {
+            id: "user_123",
+          },
+        }),
+        createItem: async () => {
+          throw new Error("createItem should not be called");
+        },
+        getDashboardUserForSession: async () => ({
+          id: "user_123",
+        }),
+      },
+    );
+
+    assert.deepEqual(result, {
+      success: false,
+      error: "Upload is not available for this user.",
+    });
+  });
+
   it("requires uploaded file metadata for file and image items", async () => {
     const { handleCreateItem } = await import("./items");
 

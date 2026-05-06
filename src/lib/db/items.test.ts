@@ -225,6 +225,87 @@ describe("createItem", () => {
       },
     );
   });
+
+  it("runs item creation and tag writes inside transaction-scoped dependencies", async () => {
+    const { createItem } = await import("./items");
+    const calls: string[] = [];
+    const txDeps = {
+      findItemTypeBySlug: async () => {
+        calls.push("tx:findItemTypeBySlug");
+        return {
+          id: "type_snippet",
+        };
+      },
+      createItemRecord: async () => {
+        calls.push("tx:createItemRecord");
+        return {
+          id: "item_123",
+        };
+      },
+      upsertTag: async (input: { slug: string }) => {
+        calls.push(`tx:upsertTag:${input.slug}`);
+        return {
+          id: `tag_${input.slug}`,
+        };
+      },
+      createItemTags: async () => {
+        calls.push("tx:createItemTags");
+      },
+      findItemDetail: async () => {
+        calls.push("tx:findItemDetail");
+        return createItemDetailRecord();
+      },
+    };
+
+    const result = await createItem(
+      {
+        userId: "user_123",
+        data: {
+          typeSlug: "snippet",
+          title: "useAuth Hook",
+          description: "Custom authentication hook.",
+          content: "export function useAuth() {}",
+          url: null,
+          language: "TypeScript",
+          tags: ["react"],
+        },
+      },
+      {
+        runTransaction: async (callback) => {
+          calls.push("transaction:start");
+          const result = await callback(txDeps);
+          calls.push("transaction:end");
+          return result;
+        },
+        findItemTypeBySlug: async () => {
+          throw new Error("root findItemTypeBySlug should not be called");
+        },
+        createItemRecord: async () => {
+          throw new Error("root createItemRecord should not be called");
+        },
+        upsertTag: async () => {
+          throw new Error("root upsertTag should not be called");
+        },
+        createItemTags: async () => {
+          throw new Error("root createItemTags should not be called");
+        },
+        findItemDetail: async () => {
+          throw new Error("root findItemDetail should not be called");
+        },
+      },
+    );
+
+    assert.equal(result?.id, "item_123");
+    assert.deepEqual(calls, [
+      "transaction:start",
+      "tx:findItemTypeBySlug",
+      "tx:createItemRecord",
+      "tx:upsertTag:react",
+      "tx:createItemTags",
+      "tx:findItemDetail",
+      "transaction:end",
+    ]);
+  });
 });
 
 describe("updateItem", () => {
@@ -356,6 +437,91 @@ describe("updateItem", () => {
       { name: "auth", slug: "auth" },
     ]);
   });
+
+  it("runs item updates and tag replacement inside transaction-scoped dependencies", async () => {
+    const { updateItem } = await import("./items");
+    const calls: string[] = [];
+    const txDeps = {
+      findOwnedItem: async () => {
+        calls.push("tx:findOwnedItem");
+        return {
+          id: "item_123",
+        };
+      },
+      updateItemFields: async () => {
+        calls.push("tx:updateItemFields");
+      },
+      deleteItemTags: async () => {
+        calls.push("tx:deleteItemTags");
+      },
+      upsertTag: async (input: { slug: string }) => {
+        calls.push(`tx:upsertTag:${input.slug}`);
+        return {
+          id: `tag_${input.slug}`,
+        };
+      },
+      createItemTags: async () => {
+        calls.push("tx:createItemTags");
+      },
+      findItemDetail: async () => {
+        calls.push("tx:findItemDetail");
+        return createItemDetailRecord();
+      },
+    };
+
+    const result = await updateItem(
+      {
+        itemId: "item_123",
+        userId: "user_123",
+        data: {
+          title: "useAuth Hook",
+          description: "Custom authentication hook.",
+          content: "export function useAuth() {}",
+          url: null,
+          language: "TypeScript",
+          tags: ["react"],
+        },
+      },
+      {
+        runTransaction: async (callback) => {
+          calls.push("transaction:start");
+          const result = await callback(txDeps);
+          calls.push("transaction:end");
+          return result;
+        },
+        findOwnedItem: async () => {
+          throw new Error("root findOwnedItem should not be called");
+        },
+        updateItemFields: async () => {
+          throw new Error("root updateItemFields should not be called");
+        },
+        deleteItemTags: async () => {
+          throw new Error("root deleteItemTags should not be called");
+        },
+        upsertTag: async () => {
+          throw new Error("root upsertTag should not be called");
+        },
+        createItemTags: async () => {
+          throw new Error("root createItemTags should not be called");
+        },
+        findItemDetail: async () => {
+          throw new Error("root findItemDetail should not be called");
+        },
+      },
+    );
+
+    assert.equal(result?.id, "item_123");
+    assert.deepEqual(calls, [
+      "transaction:start",
+      "tx:findOwnedItem",
+      "tx:updateItemFields",
+      "tx:deleteItemTags",
+      "tx:upsertTag:react",
+      "tx:createItemTags",
+      "tx:findItemDetail",
+      "transaction:end",
+    ]);
+  });
 });
 
 describe("deleteItem", () => {
@@ -432,3 +598,31 @@ describe("deleteItem", () => {
     });
   });
 });
+
+function createItemDetailRecord() {
+  return {
+    id: "item_123",
+    title: "useAuth Hook",
+    description: "Custom authentication hook.",
+    contentType: "TEXT" as const,
+    content: "export function useAuth() {}",
+    url: null,
+    fileUrl: null,
+    fileName: null,
+    fileSize: null,
+    language: "TypeScript",
+    isPinned: false,
+    isFavorite: false,
+    createdAt: new Date("2026-01-15T12:30:00.000Z"),
+    updatedAt: new Date("2026-04-25T15:45:00.000Z"),
+    itemType: {
+      id: "type_snippet",
+      name: "snippet",
+      slug: "snippet",
+      icon: "Code",
+      color: "#3b82f6",
+    },
+    collections: [],
+    tags: [{ tag: { name: "react", slug: "react" } }],
+  };
+}
