@@ -13,6 +13,7 @@ import {
   getDashboardItemTypes,
   normalizeItemTypeRouteSlug,
 } from "@/lib/db/items";
+import { shouldUseFileList } from "@/lib/file-list";
 import { shouldUseImageGallery } from "@/lib/image-gallery";
 import { mockDashboardData } from "@/lib/mock-data";
 
@@ -81,7 +82,13 @@ export default async function ItemsByTypePage({ params }: ItemsByTypePageProps) 
         </div>
 
         <ItemCardGrid
-          displayMode={shouldUseImageGallery(itemType.slug) ? "imageGallery" : "cards"}
+          displayMode={
+            shouldUseImageGallery(itemType.slug)
+              ? "imageGallery"
+              : shouldUseFileList(itemType.slug)
+                ? "fileList"
+                : "cards"
+          }
           emptyMessage={`No ${itemType.label.toLowerCase()} saved yet.`}
           items={items}
         />

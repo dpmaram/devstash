@@ -10,9 +10,12 @@ export const dashboardItemListSelect = {
   id: true,
   title: true,
   description: true,
+  createdAt: true,
   isPinned: true,
   isFavorite: true,
   updatedAt: true,
+  fileName: true,
+  fileSize: true,
   itemType: {
     select: dashboardItemTypeSelect,
   },
