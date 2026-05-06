@@ -39,6 +39,37 @@ describe("getDashboardUserForSession", () => {
     });
   });
 
+  it("uses the fallback dashboard user when the signed-in session user no longer exists", async () => {
+    const { getDashboardUserForSession } = await import("./dashboard-user");
+    const calls: string[] = [];
+
+    const user = await getDashboardUserForSession(
+      {
+        id: "stale_user",
+      },
+      {
+        findDashboardUserById: async (userId) => {
+          calls.push(`findDashboardUserById:${userId}`);
+          return null;
+        },
+        getFallbackDashboardUser: async () => {
+          calls.push("getFallbackDashboardUser");
+          return {
+            id: "demo_user",
+          };
+        },
+      },
+    );
+
+    assert.deepEqual(calls, [
+      "findDashboardUserById:stale_user",
+      "getFallbackDashboardUser",
+    ]);
+    assert.deepEqual(user, {
+      id: "demo_user",
+    });
+  });
+
   it("returns null when there is no fallback user or session user", async () => {
     const { getDashboardUserForSession } = await import("./dashboard-user");
 

@@ -19,7 +19,10 @@ import {
 
 export type { DashboardItem, DashboardItemType, ItemDetail } from "./item-shaping";
 
-type ItemDbClient = Pick<typeof prisma, "item" | "itemTag" | "itemType" | "tag">;
+type ItemDbClient = Pick<
+  typeof prisma,
+  "collection" | "item" | "itemCollection" | "itemTag" | "itemType" | "tag"
+>;
 type TransactionRunner<TDeps> = <T>(
   callback: (deps: TDeps) => Promise<T>,
 ) => Promise<T>;
@@ -39,6 +42,13 @@ type DashboardItemsByTypeOptions = Pick<
   typeSlug: string;
 };
 
+type DashboardItemsByCollectionOptions = Pick<
+  DashboardItemsOptions,
+  "limit" | "user" | "userEmail"
+> & {
+  collectionSlug: string;
+};
+
 type DashboardItemData = {
   pinnedItems: DashboardItem[];
   recentItems: DashboardItem[];
@@ -50,6 +60,7 @@ type ItemDetailOptions = {
 };
 
 export type CreateItemData = {
+  collectionIds?: string[];
   content: string | null;
   description: string | null;
   fileName?: string | null;
@@ -74,6 +85,7 @@ export type UpdateItemData = {
   url: string | null;
   language: string | null;
   tags: string[];
+  collectionIds?: string[];
 };
 
 export type UpdateItemInput = {
@@ -118,6 +130,14 @@ type CreateItemDeps = {
     itemId: string;
     tagIds: string[];
   }) => Promise<void>;
+  createItemCollections?: (input: {
+    collectionIds: string[];
+    itemId: string;
+  }) => Promise<void>;
+  findOwnedCollectionIds?: (input: {
+    collectionIds: string[];
+    userId: string;
+  }) => Promise<string[]>;
   findItemDetail: (input: {
     itemId: string;
     userId: string;
@@ -137,11 +157,20 @@ type UpdateItemDeps = {
     itemId: string;
   }) => Promise<void>;
   deleteItemTags: (itemId: string) => Promise<void>;
+  deleteItemCollections?: (itemId: string) => Promise<void>;
   upsertTag: (input: NormalizedItemTag & { userId: string }) => Promise<{ id: string }>;
   createItemTags: (input: {
     itemId: string;
     tagIds: string[];
   }) => Promise<void>;
+  createItemCollections?: (input: {
+    collectionIds: string[];
+    itemId: string;
+  }) => Promise<void>;
+  findOwnedCollectionIds?: (input: {
+    collectionIds: string[];
+    userId: string;
+  }) => Promise<string[]>;
   findItemDetail: (input: {
     itemId: string;
     userId: string;
@@ -196,6 +225,25 @@ export function normalizeItemTags(tags: string[]) {
   }
 
   return Array.from(tagsBySlug.values());
+}
+
+export function normalizeItemCollectionIds(collectionIds: string[] | undefined) {
+  if (!collectionIds) {
+    return [];
+  }
+
+  return [...new Set(collectionIds.map((collectionId) => collectionId.trim()))]
+    .filter(Boolean);
+}
+
+function getUpdateItemFields(data: UpdateItemData) {
+  return {
+    title: data.title,
+    description: data.description,
+    content: data.content,
+    url: data.url,
+    language: data.language,
+  };
 }
 
 function getCreateItemContentType(typeSlug: string): "FILE" | "TEXT" | "URL" {
@@ -285,6 +333,36 @@ export async function getDashboardItemsByTypeSlug(
       userId: user.id,
       itemType: {
         slug: normalizeItemTypeRouteSlug(options.typeSlug),
+      },
+    },
+    orderBy: [{ updatedAt: "desc" }, { title: "asc" }],
+    take: options.limit ?? 50,
+    select: dashboardItemListSelect,
+  });
+
+  return items.map((item) => toDashboardItem(item));
+}
+
+export async function getDashboardItemsByCollectionSlug(
+  options: DashboardItemsByCollectionOptions,
+) {
+  const user = await resolveDashboardUser(options);
+
+  if (!user) {
+    return [];
+  }
+
+  const collectionSlug = options.collectionSlug.trim().toLowerCase();
+  const items = await prisma.item.findMany({
+    where: {
+      userId: user.id,
+      collections: {
+        some: {
+          collection: {
+            slug: collectionSlug,
+            userId: user.id,
+          },
+        },
       },
     },
     orderBy: [{ updatedAt: "desc" }, { title: "asc" }],
@@ -446,6 +524,54 @@ async function createItemTags(
   });
 }
 
+async function findOwnedCollectionIds(
+  db: ItemDbClient,
+  input: { collectionIds: string[]; userId: string },
+) {
+  if (input.collectionIds.length === 0) {
+    return [];
+  }
+
+  const collections = await db.collection.findMany({
+    where: {
+      id: {
+        in: input.collectionIds,
+      },
+      userId: input.userId,
+    },
+    select: {
+      id: true,
+    },
+  });
+
+  return collections.map((collection) => collection.id);
+}
+
+async function createItemCollections(
+  db: ItemDbClient,
+  input: { collectionIds: string[]; itemId: string },
+) {
+  if (input.collectionIds.length === 0) {
+    return;
+  }
+
+  await db.itemCollection.createMany({
+    data: input.collectionIds.map((collectionId) => ({
+      collectionId,
+      itemId: input.itemId,
+    })),
+    skipDuplicates: true,
+  });
+}
+
+async function deleteItemCollections(db: ItemDbClient, itemId: string) {
+  await db.itemCollection.deleteMany({
+    where: {
+      itemId,
+    },
+  });
+}
+
 async function findItemDetail(
   db: ItemDbClient,
   input: { itemId: string; userId: string },
@@ -504,7 +630,9 @@ function createCreateItemDeps(
 ) {
   const deps: CreateItemDeps = {
     createItemRecord: (input) => createItemRecord({ ...input, db }),
+    createItemCollections: (input) => createItemCollections(db, input),
     createItemTags: (input) => createItemTags(db, input),
+    findOwnedCollectionIds: (input) => findOwnedCollectionIds(db, input),
     findItemDetail: (input) => findItemDetail(db, input),
     findItemTypeBySlug: (slug) => findItemTypeBySlug(db, slug),
     upsertTag: (input) => upsertTag(db, input),
@@ -525,9 +653,12 @@ function createUpdateItemDeps(
   const deps: UpdateItemDeps = {
     findOwnedItem: (input) => findOwnedItem(db, input),
     updateItemFields: (input) => updateItemFields({ ...input, db }),
+    deleteItemCollections: (itemId) => deleteItemCollections(db, itemId),
     deleteItemTags: (itemId) => deleteItemTags(db, itemId),
     upsertTag: (input) => upsertTag(db, input),
+    createItemCollections: (input) => createItemCollections(db, input),
     createItemTags: (input) => createItemTags(db, input),
+    findOwnedCollectionIds: (input) => findOwnedCollectionIds(db, input),
     findItemDetail: (input) => findItemDetail(db, input),
   };
 
@@ -569,6 +700,16 @@ async function createItemWithDeps(
     return null;
   }
 
+  const collectionIds = await getOwnedCollectionIds({
+    collectionIds: input.data.collectionIds,
+    findOwnedCollectionIds: deps.findOwnedCollectionIds,
+    userId: input.userId,
+  });
+
+  if (!collectionIds) {
+    return null;
+  }
+
   const item = await deps.createItemRecord({
     userId: input.userId,
     data: getCreateItemFields(input.data, itemType.id),
@@ -588,6 +729,17 @@ async function createItemWithDeps(
     itemId: item.id,
     tagIds,
   });
+
+  if (collectionIds.length > 0) {
+    if (!deps.createItemCollections) {
+      return null;
+    }
+
+    await deps.createItemCollections({
+      collectionIds,
+      itemId: item.id,
+    });
+  }
 
   const createdItem = await deps.findItemDetail({
     itemId: item.id,
@@ -623,12 +775,34 @@ async function updateItemWithDeps(
     return null;
   }
 
-  const { tags, ...fieldData } = input.data;
+  let collectionIds: string[] | undefined;
+  const createItemCollections = deps.createItemCollections;
+  const deleteItemCollections = deps.deleteItemCollections;
+
+  if (input.data.collectionIds !== undefined) {
+    const ownedCollectionIds = await getOwnedCollectionIds({
+      collectionIds: input.data.collectionIds,
+      findOwnedCollectionIds: deps.findOwnedCollectionIds,
+      userId: input.userId,
+    });
+
+    if (!ownedCollectionIds || !deleteItemCollections) {
+      return null;
+    }
+
+    if (ownedCollectionIds.length > 0 && !createItemCollections) {
+      return null;
+    }
+
+    collectionIds = ownedCollectionIds;
+  }
+
+  const { tags } = input.data;
   const normalizedTags = normalizeItemTags(tags);
 
   await deps.updateItemFields({
     itemId: input.itemId,
-    data: fieldData,
+    data: getUpdateItemFields(input.data),
   });
   await deps.deleteItemTags(input.itemId);
 
@@ -647,12 +821,55 @@ async function updateItemWithDeps(
     tagIds,
   });
 
+  if (collectionIds !== undefined) {
+    await deleteItemCollections?.(input.itemId);
+
+    if (collectionIds.length > 0) {
+      await createItemCollections?.({
+        collectionIds,
+        itemId: input.itemId,
+      });
+    }
+  }
+
   const updatedItem = await deps.findItemDetail({
     itemId: input.itemId,
     userId: input.userId,
   });
 
   return updatedItem ? toItemDetail(updatedItem) : null;
+}
+
+async function getOwnedCollectionIds(input: {
+  collectionIds: string[] | undefined;
+  findOwnedCollectionIds: CreateItemDeps["findOwnedCollectionIds"];
+  userId: string;
+}) {
+  const collectionIds = normalizeItemCollectionIds(input.collectionIds);
+
+  if (collectionIds.length === 0) {
+    return collectionIds;
+  }
+
+  if (!input.findOwnedCollectionIds) {
+    return null;
+  }
+
+  const ownedCollectionIds = await input.findOwnedCollectionIds({
+    collectionIds,
+    userId: input.userId,
+  });
+  const ownedCollectionIdSet = new Set(ownedCollectionIds);
+
+  if (ownedCollectionIdSet.size !== collectionIds.length) {
+    return null;
+  }
+
+  return collectionIds.every((collectionId) =>
+    ownedCollectionIdSet.has(collectionId),
+  )
+    ? collectionIds
+    : null;
 }
 
 export async function deleteItem(

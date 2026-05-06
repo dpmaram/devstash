@@ -8,6 +8,7 @@ export type CreateItemTypeSlug =
   | "image";
 
 export type NewItemDraft = {
+  collectionIds: string[];
   content: string;
   description: string;
   fileName: string;
@@ -48,6 +49,7 @@ export function createInitialNewItemDraft(
   initialTypeSlug?: string | null,
 ): NewItemDraft {
   return {
+    collectionIds: [],
     content: "",
     description: "",
     fileName: "",

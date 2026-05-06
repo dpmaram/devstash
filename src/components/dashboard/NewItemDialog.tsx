@@ -12,6 +12,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 import { createItem as createItemAction } from "@/actions/items";
+import { CollectionPicker } from "@/components/dashboard/CollectionPicker";
 import { CodeEditor } from "@/components/dashboard/CodeEditor";
 import {
   FileUpload,
@@ -37,6 +38,7 @@ import {
 } from "@/lib/code-editor";
 import { shouldUseMarkdownEditor } from "@/lib/markdown-editor";
 import { isUploadItemTypeSlug } from "@/lib/uploads";
+import type { DashboardCollection } from "@/lib/db/collections";
 import type { DashboardItemType } from "@/lib/db/items";
 import type { ItemTypeSlug } from "@/lib/mock-data";
 import { cn } from "@/lib/utils";
@@ -47,12 +49,14 @@ type NewItemToast = {
 } | null;
 
 export function NewItemDialog({
+  collections = [],
   initialTypeSlug,
   itemTypes,
   triggerClassName,
   triggerLabel = "New Item",
   triggerLabelClassName = "hidden sm:inline",
 }: {
+  collections?: DashboardCollection[];
   initialTypeSlug?: string | null;
   itemTypes: DashboardItemType[];
   triggerClassName?: string;
@@ -116,6 +120,7 @@ export function NewItemDialog({
         fileSize: isUploadItemTypeSlug(draft.typeSlug) ? draft.fileSize : null,
         language: canEditLanguage(draft.typeSlug) ? draft.language : null,
         tags: getDraftTags(draft.tagsText),
+        collectionIds: draft.collectionIds,
       });
 
       if (!result.success) {
@@ -279,6 +284,19 @@ export function NewItemDialog({
                       })
                     }
                     value={draft.tagsText}
+                  />
+                </EditField>
+
+                <EditField label="Collections">
+                  <CollectionPicker
+                    collections={collections}
+                    disabled={isSaving}
+                    onChange={(collectionIds) =>
+                      updateDraft({
+                        collectionIds,
+                      })
+                    }
+                    selectedCollectionIds={draft.collectionIds}
                   />
                 </EditField>
 

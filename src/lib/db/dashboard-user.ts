@@ -14,6 +14,7 @@ type SessionDashboardUser = {
 };
 
 type DashboardUserForSessionDeps = {
+  findDashboardUserById?: (userId: string) => Promise<DashboardUser | null>;
   getFallbackDashboardUser: () => Promise<DashboardUser | null>;
 };
 
@@ -55,13 +56,26 @@ export async function resolveDashboardUser(
 export async function getDashboardUserForSession(
   sessionUser?: SessionDashboardUser | null,
   deps: DashboardUserForSessionDeps = {
+    findDashboardUserById: (userId) =>
+      prisma.user.findUnique({
+        where: { id: userId },
+        select: { id: true },
+      }),
     getFallbackDashboardUser: () => getDashboardUser(),
   },
 ): Promise<DashboardUser | null> {
   if (sessionUser?.id) {
-    return {
-      id: sessionUser.id,
-    };
+    if (!deps.findDashboardUserById) {
+      return {
+        id: sessionUser.id,
+      };
+    }
+
+    const dashboardUser = await deps.findDashboardUserById(sessionUser.id);
+
+    if (dashboardUser) {
+      return dashboardUser;
+    }
   }
 
   return deps.getFallbackDashboardUser();

@@ -1,20 +1,31 @@
-# Current Feature
+# Current Feature: Add Items to Collections
 
 ## Status
 
 <!-- Not Started|In Progress|Completed -->
 
-Not Started
+In Progress
 
 ## Goals
 
 <!-- Goals & requirements -->
 
+- Add collection selection to the new item form.
+- Add collection selection to the edit item form.
+- Allow selecting one or multiple existing collections for an item.
+- Persist selected collection associations when creating an item.
+- Persist selected collection associations when updating an item.
+- Keep item and collection access user-scoped.
+- Follow existing item create/edit patterns for validation, server actions, data-layer helpers, UI state, and refresh behavior.
 
 ## Notes
 
 <!-- Any extra notes -->
 
+- The forms should select from available collections fetched for the current dashboard user.
+- Collection pages/display are explicitly out of scope for this feature.
+- New/edit item collection writes should support zero, one, or many selected collections.
+- Preserve the existing item create/edit UX while adding the collection picker.
 
 ## History
 
@@ -157,3 +168,10 @@ Not Started
 - 2026-05-05 23:48 EDT - Started File List View on branch `feature/file-list-view`.
 - 2026-05-05 23:59 EDT - Implemented File List View with file-specific list rows, extension-aware icons, file size and upload date metadata, direct download links that stop row propagation, and responsive mobile stacking. Verified focused red-green tests, full local tests, TypeScript, lint, production build, and git diff whitespace check; browser smoke was not run because browser/local curl verification was declined.
 - 2026-05-06 00:01 EDT - Completed File List View, merged it into `main`, deleted the local feature branch, and cleared current feature details.
+- 2026-05-06 08:33 EDT - Loaded Create Collection from inline user request and set status to Not Started.
+- 2026-05-06 08:34 EDT - Started Create Collection on branch `feature/create-collection`.
+- 2026-05-06 08:53 EDT - Implemented Create Collection with a protected `/collections` page, collection creation data layer, server action validation, top-bar New Collection dialog, success/failure toasts, and dashboard refresh after save. Verified focused collection tests, full local tests, lint, TypeScript, production build, whitespace check, and browser visibility of the New Collection button on `/collections`.
+- 2026-05-06 08:54 EDT - Loaded Add Items to Collections from inline user request and set status to Not Started.
+- 2026-05-06 09:09 EDT - Implemented Add Items to Collections with collection ID validation in item create/update server actions, user-owned collection checks and item-collection replacement in the data layer, collection pickers in new/edit item forms, and server-provided collection options across dashboard/type pages. Verified focused item tests, full local tests, lint, TypeScript, production build, whitespace check, and browser smoke checks for new/edit collection pickers.
+- 2026-05-06 09:18 EDT - Fixed Create Collection failures for stale sessions by verifying the session user still exists before using its id for dashboard writes, falling back to the dashboard user when needed. Verified the stale-session regression test, collection action tests, full local tests, lint, TypeScript, and browser collection creation.
+- 2026-05-06 09:25 EDT - Fixed collection slug links like `/collections/react-patterns` by adding a dynamic collection detail route, collection-by-slug lookup, and collection item listing query. Verified the route regression test, full local tests, lint, TypeScript, whitespace check, and browser rendering of `/collections/react-patterns`.

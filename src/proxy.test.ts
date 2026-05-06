@@ -14,11 +14,12 @@ describe("proxy", () => {
     assert.equal(typeof proxy, "function");
   });
 
-  it("protects dashboard and profile routes", async () => {
+  it("protects dashboard, collection, item, and profile routes", async () => {
     const { config } = await loadProxy();
 
     assert.deepEqual(config.matcher, [
       "/dashboard/:path*",
+      "/collections/:path*",
       "/items/:path*",
       "/profile/:path*",
     ]);

@@ -142,6 +142,50 @@ describe("createItem action", () => {
     });
   });
 
+  it("passes selected collection ids when creating an item", async () => {
+    const { handleCreateItem } = await import("./items");
+
+    const result = await handleCreateItem(
+      {
+        typeSlug: "note",
+        title: "Release checklist",
+        content: "Ship it.",
+        collectionIds: [" collection_alpha ", "collection_alpha", "collection_beta"],
+      },
+      {
+        auth: async () => ({
+          user: {
+            id: "user_123",
+          },
+        }),
+        createItem: async (input) => {
+          assert.deepEqual(input, {
+            userId: "user_123",
+            data: {
+              typeSlug: "note",
+              title: "Release checklist",
+              description: null,
+              content: "Ship it.",
+              url: null,
+              language: null,
+              tags: [],
+              collectionIds: ["collection_alpha", "collection_beta"],
+            },
+          });
+          return itemDetail;
+        },
+        getDashboardUserForSession: async () => ({
+          id: "user_123",
+        }),
+      },
+    );
+
+    assert.deepEqual(result, {
+      success: true,
+      data: itemDetail,
+    });
+  });
+
   it("creates file items with uploaded file metadata", async () => {
     const { handleCreateItem } = await import("./items");
 
@@ -392,6 +436,54 @@ describe("updateItem action", () => {
               url: null,
               language: "TypeScript",
               tags: ["react", "hooks"],
+            },
+          });
+          return itemDetail;
+        },
+      },
+    );
+
+    assert.deepEqual(result, {
+      success: true,
+      data: itemDetail,
+    });
+  });
+
+  it("passes selected collection ids when updating an item", async () => {
+    const { handleUpdateItem } = await import("./items");
+
+    const result = await handleUpdateItem(
+      "item_123",
+      {
+        title: "useAuth Hook",
+        description: "",
+        content: "export function useAuth() {}",
+        url: "",
+        language: "TypeScript",
+        tags: ["react"],
+        collectionIds: ["collection_beta", "collection_beta", " collection_gamma "],
+      },
+      {
+        auth: async () => ({
+          user: {
+            id: "user_123",
+          },
+        }),
+        getDashboardUserForSession: async () => ({
+          id: "user_123",
+        }),
+        updateItem: async (input) => {
+          assert.deepEqual(input, {
+            itemId: "item_123",
+            userId: "user_123",
+            data: {
+              title: "useAuth Hook",
+              description: null,
+              content: "export function useAuth() {}",
+              url: null,
+              language: "TypeScript",
+              tags: ["react"],
+              collectionIds: ["collection_beta", "collection_gamma"],
             },
           });
           return itemDetail;

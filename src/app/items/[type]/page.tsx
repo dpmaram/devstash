@@ -72,6 +72,7 @@ export default async function ItemsByTypePage({ params }: ItemsByTypePageProps) 
 
           {canCreateItemType ? (
             <NewItemDialog
+              collections={sidebarCollections}
               initialTypeSlug={itemType.slug}
               itemTypes={itemTypes}
               triggerClassName="w-full sm:w-auto"
@@ -82,6 +83,7 @@ export default async function ItemsByTypePage({ params }: ItemsByTypePageProps) 
         </div>
 
         <ItemCardGrid
+          availableCollections={sidebarCollections}
           displayMode={
             shouldUseImageGallery(itemType.slug)
               ? "imageGallery"
