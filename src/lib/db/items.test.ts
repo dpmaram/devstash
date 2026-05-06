@@ -177,6 +177,132 @@ describe("createItem", () => {
     ]);
   });
 
+  it("creates an item with selected owned collections", async () => {
+    const { createItem } = await import("./items");
+    const calls: string[] = [];
+
+    const result = await createItem(
+      {
+        userId: "user_123",
+        data: {
+          typeSlug: "note",
+          title: "Release checklist",
+          description: null,
+          content: "Ship it.",
+          url: null,
+          language: null,
+          tags: [],
+          collectionIds: ["collection_alpha", "collection_beta"],
+        },
+      },
+      {
+        findItemTypeBySlug: async (slug) => {
+          calls.push(`findItemTypeBySlug:${slug}`);
+          return {
+            id: "type_note",
+          };
+        },
+        findOwnedCollectionIds: async (input) => {
+          calls.push(
+            `findOwnedCollectionIds:${input.userId}:${input.collectionIds.join(",")}`,
+          );
+          return input.collectionIds;
+        },
+        createItemRecord: async () => {
+          calls.push("createItemRecord");
+          return {
+            id: "item_123",
+          };
+        },
+        upsertTag: async () => {
+          throw new Error("upsertTag should not be called");
+        },
+        createItemTags: async () => {
+          calls.push("createItemTags");
+        },
+        createItemCollections: async (input) => {
+          calls.push(
+            `createItemCollections:${input.itemId}:${input.collectionIds.join(",")}`,
+          );
+        },
+        findItemDetail: async () =>
+          createItemDetailRecord({
+            collections: [
+              {
+                collection: {
+                  id: "collection_alpha",
+                  name: "Alpha",
+                  slug: "alpha",
+                },
+              },
+              {
+                collection: {
+                  id: "collection_beta",
+                  name: "Beta",
+                  slug: "beta",
+                },
+              },
+            ],
+          }),
+      },
+    );
+
+    assert.deepEqual(calls, [
+      "findItemTypeBySlug:note",
+      "findOwnedCollectionIds:user_123:collection_alpha,collection_beta",
+      "createItemRecord",
+      "createItemTags",
+      "createItemCollections:item_123:collection_alpha,collection_beta",
+    ]);
+    assert.deepEqual(result?.collections.map((collection) => collection.id), [
+      "collection_alpha",
+      "collection_beta",
+    ]);
+  });
+
+  it("does not create an item when selected collections are outside the user", async () => {
+    const { createItem } = await import("./items");
+
+    const result = await createItem(
+      {
+        userId: "user_123",
+        data: {
+          typeSlug: "note",
+          title: "Release checklist",
+          description: null,
+          content: "Ship it.",
+          url: null,
+          language: null,
+          tags: [],
+          collectionIds: ["collection_alpha", "collection_foreign"],
+        },
+      },
+      {
+        findItemTypeBySlug: async () => ({
+          id: "type_note",
+        }),
+        findOwnedCollectionIds: async () => ["collection_alpha"],
+        createItemRecord: async () => {
+          throw new Error("createItemRecord should not be called");
+        },
+        upsertTag: async () => {
+          throw new Error("upsertTag should not be called");
+        },
+        createItemTags: async () => {
+          throw new Error("createItemTags should not be called");
+        },
+        createItemCollections: async () => {
+          throw new Error("createItemCollections should not be called");
+        },
+        findItemDetail: async () => {
+          throw new Error("findItemDetail should not be called");
+        },
+      },
+    );
+
+    assert.equal(result, null);
+  });
+
   it("creates file items with file metadata and FILE content type", async () => {
     const { createItem } = await import("./items");
 
@@ -438,6 +564,141 @@ describe("updateItem", () => {
     ]);
   });
 
+  it("replaces selected collections when updating an item", async () => {
+    const { updateItem } = await import("./items");
+    const calls: string[] = [];
+
+    const result = await updateItem(
+      {
+        itemId: "item_123",
+        userId: "user_123",
+        data: {
+          title: "useAuth Hook",
+          description: "Custom authentication hook.",
+          content: "export function useAuth() {}",
+          url: null,
+          language: "TypeScript",
+          tags: ["react"],
+          collectionIds: ["collection_beta"],
+        },
+      },
+      {
+        findOwnedItem: async (input) => {
+          calls.push(`findOwnedItem:${input.itemId}:${input.userId}`);
+          return {
+            id: input.itemId,
+          };
+        },
+        findOwnedCollectionIds: async (input) => {
+          calls.push(
+            `findOwnedCollectionIds:${input.userId}:${input.collectionIds.join(",")}`,
+          );
+          return input.collectionIds;
+        },
+        updateItemFields: async (input) => {
+          calls.push(`updateItemFields:${input.itemId}:${input.data.title}`);
+        },
+        deleteItemTags: async (itemId) => {
+          calls.push(`deleteItemTags:${itemId}`);
+        },
+        upsertTag: async (input) => {
+          calls.push(`upsertTag:${input.name}:${input.slug}`);
+          return {
+            id: `tag_${input.slug}`,
+          };
+        },
+        createItemTags: async (input) => {
+          calls.push(
+            `createItemTags:${input.itemId}:${input.tagIds.join(",")}`,
+          );
+        },
+        deleteItemCollections: async (itemId) => {
+          calls.push(`deleteItemCollections:${itemId}`);
+        },
+        createItemCollections: async (input) => {
+          calls.push(
+            `createItemCollections:${input.itemId}:${input.collectionIds.join(",")}`,
+          );
+        },
+        findItemDetail: async () =>
+          createItemDetailRecord({
+            collections: [
+              {
+                collection: {
+                  id: "collection_beta",
+                  name: "Beta",
+                  slug: "beta",
+                },
+              },
+            ],
+          }),
+      },
+    );
+
+    assert.deepEqual(calls, [
+      "findOwnedItem:item_123:user_123",
+      "findOwnedCollectionIds:user_123:collection_beta",
+      "updateItemFields:item_123:useAuth Hook",
+      "deleteItemTags:item_123",
+      "upsertTag:react:react",
+      "createItemTags:item_123:tag_react",
+      "deleteItemCollections:item_123",
+      "createItemCollections:item_123:collection_beta",
+    ]);
+    assert.deepEqual(result?.collections.map((collection) => collection.id), [
+      "collection_beta",
+    ]);
+  });
+
+  it("does not update an item when selected collections are outside the user", async () => {
+    const { updateItem } = await import("./items");
+
+    const result = await updateItem(
+      {
+        itemId: "item_123",
+        userId: "user_123",
+        data: {
+          title: "useAuth Hook",
+          description: null,
+          content: null,
+          url: null,
+          language: null,
+          tags: ["react"],
+          collectionIds: ["collection_alpha", "collection_foreign"],
+        },
+      },
+      {
+        findOwnedItem: async () => ({
+          id: "item_123",
+        }),
+        findOwnedCollectionIds: async () => ["collection_alpha"],
+        updateItemFields: async () => {
+          throw new Error("updateItemFields should not be called");
+        },
+        deleteItemTags: async () => {
+          throw new Error("deleteItemTags should not be called");
+        },
+        upsertTag: async () => {
+          throw new Error("upsertTag should not be called");
+        },
+        createItemTags: async () => {
+          throw new Error("createItemTags should not be called");
+        },
+        deleteItemCollections: async () => {
+          throw new Error("deleteItemCollections should not be called");
+        },
+        createItemCollections: async () => {
+          throw new Error("createItemCollections should not be called");
+        },
+        findItemDetail: async () => {
+          throw new Error("findItemDetail should not be called");
+        },
+      },
+    );
+
+    assert.equal(result, null);
+  });
+
   it("runs item updates and tag replacement inside transaction-scoped dependencies", async () => {
     const { updateItem } = await import("./items");
     const calls: string[] = [];
@@ -599,7 +860,7 @@ describe("deleteItem", () => {
   });
 });
 
-function createItemDetailRecord() {
+function createItemDetailRecord(overrides: Record<string, unknown> = {}) {
   return {
     id: "item_123",
     title: "useAuth Hook",
@@ -624,5 +885,6 @@ function createItemDetailRecord() {
     },
     collections: [],
     tags: [{ tag: { name: "react", slug: "react" } }],
+    ...overrides,
   };
 }

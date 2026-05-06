@@ -26,6 +26,7 @@ import {
   SIDEBAR_PRO_BADGE_LABEL,
   shouldShowSidebarProBadge,
 } from "@/components/dashboard/sidebar-pro-badge";
+import { NewCollectionDialog } from "@/components/dashboard/NewCollectionDialog";
 import { NewItemDialog } from "@/components/dashboard/NewItemDialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -67,6 +68,7 @@ export function DashboardChrome({
 
         <div className="min-w-0 flex-1">
           <TopBar
+            collections={collections}
             newItemInitialTypeSlug={newItemInitialTypeSlug}
             itemTypes={itemTypes}
             onOpenMobileSidebar={() => setIsMobileSidebarOpen(true)}
@@ -79,10 +81,12 @@ export function DashboardChrome({
 }
 
 function TopBar({
+  collections,
   itemTypes,
   newItemInitialTypeSlug,
   onOpenMobileSidebar,
 }: {
+  collections: DashboardCollection[];
   itemTypes: DashboardItemType[];
   newItemInitialTypeSlug?: string | null;
   onOpenMobileSidebar: () => void;
@@ -112,10 +116,14 @@ function TopBar({
         />
       </div>
 
-      <NewItemDialog
-        initialTypeSlug={newItemInitialTypeSlug}
-        itemTypes={itemTypes}
-      />
+      <div className="flex shrink-0 items-center gap-2">
+        <NewCollectionDialog />
+        <NewItemDialog
+          collections={collections}
+          initialTypeSlug={newItemInitialTypeSlug}
+          itemTypes={itemTypes}
+        />
+      </div>
     </header>
   );
 }

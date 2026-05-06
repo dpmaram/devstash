@@ -28,6 +28,23 @@ type DashboardCollectionsOptions = {
   userEmail?: string;
 };
 
+type DashboardCollectionBySlugOptions = Pick<
+  DashboardCollectionsOptions,
+  "user" | "userEmail"
+> & {
+  slug: string;
+};
+
+export type CreateCollectionData = {
+  name: string;
+  description?: string | null;
+};
+
+export type CreateCollectionInput = {
+  userId: string;
+  data: CreateCollectionData;
+};
+
 type DashboardCollectionQueryRecord = {
   id: string;
   name: string;
@@ -47,6 +64,35 @@ type CollectionTypeSummaryRecord = {
     itemType: CollectionItemType;
   };
 };
+
+type CreateCollectionDeps = {
+  findCollectionBySlug: (input: {
+    userId: string;
+    slug: string;
+  }) => Promise<{ id: string } | null>;
+  createCollectionRecord: (input: {
+    userId: string;
+    data: {
+      name: string;
+      slug: string;
+      description: string | null;
+    };
+  }) => Promise<{ id: string }>;
+  findCollectionById: (input: {
+    userId: string;
+    collectionId: string;
+  }) => Promise<DashboardCollectionQueryRecord | null>;
+};
+
+export function slugifyCollectionName(name: string) {
+  return (
+    name
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "") || "collection"
+  );
+}
 
 function buildCollectionTypeSummaries(
   records: CollectionTypeSummaryRecord[],
@@ -116,6 +162,86 @@ function toCollectionRecord(
   };
 }
 
+function createCreateCollectionDeps(): CreateCollectionDeps {
+  return {
+    findCollectionBySlug: ({ userId, slug }) =>
+      prisma.collection.findUnique({
+        where: {
+          userId_slug: {
+            userId,
+            slug,
+          },
+        },
+        select: {
+          id: true,
+        },
+      }),
+    createCollectionRecord: ({ userId, data }) =>
+      prisma.collection.create({
+        data: {
+          userId,
+          name: data.name,
+          slug: data.slug,
+          description: data.description,
+        },
+        select: {
+          id: true,
+        },
+      }),
+    findCollectionById: ({ userId, collectionId }) =>
+      prisma.collection.findFirst({
+        where: {
+          id: collectionId,
+          userId,
+        },
+        select: dashboardCollectionSelect,
+      }),
+  };
+}
+
+export async function createCollection(
+  input: CreateCollectionInput,
+  deps: CreateCollectionDeps = createCreateCollectionDeps(),
+) {
+  const name = input.data.name.trim();
+
+  if (!name) {
+    return null;
+  }
+
+  const description = input.data.description?.trim() || null;
+  const slug = slugifyCollectionName(name);
+  const existingCollection = await deps.findCollectionBySlug({
+    userId: input.userId,
+    slug,
+  });
+
+  if (existingCollection) {
+    return null;
+  }
+
+  const collection = await deps.createCollectionRecord({
+    userId: input.userId,
+    data: {
+      name,
+      slug,
+      description,
+    },
+  });
+  const createdCollection = await deps.findCollectionById({
+    userId: input.userId,
+    collectionId: collection.id,
+  });
+
+  if (!createdCollection) {
+    return null;
+  }
+
+  return toDashboardCollection(
+    toCollectionRecord(createdCollection, new Map()),
+  );
+}
+
 export async function getDashboardCollections(
   options: DashboardCollectionsOptions = {},
 ) {
@@ -139,6 +265,37 @@ export async function getDashboardCollections(
     toDashboardCollection(
       toCollectionRecord(collection, typeSummariesByCollectionId),
     ),
+  );
+}
+
+export async function getDashboardCollectionBySlug(
+  options: DashboardCollectionBySlugOptions,
+) {
+  const user = await resolveDashboardUser(options);
+
+  if (!user) {
+    return null;
+  }
+
+  const slug = options.slug.trim().toLowerCase();
+  const collection = await prisma.collection.findFirst({
+    where: {
+      userId: user.id,
+      slug,
+    },
+    select: dashboardCollectionSelect,
+  });
+
+  if (!collection) {
+    return null;
+  }
+
+  const typeSummariesByCollectionId = await getCollectionTypeSummaries([
+    collection.id,
+  ]);
+
+  return toDashboardCollection(
+    toCollectionRecord(collection, typeSummariesByCollectionId),
   );
 }
 

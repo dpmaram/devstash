@@ -33,6 +33,7 @@ describe("resolveCreateItemTypeSlug", () => {
 describe("createInitialNewItemDraft", () => {
   test("creates an empty draft with the requested supported type selected", () => {
     expect(createInitialNewItemDraft("note")).toEqual({
+      collectionIds: [],
       content: "",
       description: "",
       language: "",

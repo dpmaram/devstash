@@ -54,6 +54,13 @@ const nullablePositiveInteger = z.preprocess(
   z.number().int().positive().nullable(),
 );
 
+const optionalCollectionIds = z
+  .array(z.string().trim().min(1, "Collection id is required."))
+  .optional()
+  .transform((collectionIds) =>
+    collectionIds ? [...new Set(collectionIds)] : undefined,
+  );
+
 const updateItemSchema = z.object({
   title: z.string().trim().min(1, "Title is required."),
   description: nullableTrimmedString,
@@ -61,6 +68,7 @@ const updateItemSchema = z.object({
   url: nullableUrlString,
   language: nullableTrimmedString,
   tags: z.array(z.string().trim().min(1, "Tags cannot be empty.")).default([]),
+  collectionIds: optionalCollectionIds,
 });
 
 const createItemSchema = z
@@ -75,6 +83,7 @@ const createItemSchema = z
     fileSize: nullablePositiveInteger,
     language: nullableTrimmedString,
     tags: z.array(z.string().trim().min(1, "Tags cannot be empty.")).default([]),
+    collectionIds: optionalCollectionIds,
   })
   .superRefine((data, context) => {
     if (data.typeSlug === "link" && !data.url) {
@@ -119,6 +128,9 @@ const createItemSchema = z
         ? data.language
         : null,
     tags: data.tags,
+    ...(data.collectionIds !== undefined
+      ? { collectionIds: data.collectionIds }
+      : {}),
   }));
 
 type CreateItemActionDeps = {

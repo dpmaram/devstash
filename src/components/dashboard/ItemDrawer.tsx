@@ -27,6 +27,7 @@ import {
   deleteItem as deleteItemAction,
   updateItem as updateItemAction,
 } from "@/actions/items";
+import { CollectionPicker } from "@/components/dashboard/CollectionPicker";
 import { CodeEditor } from "@/components/dashboard/CodeEditor";
 import {
   FileItemRow,
@@ -56,6 +57,7 @@ import {
   getCodeEditorLanguageLabel,
   shouldUseCodeEditor,
 } from "@/lib/code-editor";
+import type { DashboardCollection } from "@/lib/db/collections";
 import { shouldUseMarkdownEditor } from "@/lib/markdown-editor";
 import { cn } from "@/lib/utils";
 
@@ -79,6 +81,7 @@ type ItemDrawerState = {
 };
 
 type ItemEditDraft = {
+  collectionIds: string[];
   content: string;
   description: string;
   itemId: string;
@@ -101,10 +104,12 @@ const initialDrawerState: ItemDrawerState = {
 };
 
 export function ItemCardGrid({
+  availableCollections = [],
   displayMode = "cards",
   emptyMessage = "No items yet.",
   items,
 }: {
+  availableCollections?: DashboardCollection[];
   displayMode?: "cards" | "fileList" | "imageGallery";
   emptyMessage?: string;
   items: DashboardItem[];
@@ -156,6 +161,7 @@ export function ItemCardGrid({
         </div>
       )}
       <ItemDetailSheet
+        availableCollections={availableCollections}
         onOpenChange={drawer.onOpenChange}
         open={drawer.isOpen}
         replaceItem={drawer.replaceItem}
@@ -166,9 +172,11 @@ export function ItemCardGrid({
 }
 
 export function ItemRowList({
+  availableCollections = [],
   emptyMessage = "No items yet.",
   items,
 }: {
+  availableCollections?: DashboardCollection[];
   emptyMessage?: string;
   items: DashboardItem[];
 }) {
@@ -187,6 +195,7 @@ export function ItemRowList({
         ))}
       </div>
       <ItemDetailSheet
+        availableCollections={availableCollections}
         onOpenChange={drawer.onOpenChange}
         open={drawer.isOpen}
         replaceItem={drawer.replaceItem}
@@ -276,11 +285,13 @@ function useItemDrawer() {
 }
 
 function ItemDetailSheet({
+  availableCollections,
   onOpenChange,
   open,
   replaceItem,
   state,
 }: {
+  availableCollections: DashboardCollection[];
   onOpenChange: (open: boolean) => void;
   open: boolean;
   replaceItem: (item: ItemDetail) => void;
@@ -515,6 +526,7 @@ function ItemDetailSheet({
             {state.status === "ready" && state.item ? (
               isEditingCurrentItem && draft ? (
                 <ItemEditForm
+                  availableCollections={availableCollections}
                   draft={draft}
                   error={formError}
                   isSaving={isSaving}
@@ -685,6 +697,7 @@ function ItemEditActionBar({
 }
 
 function ItemEditForm({
+  availableCollections,
   draft,
   error,
   isSaving,
@@ -692,6 +705,7 @@ function ItemEditForm({
   onChange,
   onSave,
 }: {
+  availableCollections: DashboardCollection[];
   draft: ItemEditDraft;
   error: string | null;
   isSaving: boolean;
@@ -704,6 +718,7 @@ function ItemEditForm({
   const descriptionId = `${fieldId}-description`;
   const tagsId = `${fieldId}-tags`;
   const contentId = `${fieldId}-content`;
+  const collectionsId = `${fieldId}-collections`;
   const languageId = `${fieldId}-language`;
   const urlId = `${fieldId}-url`;
 
@@ -771,6 +786,20 @@ function ItemEditForm({
               })
             }
             value={draft.tagsText}
+          />
+        </EditField>
+
+        <EditField htmlFor={collectionsId} label="Collections">
+          <CollectionPicker
+            collections={availableCollections}
+            disabled={isSaving}
+            onChange={(collectionIds) =>
+              onChange({
+                ...draft,
+                collectionIds,
+              })
+            }
+            selectedCollectionIds={draft.collectionIds}
           />
         </EditField>
 
@@ -1303,6 +1332,7 @@ function toDashboardItemSummary(
 
 function createItemEditDraft(item: ItemDetail): ItemEditDraft {
   return {
+    collectionIds: item.collections.map((collection) => collection.id),
     itemId: item.id,
     title: item.title,
     description: item.description === "No description yet." ? "" : item.description,
@@ -1321,6 +1351,7 @@ function createUpdateItemPayload(item: ItemDetail, draft: ItemEditDraft) {
     url: canEditItemUrl(item) ? draft.url : null,
     language: canEditItemLanguage(item) ? draft.language : null,
     tags: getDraftTags(draft.tagsText),
+    collectionIds: draft.collectionIds,
   };
 }
 
