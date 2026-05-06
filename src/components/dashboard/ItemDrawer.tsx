@@ -34,7 +34,7 @@ import {
   itemTypeIconClasses,
   itemTypeIcons,
 } from "@/components/dashboard/dashboard-icons";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
   Sheet,
@@ -45,6 +45,13 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import type { DashboardItem, ItemDetail } from "@/lib/db/items";
+import {
+  formatFileListSize,
+  getFileDownloadUrl,
+  getFileExtensionLabel,
+  getFileIconTone,
+  type FileIconTone,
+} from "@/lib/file-list";
 import { getImageThumbnailUrl } from "@/lib/image-gallery";
 import type { ItemTypeSlug } from "@/lib/mock-data";
 import {
@@ -101,38 +108,56 @@ export function ItemCardGrid({
   emptyMessage = "No items yet.",
   items,
 }: {
-  displayMode?: "cards" | "imageGallery";
+  displayMode?: "cards" | "fileList" | "imageGallery";
   emptyMessage?: string;
   items: DashboardItem[];
 }) {
   const drawer = useItemDrawer();
   const isImageGallery = displayMode === "imageGallery";
+  const isFileList = displayMode === "fileList";
 
   return (
     <>
-      <div
-        className={cn(
-          "grid gap-4",
-          isImageGallery ? "sm:grid-cols-2 xl:grid-cols-3" : "xl:grid-cols-3",
-        )}
-      >
-        {items.length === 0 ? (
-          <p className="rounded-lg border border-devstash-line bg-white/[0.025] p-5 text-sm text-muted-foreground xl:col-span-3">
-            {emptyMessage}
-          </p>
-        ) : null}
-        {items.map((item) =>
-          isImageGallery ? (
-            <ImageThumbnailCard
-              item={item}
-              key={item.id}
-              onOpen={drawer.openItem}
-            />
-          ) : (
-            <PinnedItemCard item={item} key={item.id} onOpen={drawer.openItem} />
-          ),
-        )}
-      </div>
+      {isFileList ? (
+        <div className="space-y-2">
+          {items.length === 0 ? (
+            <p className="rounded-lg border border-devstash-line bg-white/[0.025] p-5 text-sm text-muted-foreground">
+              {emptyMessage}
+            </p>
+          ) : null}
+          {items.map((item) => (
+            <FileItemRow item={item} key={item.id} onOpen={drawer.openItem} />
+          ))}
+        </div>
+      ) : (
+        <div
+          className={cn(
+            "grid gap-4",
+            isImageGallery ? "sm:grid-cols-2 xl:grid-cols-3" : "xl:grid-cols-3",
+          )}
+        >
+          {items.length === 0 ? (
+            <p className="rounded-lg border border-devstash-line bg-white/[0.025] p-5 text-sm text-muted-foreground xl:col-span-3">
+              {emptyMessage}
+            </p>
+          ) : null}
+          {items.map((item) =>
+            isImageGallery ? (
+              <ImageThumbnailCard
+                item={item}
+                key={item.id}
+                onOpen={drawer.openItem}
+              />
+            ) : (
+              <PinnedItemCard
+                item={item}
+                key={item.id}
+                onOpen={drawer.openItem}
+              />
+            ),
+          )}
+        </div>
+      )}
       <ItemDetailSheet
         onOpenChange={drawer.onOpenChange}
         open={drawer.isOpen}
@@ -298,6 +323,105 @@ function ImageThumbnailCard({
       </div>
     </button>
   );
+}
+
+function FileItemRow({
+  item,
+  onOpen,
+}: {
+  item: DashboardItem;
+  onOpen: (item: DashboardItem) => void;
+}) {
+  const fileName = item.fileName ?? item.title;
+  const shouldShowTitle = item.title !== fileName;
+
+  function handleKeyDown(event: React.KeyboardEvent<HTMLDivElement>) {
+    if (event.target !== event.currentTarget) {
+      return;
+    }
+
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      onOpen(item);
+    }
+  }
+
+  return (
+    <div
+      className="group flex w-full cursor-pointer flex-col gap-4 rounded-lg border border-devstash-line bg-white/[0.025] p-4 text-left transition hover:border-white/20 hover:bg-white/[0.05] focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 sm:flex-row sm:items-center sm:justify-between"
+      onClick={() => onOpen(item)}
+      onKeyDown={handleKeyDown}
+      role="button"
+      tabIndex={0}
+    >
+      <div className="flex min-w-0 items-start gap-4">
+        <FileListIcon fileName={fileName} />
+        <div className="min-w-0">
+          <h3 className="truncate text-base font-semibold text-white">
+            {fileName}
+          </h3>
+          {shouldShowTitle ? (
+            <p className="mt-1 truncate text-sm text-zinc-400">{item.title}</p>
+          ) : null}
+          <div className="mt-2 flex flex-col gap-1 text-sm text-muted-foreground sm:flex-row sm:items-center sm:gap-3">
+            <span>{formatFileListSize(item.fileSize)}</span>
+            <span className="hidden sm:inline" aria-hidden="true">
+              /
+            </span>
+            <span>Uploaded {item.createdAtLabel}</span>
+          </div>
+        </div>
+      </div>
+
+      <a
+        aria-label={`Download ${fileName}`}
+        className={cn(
+          buttonVariants({ size: "sm", variant: "outline" }),
+          "w-full border-devstash-line bg-white/[0.03] text-zinc-100 hover:bg-white/[0.08] sm:w-auto",
+        )}
+        href={getFileDownloadUrl(item.id)}
+        onClick={(event) => event.stopPropagation()}
+      >
+        <Download aria-hidden="true" className="size-4" />
+        Download
+      </a>
+    </div>
+  );
+}
+
+function FileListIcon({ fileName }: { fileName: string }) {
+  const tone = getFileIconTone(fileName);
+  return (
+    <div
+      className={cn(
+        "flex size-12 shrink-0 flex-col items-center justify-center rounded-lg border border-white/10 bg-white/[0.05]",
+        getFileIconToneClassName(tone),
+      )}
+    >
+      {tone === "code" ? (
+        <Code2 aria-hidden="true" className="size-5" />
+      ) : tone === "image" ? (
+        <ImageIcon aria-hidden="true" className="size-5" />
+      ) : (
+        <FileText aria-hidden="true" className="size-5" />
+      )}
+      <span className="mt-0.5 max-w-9 truncate text-[0.625rem] font-semibold leading-none">
+        {getFileExtensionLabel(fileName)}
+      </span>
+    </div>
+  );
+}
+
+function getFileIconToneClassName(tone: FileIconTone) {
+  if (tone === "code") {
+    return "text-blue-200";
+  }
+
+  if (tone === "image") {
+    return "text-pink-200";
+  }
+
+  return "text-zinc-300";
 }
 
 function PinnedItemCard({
@@ -1421,6 +1545,9 @@ function toDashboardItemSummary(
     updatedAt: "Just now",
     isPinned: item.isPinned,
     isFavorite: item.isFavorite,
+    createdAtLabel: item.createdAtLabel,
+    fileName: item.fileName,
+    fileSize: item.fileSize,
     language: item.language,
     preview: getItemDetailPreview(item),
     accentColor: item.accentColor,

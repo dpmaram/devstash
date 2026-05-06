@@ -29,9 +29,11 @@ function itemRecord(overrides: Partial<ItemRecord> = {}): ItemRecord {
     url: null,
     fileName: null,
     fileUrl: null,
+    fileSize: null,
     language: "TypeScript",
     isPinned: true,
     isFavorite: true,
+    createdAt: new Date("2026-01-15T12:30:00.000Z"),
     updatedAt: new Date("2026-04-25T15:45:00.000Z"),
     itemType: snippetType,
     collections: [
@@ -91,9 +93,12 @@ describe("toDashboardItem", () => {
       collectionSlugs: ["react-patterns"],
       collectionNames: ["React Patterns"],
       tags: ["react", "hooks"],
+      createdAtLabel: "Jan 15, 2026",
       updatedAt: "45 min ago",
       isPinned: true,
       isFavorite: true,
+      fileName: null,
+      fileSize: null,
       language: "TypeScript",
       preview: "const value = useDebounce(search, 300);",
       accentColor: "#3b82f6",
@@ -126,6 +131,7 @@ describe("toDashboardItem", () => {
         url: null,
         fileName: "component-context.md",
         fileUrl: "https://example.com/component-context.md",
+        fileSize: 2048,
         language: null,
         itemType: {
           id: "type_file",
@@ -140,6 +146,8 @@ describe("toDashboardItem", () => {
 
     assert.equal(linkItem.preview, "https://tailwindcss.com/docs");
     assert.equal(fileItem.preview, "component-context.md");
+    assert.equal(fileItem.fileName, "component-context.md");
+    assert.equal(fileItem.fileSize, 2048);
   });
 });
 

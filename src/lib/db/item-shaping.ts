@@ -23,10 +23,12 @@ export type ItemRecord = {
   content?: string | null;
   url?: string | null;
   fileName?: string | null;
+  fileSize?: number | null;
   fileUrl?: string | null;
   language?: string | null;
   isPinned: boolean;
   isFavorite: boolean;
+  createdAt: Date;
   updatedAt: Date;
   itemType: ItemTypeRecord;
   collections: {
@@ -73,9 +75,12 @@ export type DashboardItem = {
   collectionSlugs: string[];
   collectionNames: string[];
   tags: string[];
+  createdAtLabel: string;
   updatedAt: string;
   isPinned: boolean;
   isFavorite: boolean;
+  fileName: string | null;
+  fileSize: number | null;
   language?: string;
   preview: string;
   accentColor: string;
@@ -159,6 +164,14 @@ function formatUpdatedAt(updatedAt: Date, now: Date) {
 function formatDetailDate(date: Date) {
   return new Intl.DateTimeFormat("en-US", {
     month: "long",
+    day: "numeric",
+    year: "numeric",
+  }).format(date);
+}
+
+function formatListDate(date: Date) {
+  return new Intl.DateTimeFormat("en-US", {
+    month: "short",
     day: "numeric",
     year: "numeric",
   }).format(date);
@@ -250,9 +263,12 @@ export function toDashboardItem(item: ItemRecord, now = new Date()) {
     collectionSlugs: item.collections.map(({ collection }) => collection.slug),
     collectionNames: item.collections.map(({ collection }) => collection.name),
     tags: item.tags.map(({ tag }) => tag.name),
+    createdAtLabel: formatListDate(item.createdAt),
     updatedAt: formatUpdatedAt(item.updatedAt, now),
     isPinned: item.isPinned,
     isFavorite: item.isFavorite,
+    fileName: item.fileName ?? null,
+    fileSize: item.fileSize ?? null,
     language: item.language ?? undefined,
     preview: getPreview(item),
     accentColor: item.itemType.color,

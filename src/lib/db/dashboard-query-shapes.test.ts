@@ -9,8 +9,8 @@ import {
 } from "./dashboard-query-shapes";
 
 describe("dashboard query shapes", () => {
-  it("selects only item fields rendered by dashboard item cards", () => {
-    for (const unusedField of ["content", "url", "fileName", "fileUrl", "language"]) {
+  it("selects only item fields rendered by dashboard item cards and file lists", () => {
+    for (const unusedField of ["content", "url", "fileUrl", "language"]) {
       assert.equal(
         unusedField in dashboardItemListSelect,
         false,
@@ -20,7 +20,10 @@ describe("dashboard query shapes", () => {
 
     assert.deepEqual(Object.keys(dashboardItemListSelect).sort(), [
       "collections",
+      "createdAt",
       "description",
+      "fileName",
+      "fileSize",
       "id",
       "isFavorite",
       "isPinned",
