@@ -1,27 +1,20 @@
-# Current Feature: Image Gallery View
+# Current Feature
 
 ## Status
 
 <!-- Not Started|In Progress|Completed -->
 
-In Progress
+Not Started
 
 ## Goals
 
 <!-- Goals & requirements -->
 
-- Create an image thumbnail card to replace the regular item card for image listings.
-- Show image items in a 3-column gallery/grid.
-- Display image thumbnails with a 16:9 aspect ratio using `aspect-video`.
-- Use `object-cover` so thumbnails fill each card.
-- Add a subtle hover zoom effect with 5% scale and a 300ms transition.
 
 ## Notes
 
 <!-- Any extra notes -->
 
-- Loaded from `context/features/image-display-spec.md`.
-- Gallery behavior is scoped to image item listings.
 
 ## History
 
@@ -159,3 +152,4 @@ In Progress
 - 2026-05-05 23:25 EDT - Loaded Image Gallery View spec from `context/features/image-display-spec.md` and set status to Not Started.
 - 2026-05-05 23:27 EDT - Started Image Gallery View on branch `feature/image-gallery-view`.
 - 2026-05-05 23:32 EDT - Implemented Image Gallery View with image-specific thumbnail gallery cards, authenticated inline thumbnail URLs, 16:9 object-cover thumbnails, and subtle hover zoom. Verified full local tests, TypeScript, lint, production build, git diff whitespace check, and browser grid mode on `/items/images`.
+- 2026-05-05 23:37 EDT - Completed Image Gallery View, merged it into `main`, deleted the local feature branch, and cleared current feature details.
