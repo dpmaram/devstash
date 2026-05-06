@@ -42,7 +42,7 @@ describe("profile change password route", () => {
   });
 
   it("returns a 429 response when password changes are rate limited", async () => {
-    const route = (await import("./app/api/profile/change-password/route")) as typeof import("./app/api/profile/change-password/route") & {
+    const route = (await import("./app/api/profile/change-password/route-handler")) as unknown as {
       handleChangePasswordPost: (
         request: Request,
         deps: {

@@ -1,6 +1,11 @@
 import { describe, expect, test } from "vitest";
 
-import { getQuickCopyText, type QuickCopyItem } from "./item-copy";
+import {
+  getQuickCopyText,
+  getQuickCopyTextFromDetail,
+  type QuickCopyDetailItem,
+  type QuickCopyItem,
+} from "./item-copy";
 
 function item(overrides: Partial<QuickCopyItem> = {}): QuickCopyItem {
   return {
@@ -57,5 +62,38 @@ describe("getQuickCopyText", () => {
         }),
       ),
     ).toBe("/api/uploads/item%2Fimage%20123/download");
+  });
+});
+
+function detailItem(overrides: Partial<QuickCopyDetailItem> = {}): QuickCopyDetailItem {
+  return {
+    content: "console.log('copied from detail');",
+    fileName: null,
+    id: "item_123",
+    title: "useDebounce Hook",
+    typeSlug: "snippet",
+    url: null,
+    ...overrides,
+  };
+}
+
+describe("getQuickCopyTextFromDetail", () => {
+  test("copies full text content from fetched item detail", () => {
+    expect(getQuickCopyTextFromDetail(detailItem())).toBe(
+      "console.log('copied from detail');",
+    );
+  });
+
+  test("copies link URLs from fetched item detail", () => {
+    expect(
+      getQuickCopyTextFromDetail(
+        detailItem({
+          content: null,
+          title: "Tailwind Docs",
+          typeSlug: "link",
+          url: "https://tailwindcss.com/docs",
+        }),
+      ),
+    ).toBe("https://tailwindcss.com/docs");
   });
 });

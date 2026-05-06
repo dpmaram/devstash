@@ -66,7 +66,7 @@ describe("resend verification route", () => {
   });
 
   it("returns a 429 response when resend requests are rate limited", async () => {
-    const route = (await import("./app/api/auth/resend-verification/route")) as typeof import("./app/api/auth/resend-verification/route") & {
+    const route = (await import("./app/api/auth/resend-verification/route-handler")) as unknown as {
       handleResendVerificationPost: (
         request: Request,
         deps: {

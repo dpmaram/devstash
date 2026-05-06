@@ -20,7 +20,7 @@ type UploadValidationResult =
 const imageMaxSize = 5 * 1024 * 1024;
 const fileMaxSize = 10 * 1024 * 1024;
 
-const imageExtensions = new Set([".png", ".jpg", ".jpeg", ".gif", ".webp", ".svg"]);
+const imageExtensions = new Set([".png", ".jpg", ".jpeg", ".gif", ".webp"]);
 const fileExtensions = new Set([
   ".pdf",
   ".txt",
@@ -39,7 +39,6 @@ const imageMimeTypes = new Set([
   "image/jpeg",
   "image/gif",
   "image/webp",
-  "image/svg+xml",
 ]);
 
 const fileMimeTypes = new Set([
@@ -120,7 +119,7 @@ export function buildUploadObjectKey({
   uploadId: string;
   userId: string;
 }) {
-  return `${normalizeUploadObjectKeyPrefix(prefix)}/${sanitizePathSegment(userId)}/${sanitizePathSegment(
+  return `${normalizeUploadObjectKeyPrefix(prefix)}/${sanitizeUploadPathSegment(userId)}/${sanitizeUploadPathSegment(
     uploadId,
   )}-${sanitizeFileName(fileName)}`;
 }
@@ -160,7 +159,7 @@ function sanitizeFileName(fileName: string) {
   return `${stem || "upload"}${extension}`;
 }
 
-function sanitizePathSegment(value: string) {
+export function sanitizeUploadPathSegment(value: string) {
   return value
     .toLowerCase()
     .replace(/[^a-z0-9_-]+/g, "-")

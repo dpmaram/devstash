@@ -192,7 +192,7 @@ export function FileUpload({
                 Drop {isImageUpload ? "an image" : "a file"} here
               </p>
               <p className="text-xs text-muted-foreground">
-                {isImageUpload ? "PNG, JPG, GIF, WebP, or SVG up to 5 MB" : "PDF, text, markdown, JSON, YAML, XML, CSV, TOML, or INI up to 10 MB"}
+                {isImageUpload ? "PNG, JPG, GIF, or WebP up to 5 MB" : "PDF, text, markdown, JSON, YAML, XML, CSV, TOML, or INI up to 10 MB"}
               </p>
             </div>
             <Button
@@ -348,5 +348,5 @@ function formatFileSize(fileSize: number) {
   return `${(fileSize / (1024 * 1024)).toFixed(1)} MB`;
 }
 
-const imageAccept = ".png,.jpg,.jpeg,.gif,.webp,.svg";
+const imageAccept = ".png,.jpg,.jpeg,.gif,.webp";
 const fileAccept = ".pdf,.txt,.md,.json,.yaml,.yml,.xml,.csv,.toml,.ini";

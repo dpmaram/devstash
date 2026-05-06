@@ -58,17 +58,11 @@ export async function getDashboardUserForSession(
     getFallbackDashboardUser: () => getDashboardUser(),
   },
 ): Promise<DashboardUser | null> {
-  const fallbackUser = await deps.getFallbackDashboardUser();
-
-  if (fallbackUser) {
-    return fallbackUser;
-  }
-
   if (sessionUser?.id) {
     return {
       id: sessionUser.id,
     };
   }
 
-  return null;
+  return deps.getFallbackDashboardUser();
 }

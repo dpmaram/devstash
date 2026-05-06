@@ -11,6 +11,9 @@
 
 - `src/components/dashboard/DashboardShell.tsx` - server component that fetches dashboard data and renders the dashboard content.
 - `src/components/dashboard/DashboardChrome.tsx` - client component for the dashboard frame, responsive sidebar, search bar, and user area.
+- `src/components/dashboard/ItemDrawer.tsx` - item detail drawer, edit/delete actions, and detail rendering.
+- `src/components/dashboard/ItemCards.tsx` - dashboard item cards/list rows, quick-copy controls, and file/image list presentation.
+- `src/components/dashboard/FileUpload.tsx` - drag-and-drop upload input used by file and image creation.
 - `src/components/dashboard/dashboard-icons.ts` - item type icon mapping and color classes.
 - `src/components/dashboard/sidebar-pro-badge.ts` - sidebar Pro badge rules.
 - `src/components/ui/` - shadcn/ui-style primitives used by dashboard components.
@@ -22,6 +25,8 @@
 - `src/lib/db/collection-shaping.ts` - maps Prisma collection records into dashboard view models.
 - `src/lib/db/items.ts` - dashboard item and item type queries.
 - `src/lib/db/item-shaping.ts` - maps Prisma item records into dashboard view models.
+- `src/lib/storage/s3.ts` - AWS S3 upload, download, cleanup, and upload-scope helpers.
+- `src/lib/uploads.ts` - upload validation and S3 object-key construction.
 - `src/lib/mock-data.ts` - legacy/mock dashboard data still used for the current user placeholder and type helpers.
 
 ## Database

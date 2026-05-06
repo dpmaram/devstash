@@ -14,7 +14,8 @@ import {
   type DeleteItemInput,
   type UpdateItemInput,
 } from "@/lib/db/items";
-import { deleteStoredFile } from "@/lib/storage/s3";
+import { deleteStoredFile, isStoredFileOwnedByUser } from "@/lib/storage/s3";
+import { isUploadItemTypeSlug } from "@/lib/uploads";
 
 const nullableTrimmedString = z.preprocess(
   (value) => {
@@ -231,6 +232,16 @@ export async function handleCreateItem(
     return {
       success: false,
       error: "Unable to create item.",
+    };
+  }
+
+  if (
+    isUploadItemTypeSlug(parsedData.data.typeSlug) &&
+    !isStoredFileOwnedByUser(parsedData.data.fileUrl, dashboardUser.id)
+  ) {
+    return {
+      success: false,
+      error: "Upload is not available for this user.",
     };
   }
 
