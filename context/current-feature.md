@@ -1,28 +1,20 @@
-# Current Feature: File List View
+# Current Feature
 
 ## Status
 
 <!-- Not Started|In Progress|Completed -->
 
-In Progress
+Not Started
 
 ## Goals
 
 <!-- Goals & requirements -->
 
-- Update `/items/files` to display as a single-column file list instead of grid cards.
-- Render rows with a file icon by extension, file name, file size, upload date, and download button.
-- Add a row hover highlight.
-- Clicking a row opens `ItemDrawer`.
-- The download button triggers a direct download and stops row-click propagation.
-- Stack file info vertically on mobile.
 
 ## Notes
 
 <!-- Any extra notes -->
 
-- Loaded from `context/features/file-display-spec.md`.
-- Scope is the files type page at `/items/files`.
 
 ## History
 
@@ -164,3 +156,4 @@ In Progress
 - 2026-05-05 23:47 EDT - Loaded File List View spec from `context/features/file-display-spec.md` and set status to Not Started.
 - 2026-05-05 23:48 EDT - Started File List View on branch `feature/file-list-view`.
 - 2026-05-05 23:59 EDT - Implemented File List View with file-specific list rows, extension-aware icons, file size and upload date metadata, direct download links that stop row propagation, and responsive mobile stacking. Verified focused red-green tests, full local tests, TypeScript, lint, production build, and git diff whitespace check; browser smoke was not run because browser/local curl verification was declined.
+- 2026-05-06 00:01 EDT - Completed File List View, merged it into `main`, deleted the local feature branch, and cleared current feature details.
