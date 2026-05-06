@@ -45,6 +45,7 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import type { DashboardItem, ItemDetail } from "@/lib/db/items";
+import { getImageThumbnailUrl } from "@/lib/image-gallery";
 import type { ItemTypeSlug } from "@/lib/mock-data";
 import {
   getCodeEditorLanguage,
@@ -96,25 +97,41 @@ const initialDrawerState: ItemDrawerState = {
 };
 
 export function ItemCardGrid({
+  displayMode = "cards",
   emptyMessage = "No items yet.",
   items,
 }: {
+  displayMode?: "cards" | "imageGallery";
   emptyMessage?: string;
   items: DashboardItem[];
 }) {
   const drawer = useItemDrawer();
+  const isImageGallery = displayMode === "imageGallery";
 
   return (
     <>
-      <div className="grid gap-4 xl:grid-cols-3">
+      <div
+        className={cn(
+          "grid gap-4",
+          isImageGallery ? "sm:grid-cols-2 xl:grid-cols-3" : "xl:grid-cols-3",
+        )}
+      >
         {items.length === 0 ? (
           <p className="rounded-lg border border-devstash-line bg-white/[0.025] p-5 text-sm text-muted-foreground xl:col-span-3">
             {emptyMessage}
           </p>
         ) : null}
-        {items.map((item) => (
-          <PinnedItemCard item={item} key={item.id} onOpen={drawer.openItem} />
-        ))}
+        {items.map((item) =>
+          isImageGallery ? (
+            <ImageThumbnailCard
+              item={item}
+              key={item.id}
+              onOpen={drawer.openItem}
+            />
+          ) : (
+            <PinnedItemCard item={item} key={item.id} onOpen={drawer.openItem} />
+          ),
+        )}
       </div>
       <ItemDetailSheet
         onOpenChange={drawer.onOpenChange}
@@ -234,6 +251,53 @@ function useItemDrawer() {
     replaceItem,
     state,
   };
+}
+
+function ImageThumbnailCard({
+  item,
+  onOpen,
+}: {
+  item: DashboardItem;
+  onOpen: (item: DashboardItem) => void;
+}) {
+  return (
+    <button
+      className="group block w-full overflow-hidden rounded-lg border border-devstash-line bg-white/[0.025] text-left transition hover:border-white/20 hover:bg-white/[0.05] focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+      onClick={() => onOpen(item)}
+      type="button"
+    >
+      <div className="aspect-video overflow-hidden bg-white/[0.04]">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          alt=""
+          className="size-full object-cover transition duration-300 group-hover:scale-105"
+          src={getImageThumbnailUrl(item.id)}
+        />
+      </div>
+      <div className="p-4">
+        <div className="flex min-w-0 items-start justify-between gap-3">
+          <div className="min-w-0">
+            <h3 className="truncate text-base font-semibold text-white">
+              {item.title}
+            </h3>
+            <p className="mt-1 text-sm text-muted-foreground">
+              {item.updatedAt}
+            </p>
+          </div>
+          {item.isFavorite ? (
+            <Star
+              aria-hidden="true"
+              className="mt-0.5 size-4 shrink-0 fill-yellow-400 text-yellow-400"
+            />
+          ) : null}
+        </div>
+        <p className="mt-3 line-clamp-2 text-sm leading-6 text-zinc-400">
+          {item.description}
+        </p>
+        <TagList tags={item.tags} />
+      </div>
+    </button>
+  );
 }
 
 function PinnedItemCard({

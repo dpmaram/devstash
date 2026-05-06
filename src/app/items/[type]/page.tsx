@@ -13,6 +13,7 @@ import {
   getDashboardItemTypes,
   normalizeItemTypeRouteSlug,
 } from "@/lib/db/items";
+import { shouldUseImageGallery } from "@/lib/image-gallery";
 import { mockDashboardData } from "@/lib/mock-data";
 
 export const dynamic = "force-dynamic";
@@ -80,6 +81,7 @@ export default async function ItemsByTypePage({ params }: ItemsByTypePageProps) 
         </div>
 
         <ItemCardGrid
+          displayMode={shouldUseImageGallery(itemType.slug) ? "imageGallery" : "cards"}
           emptyMessage={`No ${itemType.label.toLowerCase()} saved yet.`}
           items={items}
         />
