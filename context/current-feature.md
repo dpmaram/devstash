@@ -1,20 +1,27 @@
-# Current Feature
+# Current Feature: Image Gallery View
 
 ## Status
 
 <!-- Not Started|In Progress|Completed -->
 
-Not Started
+In Progress
 
 ## Goals
 
 <!-- Goals & requirements -->
 
+- Create an image thumbnail card to replace the regular item card for image listings.
+- Show image items in a 3-column gallery/grid.
+- Display image thumbnails with a 16:9 aspect ratio using `aspect-video`.
+- Use `object-cover` so thumbnails fill each card.
+- Add a subtle hover zoom effect with 5% scale and a 300ms transition.
 
 ## Notes
 
 <!-- Any extra notes -->
 
+- Loaded from `context/features/image-display-spec.md`.
+- Gallery behavior is scoped to image item listings.
 
 ## History
 
@@ -149,3 +156,6 @@ Not Started
 - 2026-05-05 08:42 EDT - Implemented File Upload with Cloudflare R2 with upload validation, R2 storage helpers, authenticated upload and download proxy routes, file/image create flow, drawer image preview/download controls, and R2 cleanup on item delete. Verified focused upload/data/action tests, full local tests, TypeScript, lint, production build, and git diff whitespace check.
 - 2026-05-05 09:29 EDT - Fixed type-page top-bar New Item behavior so file and image pages preselect their upload type from every add entry point. Verified full local tests, TypeScript, lint, production build, git diff whitespace check, and browser behavior on `/items/files`.
 - 2026-05-05 09:29 EDT - Completed File Upload with Cloudflare R2, merged it into `main`, deleted the local feature branch, and cleared current feature details.
+- 2026-05-05 23:25 EDT - Loaded Image Gallery View spec from `context/features/image-display-spec.md` and set status to Not Started.
+- 2026-05-05 23:27 EDT - Started Image Gallery View on branch `feature/image-gallery-view`.
+- 2026-05-05 23:32 EDT - Implemented Image Gallery View with image-specific thumbnail gallery cards, authenticated inline thumbnail URLs, 16:9 object-cover thumbnails, and subtle hover zoom. Verified full local tests, TypeScript, lint, production build, git diff whitespace check, and browser grid mode on `/items/images`.
