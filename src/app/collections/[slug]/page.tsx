@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 
 import { auth } from "@/auth";
+import { CollectionDetailActions } from "@/components/dashboard/CollectionDetailActions";
 import { DashboardChrome } from "@/components/dashboard/DashboardChrome";
 import { ItemCardGrid } from "@/components/dashboard/ItemDrawer";
 import { getAccentBorderStyle } from "@/components/dashboard/accent-border-style";
@@ -61,9 +62,12 @@ export default async function CollectionDetailPage({
             <p className="text-sm font-medium uppercase tracking-wide text-muted-foreground">
               Collection
             </p>
-            <h1 className="text-3xl font-semibold text-white sm:text-4xl">
-              {collection.name}
-            </h1>
+            <div className="flex items-start justify-between gap-4">
+              <h1 className="text-3xl font-semibold text-white sm:text-4xl">
+                {collection.name}
+              </h1>
+              <CollectionDetailActions collection={collection} />
+            </div>
             <p className="max-w-3xl text-base leading-7 text-muted-foreground">
               {collection.description}
             </p>

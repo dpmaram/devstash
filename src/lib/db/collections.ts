@@ -365,3 +365,84 @@ export async function getDashboardCollectionData(
 
   return { collections, stats };
 }
+
+export type UpdateCollectionData = {
+  name?: string;
+  description?: string | null;
+};
+
+export async function updateCollection({
+  userId,
+  collectionId,
+  data,
+}: {
+  userId: string;
+  collectionId: string;
+  data: UpdateCollectionData;
+}) {
+  // Verify ownership
+  const collection = await prisma.collection.findUnique({
+    where: { id: collectionId },
+    select: { userId: true, slug: true },
+  });
+
+  if (!collection || collection.userId !== userId) {
+    return null;
+  }
+
+  const updateData: Record<string, unknown> = {};
+
+  if (data.name !== undefined) {
+    const trimmedName = data.name.trim();
+    if (trimmedName) {
+      updateData.name = trimmedName;
+    }
+  }
+
+  if (data.description !== undefined) {
+    updateData.description = data.description?.trim() || null;
+  }
+
+  if (Object.keys(updateData).length === 0) {
+    // No valid updates
+    return getDashboardCollectionBySlug({
+      slug: collection.slug,
+      user: { id: userId },
+    });
+  }
+
+  await prisma.collection.update({
+    where: { id: collectionId },
+    data: updateData,
+  });
+
+  return getDashboardCollectionBySlug({
+    slug: collection.slug,
+    user: { id: userId },
+  });
+}
+
+export async function deleteCollection({
+  userId,
+  collectionId,
+}: {
+  userId: string;
+  collectionId: string;
+}): Promise<boolean> {
+  // Verify ownership
+  const collection = await prisma.collection.findUnique({
+    where: { id: collectionId },
+    select: { userId: true },
+  });
+
+  if (!collection || collection.userId !== userId) {
+    return false;
+  }
+
+  // Delete collection (this will cascade to ItemCollection records due to the schema)
+  await prisma.collection.delete({
+    where: { id: collectionId },
+  });
+
+  return true;
+}

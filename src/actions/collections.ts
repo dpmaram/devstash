@@ -113,3 +113,125 @@ export async function handleCreateCollection(
 export async function createCollection(data: unknown) {
   return handleCreateCollection(data);
 }
+
+const updateCollectionSchema = z.object({
+  collectionId: z.string().min(1, "Collection ID is required."),
+  name: z.string().trim().min(1, "Name is required.").optional(),
+  description: nullableTrimmedString.optional(),
+});
+
+type UpdateCollectionResult =
+  | {
+      success: true;
+      data: DashboardCollection;
+    }
+  | {
+      success: false;
+      error: string;
+    };
+
+export async function updateCollection(data: unknown): Promise<UpdateCollectionResult> {
+  const parsed = updateCollectionSchema.safeParse(data);
+
+  if (!parsed.success) {
+    return {
+      success: false,
+      error: parsed.error.issues[0]?.message ?? "Invalid collection data.",
+    };
+  }
+
+  const session = await auth();
+
+  if (!session?.user?.id) {
+    return {
+      success: false,
+      error: "You must be signed in.",
+    };
+  }
+
+  const dashboardUser = await getDashboardUserForSession(session.user);
+
+  if (!dashboardUser) {
+    return {
+      success: false,
+      error: "Unable to update collection.",
+    };
+  }
+
+  const { updateCollection: updateCollectionDb } = await import("@/lib/db/collections");
+  const collection = await updateCollectionDb({
+    userId: dashboardUser.id,
+    collectionId: parsed.data.collectionId,
+    data: {
+      name: parsed.data.name,
+      description: parsed.data.description,
+    },
+  });
+
+  if (!collection) {
+    return {
+      success: false,
+      error: "Unable to update collection.",
+    };
+  }
+
+  return {
+    success: true,
+    data: collection,
+  };
+}
+
+type DeleteCollectionResult =
+  | {
+      success: true;
+    }
+  | {
+      success: false;
+      error: string;
+    };
+
+export async function deleteCollection(
+  collectionId: unknown,
+): Promise<DeleteCollectionResult> {
+  if (typeof collectionId !== "string" || !collectionId) {
+    return {
+      success: false,
+      error: "Invalid collection ID.",
+    };
+  }
+
+  const session = await auth();
+
+  if (!session?.user?.id) {
+    return {
+      success: false,
+      error: "You must be signed in.",
+    };
+  }
+
+  const dashboardUser = await getDashboardUserForSession(session.user);
+
+  if (!dashboardUser) {
+    return {
+      success: false,
+      error: "Unable to delete collection.",
+    };
+  }
+
+  const { deleteCollection: deleteCollectionDb } = await import("@/lib/db/collections");
+  const success = await deleteCollectionDb({
+    userId: dashboardUser.id,
+    collectionId,
+  });
+
+  if (!success) {
+    return {
+      success: false,
+      error: "Unable to delete collection.",
+    };
+  }
+
+  return {
+    success: true,
+  };
+}

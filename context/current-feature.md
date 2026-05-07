@@ -1,10 +1,10 @@
-# Current Feature
+# Current Feature: Collection Detail Actions
 
 ## Status
 
 <!-- Not Started|In Progress|Completed -->
 
-Not Started
+Completed
 
 ## Goals
 
@@ -13,6 +13,20 @@ Not Started
 ## Notes
 
 <!-- Any extra notes -->
+
+## History
+
+<!-- Keep this updated. Earliest to latest -->
+
+- 2026-05-07 EDT - Loaded Collection Detail Actions from inline user request. Feature adds edit modal, delete with confirmation, and favorite placeholder button to `/collections/[slug]`. Items are preserved on collection delete.
+- 2026-05-07 EDT - Implemented Collection Detail Actions with updateCollection and deleteCollection data layer functions, corresponding server actions with Zod validation and ownership checks, CollectionDetailActions component with edit/delete modals and favorite placeholder button, integration into collection detail page, and basic tests. Verified full `npm test`, `npm run lint`, `npx tsc --noEmit`, and `npm run build`.
+
+<!-- Any extra notes -->
+
+- This feature targets the existing `/collections/[slug]` detail page
+- Favorite button is placeholder UI only — no backend or state for favorites yet
+- Edit modal should allow changing collection name and description
+- Delete should remove the collection record and its item associations, but preserve all items
 
 ## History
 
@@ -163,3 +177,4 @@ Not Started
 - 2026-05-06 09:18 EDT - Fixed Create Collection failures for stale sessions by verifying the session user still exists before using its id for dashboard writes, falling back to the dashboard user when needed. Verified the stale-session regression test, collection action tests, full local tests, lint, TypeScript, and browser collection creation.
 - 2026-05-06 09:25 EDT - Fixed collection slug links like `/collections/react-patterns` by adding a dynamic collection detail route, collection-by-slug lookup, and collection item listing query. Verified the route regression test, full local tests, lint, TypeScript, whitespace check, and browser rendering of `/collections/react-patterns`.
 - 2026-05-06 10:34 EDT - Completed collection management feature, merged it into `main`, deleted the local feature branch, and cleared current feature details.
+- 2026-05-07 EDT - Loaded Collection Detail Actions from inline user request. Feature adds edit modal, delete with confirmation, and favorite placeholder button to `/collections/[slug]`. Items are preserved on collection delete.
