@@ -1,22 +1,49 @@
-# Current Feature
+# Current Feature: Favorites Page
 
 ## Status
 
 <!-- Not Started|In Progress|Completed -->
 
+In Progress
+
 ## Goals
 
 <!-- Add goals for the active feature here -->
+
+- Add star icon button to TopBar linking to /favorites
+- Create protected /favorites route with auth guard
+- Fetch all user favorited items and collections from database
+- Display compact list view with type icon, title, type badge, and date added per row
+- Show separate sections for items and collections with counts
+- Click item row opens ItemDrawer, click collection row navigates to /collections/[slug]
+- Show empty state message when user has no favorites
+- Sort favorites by most recently favorited (updatedAt descending)
+- Style with monospace/semi-monospace font, minimal padding, high density (VS Code/terminal aesthetic)
+- Subtle hover states, no cards or heavy borders, clean lines only
 
 ## Notes
 
 <!-- Add notes or constraints for the active feature here -->
 
+- Spec file: `context/features/favorites-spec.md`
+- Requires `isFavorite` or `favorite` boolean and `favoritedAt` timestamp on Item and Collection models in Prisma
+- TopBar: Add star icon button in header area linking to `/favorites`
+- Route: Protected `/favorites` page similar to `/collections` and `/items` with auth guard
+- Data layer: Query for User's favorited items and collections with proper filtering and ownership checks
+- List rows: Compact single-line format with type icon, title, type/collection badge, favorited date
+- Item interaction: Click opens ItemDrawer (reuse existing ItemDrawer component)
+- Collection interaction: Click navigates to `/collections/[slug]` (reuse existing detail route)
+- Empty state: Show message when both item and collection lists are empty
+- Sorting: Most recently favorited first (ORDER BY favoritedAt DESC or updatedAt DESC)
+- UI: Terminal/VS Code density aesthetic - monospace font, tight line height, minimal padding, clean lines
+
 ## History
 
 <!-- Keep this updated. Earliest to latest -->
 
-- 2026-05-08 EDT - Implemented Editor Preferences Settings: added `editorPreferences Json?` field to User model in Prisma schema, created and ran migration `20260508123422_add_editor_preferences`, created server actions `updateEditorPreferences()`, `getEditorPreferences()`, and `getDefaultEditorPreferences()` with Zod validation, built `EditorPreferencesPanel` component with controls for font size (12-28px), tab size (2/4/8), word wrap toggle, minimap toggle, and theme dropdown, added panel to `/settings` page, wired preferences into CodeEditor component with auto-load on mount, auto-save on change + toast notifications. TypeScript, lint, and all 234 tests passing. created protected `/settings` route (`src/app/settings/page.tsx`) with `auth()` guard, moved `ProfileActions` (change password + delete account) from profile page to settings page, added Settings link to sidebar dropdown (expanded) and collapsed sidebar icon, added `/settings/:path*` to middleware matcher. TypeScript, lint, and all 234 tests passing. Merged `feature/settings-page` to main.
+- 2026-05-08 EDT - Started Favorites Page on branch `feature/favorites-page`.
+- 2026-05-08 EDT - Loaded Favorites Page from `context/features/favorites-spec.md` and set status to Not Started.
+- 2026-05-08 EDT - Completed Editor Preferences Settings on branch `feature/editor-preferences-settings` with Prisma schema update (`editorPreferences Json?`), migration `20260508123422_add_editor_preferences`, server actions `updateEditorPreferences()` and `getEditorPreferences()`, utility file with Zod schema and defaults, `EditorPreferencesPanel` component with font size (12-28px), tab size (2/4/8), theme dropdown (vs-dark/monokai/github-dark), word wrap toggle, minimap toggle, auto-save with success/error toasts, `EditorPreferencesContext` provider for distributing preferences, CodeEditor component wired to load and apply preferences on mount, settings page integration, 18 new unit tests covering schema validation and defaults (252 total tests passing), merged to main.
 - 2026-05-07 EDT - Loaded Settings Page from inline description and set status to Not Started.
 - Initial setup of Next.js and Tailwind CSS
 - Dashboard UI mockup with responsive layout and dummy data
