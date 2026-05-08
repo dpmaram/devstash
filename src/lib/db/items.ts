@@ -951,3 +951,24 @@ export async function deleteItem(
 
   return item;
 }
+
+export async function toggleItemFavorite(
+  itemId: string,
+  userId: string,
+): Promise<boolean> {
+  const item = await prisma.item.findUnique({
+    where: { id: itemId },
+    select: { userId: true, isFavorite: true },
+  });
+
+  if (!item || item.userId !== userId) {
+    return false;
+  }
+
+  await prisma.item.update({
+    where: { id: itemId },
+    data: { isFavorite: !item.isFavorite },
+  });
+
+  return true;
+}

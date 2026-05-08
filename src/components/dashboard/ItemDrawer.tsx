@@ -26,6 +26,7 @@ import { usePathname, useRouter } from "next/navigation";
 import {
   deleteItem as deleteItemAction,
   updateItem as updateItemAction,
+  toggleItemFavoriteAction,
 } from "@/actions/items";
 import { CollectionPicker } from "@/components/dashboard/CollectionPicker";
 import { CodeEditor } from "@/components/dashboard/CodeEditor";
@@ -534,6 +535,28 @@ function ItemDetailSheet({
               item={state.item}
               onDelete={() => setIsDeleteDialogOpen(true)}
               onEdit={startEdit}
+              onToggleFavorite={async () => {
+                if (!state.item) return;
+                
+                const previousFavorite = state.item.isFavorite;
+                
+                // Optimistic UI update
+                replaceItem({
+                  ...state.item,
+                  isFavorite: !state.item.isFavorite,
+                });
+                
+                // Call server action
+                const result = await toggleItemFavoriteAction(state.item.id);
+                
+                if (!result.success) {
+                  // Revert on failure
+                  replaceItem({
+                    ...state.item,
+                    isFavorite: previousFavorite,
+                  });
+                }
+              }}
             />
           )}
 
@@ -571,11 +594,24 @@ function ItemActionBar({
   item,
   onDelete,
   onEdit,
+  onToggleFavorite,
 }: {
   item: ItemDetail | null;
   onDelete: () => void;
   onEdit: () => void;
+  onToggleFavorite?: () => void | Promise<void>;
 }) {
+  const [isTogglingFavorite, setIsTogglingFavorite] = useState(false);
+
+  async function handleToggleFavorite() {
+    setIsTogglingFavorite(true);
+    try {
+      await onToggleFavorite?.();
+    } finally {
+      setIsTogglingFavorite(false);
+    }
+  }
+
   async function copyItem() {
     if (!item || !navigator.clipboard) {
       return;
@@ -599,9 +635,16 @@ function ItemActionBar({
       <ActionButton
         active={item?.isFavorite}
         activeClassName="text-yellow-400"
-        disabled={!item}
-        icon={<Star className={cn("size-5", item?.isFavorite && "fill-yellow-400")} />}
+        disabled={!item || isTogglingFavorite}
+        icon={
+          isTogglingFavorite ? (
+            <LoaderCircle aria-hidden="true" className="size-5 animate-spin" />
+          ) : (
+            <Star className={cn("size-5", item?.isFavorite && "fill-yellow-400")} />
+          )
+        }
         label="Favorite"
+        onClick={handleToggleFavorite}
       />
       <ActionButton
         active={item?.isPinned}

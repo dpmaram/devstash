@@ -8,6 +8,7 @@ import {
   createItem as createItemRecord,
   deleteItem as deleteItemRecord,
   updateItem as updateItemRecord,
+  toggleItemFavorite,
   type CreateItemInput,
   type DeletedItem,
   type ItemDetail,
@@ -401,4 +402,46 @@ export async function handleDeleteItem(
 
 export async function deleteItem(itemId: string) {
   return handleDeleteItem(itemId);
+}
+
+export async function toggleItemFavoriteAction(itemId: string) {
+  const session = await auth();
+
+  if (!session?.user?.id) {
+    return {
+      success: false,
+      error: "You must be signed in.",
+    };
+  }
+
+  const normalizedItemId = typeof itemId === "string" ? itemId.trim() : "";
+
+  if (!normalizedItemId) {
+    return {
+      success: false,
+      error: "Item id is required.",
+    };
+  }
+
+  const dashboardUser = await getDashboardUserForSession(session.user);
+
+  if (!dashboardUser) {
+    return {
+      success: false,
+      error: "Item not found.",
+    };
+  }
+
+  const result = await toggleItemFavorite(normalizedItemId, dashboardUser.id);
+
+  if (!result) {
+    return {
+      success: false,
+      error: "Item not found.",
+    };
+  }
+
+  return {
+    success: true,
+  };
 }

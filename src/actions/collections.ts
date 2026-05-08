@@ -6,6 +6,7 @@ import { auth } from "@/auth";
 import { getDashboardUserForSession } from "@/lib/db/dashboard-user";
 import {
   createCollection as createCollectionRecord,
+  toggleCollectionFavorite,
   type CreateCollectionInput,
   type DashboardCollection,
 } from "@/lib/db/collections";
@@ -228,6 +229,48 @@ export async function deleteCollection(
     return {
       success: false,
       error: "Unable to delete collection.",
+    };
+  }
+
+  return {
+    success: true,
+  };
+}
+
+export async function toggleCollectionFavoriteAction(collectionId: string) {
+  const session = await auth();
+
+  if (!session?.user?.id) {
+    return {
+      success: false,
+      error: "You must be signed in.",
+    };
+  }
+
+  const normalizedCollectionId = typeof collectionId === "string" ? collectionId.trim() : "";
+
+  if (!normalizedCollectionId) {
+    return {
+      success: false,
+      error: "Collection id is required.",
+    };
+  }
+
+  const dashboardUser = await getDashboardUserForSession(session.user);
+
+  if (!dashboardUser) {
+    return {
+      success: false,
+      error: "Collection not found.",
+    };
+  }
+
+  const result = await toggleCollectionFavorite(normalizedCollectionId, dashboardUser.id);
+
+  if (!result) {
+    return {
+      success: false,
+      error: "Collection not found.",
     };
   }
 
