@@ -6,6 +6,7 @@ import {
   ChevronUp,
   Circle,
   Folder,
+  Heart,
   LogOut,
   Menu,
   PanelLeftClose,
@@ -136,6 +137,13 @@ function TopBar({
       </button>
 
       <div className="flex shrink-0 items-center gap-2">
+        <Link
+          href="/favorites"
+          className="flex h-11 w-11 items-center justify-center rounded-lg border border-devstash-line bg-white/[0.04] text-muted-foreground transition hover:bg-white/[0.08] hover:text-red-400"
+          title="Favorites"
+        >
+          <Heart aria-hidden="true" className="size-5" />
+        </Link>
         <NewCollectionDialog />
         <NewItemDialog
           collections={collections}

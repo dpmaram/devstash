@@ -14,7 +14,7 @@ describe("proxy", () => {
     assert.equal(typeof proxy, "function");
   });
 
-  it("protects dashboard, collection, item, profile, and settings routes", async () => {
+  it("protects dashboard, collection, item, profile, settings, and favorites routes", async () => {
     const { config } = await loadProxy();
 
     assert.deepEqual(config.matcher, [
@@ -23,6 +23,7 @@ describe("proxy", () => {
       "/items/:path*",
       "/profile/:path*",
       "/settings/:path*",
+      "/favorites/:path*",
     ]);
   });
 
