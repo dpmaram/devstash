@@ -18,35 +18,6 @@ Not Started
 
 <!-- Keep this updated. Earliest to latest -->
 
-- 2026-05-07 EDT - Loaded Global Search / Command Palette from `context/features/global-search-spec.md` and set status to Not Started.
-- 2026-05-07 EDT - Loaded Pagination from `context/features/pagination-spec.md` and set status to Not Started.
-- 2026-05-07 EDT - Started Pagination on branch `feature/pagination`.
-- 2026-05-07 EDT - Implemented pagination with query-time data fetching for `/items/[type]` and `/collections/[slug]`, added reusable previous/next + numbered page controls, introduced shared pagination/dashboard limit constants, and verified with `npx tsc --noEmit`, `npm run lint`, and `npm test`.
-- 2026-05-07 EDT - Created feature/global-search-command-palette branch and implemented:
-  - `src/lib/fuzzy-search.ts` - Generic fuzzy search with smart scoring algorithm
-  - `src/lib/db/search.ts` - Server-side search index fetching from database
-  - `src/actions/search.ts` - Server action wrapper for authenticated search access
-  - `src/components/dashboard/SearchCommand.tsx` - cmdk-based command palette UI with grouped results
-  - Integrated SearchCommand into DashboardChrome and all dashboard pages
-  - Keyboard shortcut: Cmd+K (Mac) / Ctrl+K (Windows)
-  - Results show item type icons, titles, previews, and collection item counts
-  - Navigation to item detail (/items/{id}) or collection detail (/collections/{slug})
-  - Fixed Prisma field references and ESLint errors
-  - All tests passing (234), lint clean, production build succeeds
-  - Merged feature branch to main and deleted branch
-  - Status set to Completed
-
-<!-- Any extra notes -->
-
-- This feature targets the existing `/collections/[slug]` detail page
-- Favorite button is placeholder UI only — no backend or state for favorites yet
-- Edit modal should allow changing collection name and description
-- Delete should remove the collection record and its item associations, but preserve all items
-
-## History
-
-<!-- Keep this updated. Earliest to latest -->
-
 - Project setup and boilerplate cleanup
 - Initial setup of Next.js and Tailwind CSS
 - Dashboard UI mockup with responsive layout and dummy data
@@ -58,6 +29,9 @@ Not Started
 - Implemented seed development/demo data with hashed demo credentials, system item types, collections, and sample items
 - Updated database test script to fetch, validate, and display seeded demo data
 - Completed seed development data feature and cleared current feature details
+- 2026-05-07 EDT - Implemented Global Search / Command Palette: fuzzy search (`src/lib/fuzzy-search.ts`), DB search index (`src/lib/db/search.ts`), server action (`src/actions/search.ts`), cmdk-based `SearchCommand` component with Cmd+K shortcut, grouped results with icons/previews, navigation to item/collection detail pages. Fixed Prisma field refs, accessibility warnings, cmdk double-filtering, and 404 navigation bug. Merged to main.
+- 2026-05-07 EDT - Implemented Pagination: shared constants/helpers in `src/lib/pagination.ts`, reusable `PaginationControls` component, paginated queries for `/items/[type]` and `/collections/[slug]` detail pages. Added `getDashboardItemCountByTypeSlug`, `getDashboardItemCountByCollectionSlug`. Merged to main on `feature/pagination`.
+- 2026-05-07 EDT - Fixed missing pagination on `/collections` listing page: added `getDashboardCollectionCount`, `page` support in `getDashboardCollections`, and `PaginationControls` to `src/app/collections/page.tsx`. TypeScript and lint verified.
 - Current feature set to Dashboard Collections and marked In Progress
 - Implemented dashboard collection data fetching with Prisma-backed cards, type icons, accent colors, and stats
 - Completed Dashboard Collections feature
