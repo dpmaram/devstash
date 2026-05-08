@@ -1,24 +1,41 @@
-# Current Feature
+# Current Feature: Settings Page
 
 ## Status
 
 <!-- Not Started|In Progress|Completed -->
 
-Not Started
+In Progress
 
 ## Goals
 
 <!-- Add goals for the active feature here -->
 
+- Create a protected `/settings` route accessible only to authenticated users
+- Add a "Settings" link in the user icon dropdown menu in the sidebar (between "Profile" and "Sign out")
+- Add a "Settings" link in the collapsed sidebar state (currently a direct profile link icon — add settings as a separate icon or within the expanded dropdown)
+- Move the "Account actions" section (delete account + forgot/change password) from the profile page (`ProfileActions` component) to the settings page
+- The profile page should no longer render `ProfileActions` after the move
+- The settings page should be styled consistently with the rest of the dashboard (use existing layout/shell patterns)
+- The settings page should be accessible only when authenticated (use the same auth guard pattern as the profile page)
+
 ## Notes
 
 <!-- Add notes or constraints for the active feature here -->
+
+- The user icon dropdown lives in `src/components/dashboard/DashboardChrome.tsx` — the `SidebarFooter` component handles both collapsed (icon link) and expanded (dropdown) states
+- The dropdown currently has two items: "Profile" (`/profile`) and "Sign out" button — add "Settings" (`/settings`) between them
+- `ProfileActions` is at `src/components/profile/ProfileActions.tsx` and rendered in `src/app/profile/page.tsx` — it contains delete account and change password flows
+- The settings page should import and render `ProfileActions` (or a renamed equivalent); remove it from `src/app/profile/page.tsx`
+- Auth protection pattern: look at `src/app/profile/page.tsx` for the `auth()` + redirect pattern to replicate
+- Route: `src/app/settings/page.tsx` (new file)
+- Icons: use `Settings` from `lucide-react` for the sidebar dropdown link
+- No new database fields or API routes needed — just UI restructuring
 
 ## History
 
 <!-- Keep this updated. Earliest to latest -->
 
-- Project setup and boilerplate cleanup
+- 2026-05-07 EDT - Loaded Settings Page from inline description and set status to Not Started.
 - Initial setup of Next.js and Tailwind CSS
 - Dashboard UI mockup with responsive layout and dummy data
 - Dashboard UI Phase 1 route, shadcn setup, and layout placeholders
