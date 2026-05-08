@@ -16,7 +16,6 @@ import {
   itemTypeIconClasses,
   itemTypeIcons,
 } from "@/components/dashboard/dashboard-icons";
-import { ProfileActions } from "@/components/profile/ProfileActions";
 import { Badge } from "@/components/ui/badge";
 import {
   getProfileData,
@@ -132,11 +131,6 @@ export default async function ProfilePage() {
             ))}
           </div>
         </section>
-
-        <ProfileActions
-          canChangePassword={profileData.user.canChangePassword}
-          email={profileData.user.email}
-        />
       </div>
     </main>
   );

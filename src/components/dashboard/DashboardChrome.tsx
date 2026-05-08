@@ -11,6 +11,7 @@ import {
   PanelLeftClose,
   PanelLeftOpen,
   Search,
+  Settings,
   Star,
   UserRound,
   X,
@@ -344,18 +345,28 @@ function SidebarUserMenu({
 
   if (isCollapsed) {
     return (
-      <Link
-        aria-label="Open profile"
-        className="inline-flex rounded-full outline-none transition focus-visible:ring-3 focus-visible:ring-ring/50"
-        href="/profile"
-        title={currentUser.name}
-      >
-        <UserAvatar
-          email={currentUser.email}
-          imageUrl={currentUser.avatarUrl}
-          name={currentUser.name}
-        />
-      </Link>
+      <div className="flex flex-col items-center gap-2">
+        <Link
+          aria-label="Open profile"
+          className="inline-flex rounded-full outline-none transition focus-visible:ring-3 focus-visible:ring-ring/50"
+          href="/profile"
+          title={currentUser.name}
+        >
+          <UserAvatar
+            email={currentUser.email}
+            imageUrl={currentUser.avatarUrl}
+            name={currentUser.name}
+          />
+        </Link>
+        <Link
+          aria-label="Settings"
+          className="flex size-9 items-center justify-center rounded-lg text-muted-foreground transition hover:bg-white/[0.06] hover:text-white"
+          href="/settings"
+          title="Settings"
+        >
+          <Settings aria-hidden="true" className="size-4" />
+        </Link>
+      </div>
     );
   }
 
@@ -370,6 +381,14 @@ function SidebarUserMenu({
           >
             <UserRound aria-hidden="true" className="size-4 text-muted-foreground" />
             Profile
+          </Link>
+          <Link
+            className="flex h-11 items-center gap-3 px-3 text-sm text-zinc-200 transition hover:bg-white/[0.06] hover:text-white"
+            href="/settings"
+            onClick={() => setIsOpen(false)}
+          >
+            <Settings aria-hidden="true" className="size-4 text-muted-foreground" />
+            Settings
           </Link>
           <button
             className="flex h-11 w-full items-center gap-3 px-3 text-left text-sm text-zinc-200 transition hover:bg-white/[0.06] hover:text-white"
