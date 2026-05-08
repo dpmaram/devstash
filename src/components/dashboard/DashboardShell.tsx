@@ -16,6 +16,7 @@ import {
 import { getDashboardUserForSession } from "@/lib/db/dashboard-user";
 import { toCurrentUser } from "@/lib/auth/current-user";
 import { mockDashboardData } from "@/lib/mock-data";
+import { getSearchIndexAction } from "@/actions/search";
 
 export async function DashboardShell() {
   const session = await auth();
@@ -26,11 +27,13 @@ export async function DashboardShell() {
     { pinnedItems, recentItems },
     itemTypes,
     sidebarCollections,
+    searchIndex,
   ] = await Promise.all([
     getDashboardCollectionData({ limit: 6, user: dashboardUser }),
     getDashboardItemData({ pinnedLimit: 3, recentLimit: 10, user: dashboardUser }),
     getDashboardItemTypes({ user: dashboardUser }),
     getDashboardCollections({ limit: 20, user: dashboardUser }),
+    getSearchIndexAction(),
   ]);
 
   return (
@@ -38,6 +41,7 @@ export async function DashboardShell() {
       collections={sidebarCollections}
       currentUser={currentUser}
       itemTypes={itemTypes}
+      searchIndex={searchIndex}
     >
       <DashboardMain
         availableCollections={sidebarCollections}

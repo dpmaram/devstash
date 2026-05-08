@@ -8,6 +8,7 @@ import { toCurrentUser } from "@/lib/auth/current-user";
 import { isCreateItemTypeSlug } from "@/lib/create-item-types";
 import { getDashboardCollections } from "@/lib/db/collections";
 import { getDashboardUserForSession } from "@/lib/db/dashboard-user";
+import { getSearchIndexAction } from "@/actions/search";
 import {
   getDashboardItemsByTypeSlug,
   getDashboardItemTypes,
@@ -31,9 +32,10 @@ export default async function ItemsByTypePage({ params }: ItemsByTypePageProps) 
   const session = await auth();
   const dashboardUser = await getDashboardUserForSession(session?.user);
   const currentUser = toCurrentUser(session?.user, mockDashboardData.currentUser);
-  const [itemTypes, sidebarCollections] = await Promise.all([
+  const [itemTypes, sidebarCollections, searchIndex] = await Promise.all([
     getDashboardItemTypes({ user: dashboardUser }),
     getDashboardCollections({ limit: 20, user: dashboardUser }),
+    getSearchIndexAction(),
   ]);
   const itemType = itemTypes.find(
     (candidateItemType) => candidateItemType.slug === normalizedTypeSlug,
@@ -55,6 +57,7 @@ export default async function ItemsByTypePage({ params }: ItemsByTypePageProps) 
       currentUser={currentUser}
       itemTypes={itemTypes}
       newItemInitialTypeSlug={canCreateItemType ? itemType.slug : null}
+      searchIndex={searchIndex}
     >
       <section className="space-y-8 p-5 sm:p-6 lg:p-8">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">

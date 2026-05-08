@@ -28,11 +28,12 @@ import {
 } from "@/components/dashboard/sidebar-pro-badge";
 import { NewCollectionDialog } from "@/components/dashboard/NewCollectionDialog";
 import { NewItemDialog } from "@/components/dashboard/NewItemDialog";
+import { SearchCommand } from "@/components/dashboard/SearchCommand";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import type { DashboardCollection } from "@/lib/db/collections";
 import type { DashboardItemType } from "@/lib/db/items";
+import type { SearchIndex } from "@/lib/db/search";
 import type { CurrentUser, ItemTypeSlug } from "@/lib/mock-data";
 
 type DashboardChromeProps = {
@@ -41,6 +42,7 @@ type DashboardChromeProps = {
   currentUser: CurrentUser;
   itemTypes: DashboardItemType[];
   newItemInitialTypeSlug?: string | null;
+  searchIndex: SearchIndex;
 };
 
 export function DashboardChrome({
@@ -49,12 +51,19 @@ export function DashboardChrome({
   currentUser,
   itemTypes,
   newItemInitialTypeSlug,
+  searchIndex,
 }: DashboardChromeProps) {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
 
   return (
     <main className="min-h-screen bg-devstash-bg text-foreground">
+      <SearchCommand
+        open={isSearchOpen}
+        onOpenChange={setIsSearchOpen}
+        searchIndex={searchIndex}
+      />
       <div className="flex min-h-screen">
         <DashboardSidebar
           collections={collections}
@@ -72,6 +81,7 @@ export function DashboardChrome({
             newItemInitialTypeSlug={newItemInitialTypeSlug}
             itemTypes={itemTypes}
             onOpenMobileSidebar={() => setIsMobileSidebarOpen(true)}
+            onOpenSearch={() => setIsSearchOpen(true)}
           />
           {children}
         </div>
@@ -85,11 +95,13 @@ function TopBar({
   itemTypes,
   newItemInitialTypeSlug,
   onOpenMobileSidebar,
+  onOpenSearch,
 }: {
   collections: DashboardCollection[];
   itemTypes: DashboardItemType[];
   newItemInitialTypeSlug?: string | null;
   onOpenMobileSidebar: () => void;
+  onOpenSearch: () => void;
 }) {
   return (
     <header className="flex h-20 items-center gap-4 border-b border-devstash-line bg-devstash-bg px-4 sm:px-6">
@@ -103,18 +115,24 @@ function TopBar({
         <Menu aria-hidden="true" className="size-5" />
       </Button>
 
-      <div className="relative min-w-0 flex-1 max-w-2xl">
-        <Search
-          aria-hidden="true"
-          className="pointer-events-none absolute left-3 top-1/2 size-5 -translate-y-1/2 text-muted-foreground"
-        />
-        <Input
-          aria-label="Search items"
-          className="h-11 rounded-lg border-devstash-line bg-white/[0.04] pl-11 text-base text-foreground placeholder:text-muted-foreground"
-          placeholder="Search items..."
-          readOnly
-        />
-      </div>
+      <button
+        className="relative min-w-0 flex-1 max-w-2xl cursor-pointer rounded-lg border border-devstash-line bg-white/[0.04] px-3 py-2.5 text-left transition hover:bg-white/[0.06]"
+        onClick={onOpenSearch}
+        type="button"
+      >
+        <div className="flex items-center gap-3">
+          <Search
+            aria-hidden="true"
+            className="size-5 text-muted-foreground"
+          />
+          <span className="text-base text-muted-foreground">
+            Search items...
+          </span>
+          <kbd className="ml-auto hidden text-xs font-semibold text-muted-foreground sm:inline-block">
+            ⌘K
+          </kbd>
+        </div>
+      </button>
 
       <div className="flex shrink-0 items-center gap-2">
         <NewCollectionDialog />

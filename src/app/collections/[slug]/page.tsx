@@ -11,6 +11,7 @@ import {
   getDashboardCollections,
 } from "@/lib/db/collections";
 import { getDashboardUserForSession } from "@/lib/db/dashboard-user";
+import { getSearchIndexAction } from "@/actions/search";
 import {
   getDashboardItemsByCollectionSlug,
   getDashboardItemTypes,
@@ -32,10 +33,11 @@ export default async function CollectionDetailPage({
   const session = await auth();
   const dashboardUser = await getDashboardUserForSession(session?.user);
   const currentUser = toCurrentUser(session?.user, mockDashboardData.currentUser);
-  const [collection, itemTypes, sidebarCollections] = await Promise.all([
+  const [collection, itemTypes, sidebarCollections, searchIndex] = await Promise.all([
     getDashboardCollectionBySlug({ slug, user: dashboardUser }),
     getDashboardItemTypes({ user: dashboardUser }),
     getDashboardCollections({ limit: 20, user: dashboardUser }),
+    getSearchIndexAction(),
   ]);
 
   if (!collection) {
@@ -52,6 +54,7 @@ export default async function CollectionDetailPage({
       collections={sidebarCollections}
       currentUser={currentUser}
       itemTypes={itemTypes}
+      searchIndex={searchIndex}
     >
       <section className="space-y-8 p-5 sm:p-6 lg:p-8">
         <div

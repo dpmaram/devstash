@@ -8,6 +8,7 @@ import {
 import { getDashboardUserForSession } from "@/lib/db/dashboard-user";
 import { getDashboardItemTypes } from "@/lib/db/items";
 import { mockDashboardData } from "@/lib/mock-data";
+import { getSearchIndexAction } from "@/actions/search";
 
 export const dynamic = "force-dynamic";
 
@@ -15,10 +16,11 @@ export default async function CollectionsPage() {
   const session = await auth();
   const dashboardUser = await getDashboardUserForSession(session?.user);
   const currentUser = toCurrentUser(session?.user, mockDashboardData.currentUser);
-  const [collections, itemTypes, sidebarCollections] = await Promise.all([
+  const [collections, itemTypes, sidebarCollections, searchIndex] = await Promise.all([
     getDashboardCollections({ limit: 50, user: dashboardUser }),
     getDashboardItemTypes({ user: dashboardUser }),
     getDashboardCollections({ limit: 20, user: dashboardUser }),
+    getSearchIndexAction(),
   ]);
 
   return (
@@ -26,6 +28,7 @@ export default async function CollectionsPage() {
       collections={sidebarCollections}
       currentUser={currentUser}
       itemTypes={itemTypes}
+      searchIndex={searchIndex}
     >
       <section className="space-y-8 p-5 sm:p-6 lg:p-8">
         <div className="flex flex-col gap-2">
