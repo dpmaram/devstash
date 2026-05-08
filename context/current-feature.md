@@ -1,14 +1,39 @@
-# Current Feature
+# Current Feature: Editor Preferences Settings
 
 ## Status
 
 <!-- Not Started|In Progress|Completed -->
 
-Not Started
+In Progress
 
 ## Goals
 
 <!-- Add goals for the active feature here -->
+
+- Add an "Editor Preferences" section to the existing `/settings` page
+- Provide controls: font size dropdown, tab size dropdown, word wrap toggle (default on), minimap toggle (default off), theme dropdown (vs-dark / monokai / github-dark, default vs-dark)
+- Add a `editorPreferences` JSON column to the `User` model in Prisma schema
+- Create and run a proper Prisma migration (never use `db push`)
+- Create a server action to persist editor preferences to the database
+- Build an `EditorPreferencesContext` for distributing settings to client components
+- Apply saved preferences to the Monaco editor component
+- Auto-save on change (no explicit save button)
+- Show a success toast after each save
+
+## Notes
+
+<!-- Add notes or constraints for the active feature here -->
+
+- Spec file: `context/features/editor-settings-spec.md`
+- Settings page: `src/app/settings/page.tsx` — add the new section below existing Account actions
+- Prisma schema: `prisma/schema.prisma` — add `editorPreferences Json?` to `User` model
+- Migration: use `npx prisma migrate dev --name add_editor_preferences` (never `db push`)
+- Server action: `src/actions/` following the existing `{ success, error?, data? }` shape; validate with Zod
+- Context: `EditorPreferencesContext` in `src/components/` (client component) wrapping dashboard pages or the editor area
+- Monaco editor: find the existing Monaco component and wire `fontSize`, `tabSize`, `wordWrap`, `minimap.enabled`, and `theme` props from context
+- Toast: use the existing toast/notification pattern in the codebase (check how other actions show toasts)
+- Auto-save: debounce or immediate `onChange` → call server action
+- Default values: font size 14, tab size 2, word wrap on, minimap off, theme vs-dark
 
 ## Notes
 
@@ -18,7 +43,7 @@ Not Started
 
 <!-- Keep this updated. Earliest to latest -->
 
-- 2026-05-08 EDT - Implemented Settings Page: created protected `/settings` route (`src/app/settings/page.tsx`) with `auth()` guard, moved `ProfileActions` (change password + delete account) from profile page to settings page, added Settings link to sidebar dropdown (expanded) and collapsed sidebar icon, added `/settings/:path*` to middleware matcher. TypeScript, lint, and all 234 tests passing. Merged `feature/settings-page` to main.
+- 2026-05-08 EDT - Implemented Editor Preferences Settings: added `editorPreferences Json?` field to User model in Prisma schema, created and ran migration `20260508123422_add_editor_preferences`, created server actions `updateEditorPreferences()`, `getEditorPreferences()`, and `getDefaultEditorPreferences()` with Zod validation, built `EditorPreferencesPanel` component with controls for font size (12-28px), tab size (2/4/8), word wrap toggle, minimap toggle, and theme dropdown, added panel to `/settings` page, wired preferences into CodeEditor component with auto-load on mount, auto-save on change + toast notifications. TypeScript, lint, and all 234 tests passing. created protected `/settings` route (`src/app/settings/page.tsx`) with `auth()` guard, moved `ProfileActions` (change password + delete account) from profile page to settings page, added Settings link to sidebar dropdown (expanded) and collapsed sidebar icon, added `/settings/:path*` to middleware matcher. TypeScript, lint, and all 234 tests passing. Merged `feature/settings-page` to main.
 - 2026-05-07 EDT - Loaded Settings Page from inline description and set status to Not Started.
 - Initial setup of Next.js and Tailwind CSS
 - Dashboard UI mockup with responsive layout and dummy data

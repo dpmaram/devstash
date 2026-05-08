@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 
 import { auth } from "@/auth";
+import { EditorPreferencesPanel } from "@/components/editor/EditorPreferencesPanel";
 import { ProfileActions } from "@/components/profile/ProfileActions";
 import { getProfileData } from "@/lib/db/profile";
 
@@ -53,6 +54,10 @@ export default async function SettingsPage() {
             canChangePassword={profileData.user.canChangePassword}
             email={profileData.user.email}
           />
+        </section>
+
+        <section className="space-y-4">
+          <EditorPreferencesPanel />
         </section>
       </div>
     </main>

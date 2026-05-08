@@ -13,6 +13,9 @@ const MonacoEditor = dynamic(() => import("@monaco-editor/react"), {
   ssr: false,
 });
 
+const DEFAULT_FONT_SIZE = 14;
+const DEFAULT_TAB_SIZE = 2;
+
 type CodeEditorProps = {
   ariaLabel?: string;
   className?: string;
@@ -36,10 +39,41 @@ export function CodeEditor({
 }: CodeEditorProps) {
   const [hasCopied, setHasCopied] = useState(false);
   const [isMonacoConfigured, setIsMonacoConfigured] = useState(false);
+  const [editorPreferences, setEditorPreferences] = useState<{
+    fontSize: number;
+    tabSize: number;
+    wordWrap: boolean;
+    minimap: boolean;
+    theme: string;
+  }>({
+    fontSize: DEFAULT_FONT_SIZE,
+    tabSize: DEFAULT_TAB_SIZE,
+    wordWrap: true,
+    minimap: false,
+    theme: "vs-dark",
+  });
+  
   const editorHeight = useMemo(() => getEditorHeight(value, readOnly), [
     readOnly,
     value,
   ]);
+
+  // Load editor preferences from server
+  useEffect(() => {
+    async function loadPreferences() {
+      try {
+        const { getEditorPreferences } = await import("@/actions/editor-preferences");
+        const saved = await getEditorPreferences();
+        if (saved) {
+          setEditorPreferences(saved);
+        }
+      } catch {
+        // Fall back to defaults if preferences can't be loaded
+      }
+    }
+
+    void loadPreferences();
+  }, []);
 
   useEffect(() => {
     let isActive = true;
@@ -157,9 +191,9 @@ export function CodeEditor({
               fontFamily:
                 "var(--font-geist-mono), ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace",
               fontLigatures: true,
-              fontSize: 13,
+              fontSize: editorPreferences.fontSize,
               lineHeight: 22,
-              minimap: { enabled: false },
+              minimap: { enabled: editorPreferences.minimap },
               padding: { bottom: 16, top: 16 },
               readOnly: readOnly || disabled,
               renderLineHighlight: "line",
@@ -170,8 +204,8 @@ export function CodeEditor({
               },
               scrollBeyondLastLine: false,
               smoothScrolling: true,
-              tabSize: 2,
-              wordWrap: "on",
+              tabSize: editorPreferences.tabSize,
+              wordWrap: editorPreferences.wordWrap ? "on" : "off",
             }}
             theme="devstash-dark"
             value={value}
