@@ -4,7 +4,7 @@
 
 <!-- Not Started|In Progress|Completed -->
 
-In Progress
+Completed
 
 ## Goals
 
@@ -37,6 +37,7 @@ In Progress
 
 <!-- Keep this updated. Earliest to latest -->
 
+- 2026-05-08 EDT - Completed Add Client-Side Sorting to Favorites Page on branch `feature/favorites-sorting` with: SortType union ("name", "date", "type"), SortDirection type ("asc", "desc"), SortPreference type combining both, sort utility functions for items and collections, localStorage persistence with getSortPreference/setSortPreference functions, state management with lazy useState initializer, UI controls as button group with sort type selection and direction toggle, ArrowUpDown icon rotation for direction indicator, handleSortChange function with optimistic state update and persistence, consistent sorting applied to both items and collections sections. Verified: TypeScript clean, ESLint clean, all 252 tests passing. Ready for merge.
 - 2026-05-08 EDT - Started Add Client-Side Sorting to Favorites Page on branch `feature/favorites-sorting`.
 - 2026-05-08 EDT - Loaded Add Client-Side Sorting to Favorites Page feature from inline description and set status to Not Started.
 - 2026-05-08 EDT - Completed Add Favorite Button to Drawer, Collection Page, and Cards on branch `feature/favorite-button-toggle` with: server actions `toggleItemFavoriteAction()` and `toggleCollectionFavoriteAction()`, database functions `toggleItemFavorite()` and `toggleCollectionFavorite()`, ItemActionBar with favorite toggle callback and optimistic UI, ItemCards component with FavoriteButton component (ImageThumbnailCard, FileItemRow, PinnedItemCard, RecentItemRow), CollectionDetailActions with favorite toggle button in header, DashboardCollectionsGrid and CollectionsGridWithMenu with favorite toggle handlers and optimistic UI, all tests passing (252/252), TypeScript clean, linting clean. Ready for review and merge.
