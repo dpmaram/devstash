@@ -4,7 +4,7 @@
 
 <!-- Not Started|In Progress|Completed -->
 
-In Progress
+Completed
 
 ## Goals
 
@@ -41,6 +41,7 @@ In Progress
 
 <!-- Keep this updated. Earliest to latest -->
 
+- 2026-05-08 EDT - Completed Favorites Page on branch `feature/favorites-page` with data layer `src/lib/db/favorites.ts` that queries favorited items and collections using proper type summaries and shaping, protected `/favorites` route with auth guard and metadata, `FavoritesListView` client component with compact monospace list showing type icon, title, type badge, and relative date for each item/collection, empty state when no favorites, separate sections for items and collections with counts, item rows open ItemDrawer (placeholder), collection rows link to `/collections/[slug]`, Heart icon button added to TopBar linking to `/favorites`, middleware updated to protect `/favorites/:path*`, 252 tests passing (no new tests needed for data layer as it uses existing patterns), linting clean, TypeScript clean. Ready for review.
 - 2026-05-08 EDT - Started Favorites Page on branch `feature/favorites-page`.
 - 2026-05-08 EDT - Loaded Favorites Page from `context/features/favorites-spec.md` and set status to Not Started.
 - 2026-05-08 EDT - Completed Editor Preferences Settings on branch `feature/editor-preferences-settings` with Prisma schema update (`editorPreferences Json?`), migration `20260508123422_add_editor_preferences`, server actions `updateEditorPreferences()` and `getEditorPreferences()`, utility file with Zod schema and defaults, `EditorPreferencesPanel` component with font size (12-28px), tab size (2/4/8), theme dropdown (vs-dark/monokai/github-dark), word wrap toggle, minimap toggle, auto-save with success/error toasts, `EditorPreferencesContext` provider for distributing preferences, CodeEditor component wired to load and apply preferences on mount, settings page integration, 18 new unit tests covering schema validation and defaults (252 total tests passing), merged to main.
