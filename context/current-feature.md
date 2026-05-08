@@ -1,39 +1,12 @@
-# Current Feature: Editor Preferences Settings
+# Current Feature
 
 ## Status
 
 <!-- Not Started|In Progress|Completed -->
 
-In Progress
-
 ## Goals
 
 <!-- Add goals for the active feature here -->
-
-- Add an "Editor Preferences" section to the existing `/settings` page
-- Provide controls: font size dropdown, tab size dropdown, word wrap toggle (default on), minimap toggle (default off), theme dropdown (vs-dark / monokai / github-dark, default vs-dark)
-- Add a `editorPreferences` JSON column to the `User` model in Prisma schema
-- Create and run a proper Prisma migration (never use `db push`)
-- Create a server action to persist editor preferences to the database
-- Build an `EditorPreferencesContext` for distributing settings to client components
-- Apply saved preferences to the Monaco editor component
-- Auto-save on change (no explicit save button)
-- Show a success toast after each save
-
-## Notes
-
-<!-- Add notes or constraints for the active feature here -->
-
-- Spec file: `context/features/editor-settings-spec.md`
-- Settings page: `src/app/settings/page.tsx` — add the new section below existing Account actions
-- Prisma schema: `prisma/schema.prisma` — add `editorPreferences Json?` to `User` model
-- Migration: use `npx prisma migrate dev --name add_editor_preferences` (never `db push`)
-- Server action: `src/actions/` following the existing `{ success, error?, data? }` shape; validate with Zod
-- Context: `EditorPreferencesContext` in `src/components/` (client component) wrapping dashboard pages or the editor area
-- Monaco editor: find the existing Monaco component and wire `fontSize`, `tabSize`, `wordWrap`, `minimap.enabled`, and `theme` props from context
-- Toast: use the existing toast/notification pattern in the codebase (check how other actions show toasts)
-- Auto-save: debounce or immediate `onChange` → call server action
-- Default values: font size 14, tab size 2, word wrap on, minimap off, theme vs-dark
 
 ## Notes
 
@@ -194,3 +167,4 @@ In Progress
 - 2026-05-06 10:34 EDT - Completed collection management feature, merged it into `main`, deleted the local feature branch, and cleared current feature details.
 - 2026-05-07 EDT - Loaded Collection Detail Actions from inline user request. Feature adds edit modal, delete with confirmation, and favorite placeholder button to `/collections/[slug]`. Items are preserved on collection delete.
 - 2026-05-07 EDT - Completed Pagination on branch `feature/pagination` with query-time pagination for `/items/[type]` and `/collections/[slug]`, shared page-size/dashboard constants, reusable numbered page controls with disabled previous/next states, and verification via TypeScript, lint, tests, and production build.
+- 2026-05-08 EDT - Completed Editor Preferences Settings on branch `feature/editor-preferences-settings` with Prisma schema update (`editorPreferences Json?`), migration `20260508123422_add_editor_preferences`, server actions `updateEditorPreferences()` and `getEditorPreferences()`, utility file with Zod schema and defaults, `EditorPreferencesPanel` component with font size (12-28px), tab size (2/4/8), theme dropdown (vs-dark/monokai/github-dark), word wrap toggle, minimap toggle, auto-save with success/error toasts, `EditorPreferencesContext` provider for distributing preferences, CodeEditor component wired to load and apply preferences on mount, settings page integration, 18 new unit tests covering schema validation and defaults (252 total tests passing), all TypeScript/lint/production build verified.
