@@ -7,10 +7,12 @@ import {
   Download,
   FileText,
   Image as ImageIcon,
+  LoaderCircle,
   Star,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 
+import { toggleItemFavoriteAction } from "@/actions/items";
 import { getAccentBorderStyle } from "@/components/dashboard/accent-border-style";
 import {
   itemTypeIconClasses,
@@ -76,12 +78,9 @@ export function ImageThumbnailCard({
             </p>
           </div>
           <div className="flex shrink-0 items-center gap-1">
-            {item.isFavorite ? (
-              <Star
-                aria-hidden="true"
-                className="size-4 shrink-0 fill-yellow-400 text-yellow-400"
-              />
-            ) : null}
+            <FavoriteButton
+              item={item}
+            />
             <QuickCopyButton item={item} />
           </div>
         </div>
@@ -132,6 +131,7 @@ export function FileItemRow({
       </div>
 
       <div className="flex w-full items-center gap-2 sm:w-auto">
+        <FavoriteButton item={item} />
         <QuickCopyButton item={item} />
         <a
           aria-label={`Download ${fileName}`}
@@ -177,12 +177,10 @@ export function PinnedItemCard({
             </h3>
             <CardItemTypeBadge item={item} />
             <span className="text-muted-foreground">Pinned</span>
-            {item.isFavorite ? (
-              <Star
-                aria-hidden="true"
-                className="size-4 shrink-0 fill-yellow-400 text-yellow-400"
-              />
-            ) : null}
+            <FavoriteButton
+              className="size-5"
+              item={item}
+            />
           </div>
           <p className="mt-2 line-clamp-2 text-sm leading-6 text-zinc-400">
             {item.description}
@@ -225,12 +223,10 @@ export function RecentItemRow({
               {item.isPinned ? (
                 <span className="text-sm text-muted-foreground">Pinned</span>
               ) : null}
-              {item.isFavorite ? (
-                <Star
-                  aria-hidden="true"
-                  className="size-4 shrink-0 fill-yellow-400 text-yellow-400"
-                />
-              ) : null}
+              <FavoriteButton
+                className="size-5"
+                item={item}
+              />
             </div>
             <p className="mt-1 line-clamp-2 text-sm leading-6 text-zinc-400">
               {item.description}
@@ -306,6 +302,70 @@ function QuickCopyButton({
         <Check aria-hidden="true" className="size-4" />
       ) : (
         <Copy aria-hidden="true" className="size-4" />
+      )}
+    </Button>
+  );
+}
+
+function FavoriteButton({
+  className,
+  item,
+  onFavoriteChange,
+}: {
+  className?: string;
+  item: DashboardItem;
+  onFavoriteChange?: (isFavorite: boolean) => void;
+}) {
+  const [isFavorite, setIsFavorite] = useState(item.isFavorite);
+  const [isTogglingFavorite, setIsTogglingFavorite] = useState(false);
+
+  async function toggleFavorite(event: React.MouseEvent<HTMLButtonElement>) {
+    event.preventDefault();
+    event.stopPropagation();
+
+    const previousFavorite = isFavorite;
+
+    // Optimistic UI update
+    setIsFavorite(!isFavorite);
+    setIsTogglingFavorite(true);
+
+    try {
+      // Call server action
+      const result = await toggleItemFavoriteAction(item.id);
+
+      if (!result.success) {
+        // Revert on failure
+        setIsFavorite(previousFavorite);
+      } else {
+        onFavoriteChange?.(!previousFavorite);
+      }
+    } finally {
+      setIsTogglingFavorite(false);
+    }
+  }
+
+  return (
+    <Button
+      aria-label={isFavorite ? `Remove ${item.title} from favorites` : `Add ${item.title} to favorites`}
+      className={cn(
+        "size-8 shrink-0 border border-white/10 bg-white/[0.04] text-zinc-300 transition hover:bg-white/[0.08] hover:text-yellow-300",
+        isFavorite && "border-yellow-400/50 text-yellow-400",
+        className,
+      )}
+      disabled={isTogglingFavorite}
+      onClick={toggleFavorite}
+      size="icon"
+      title={isFavorite ? "Remove from favorites" : "Add to favorites"}
+      type="button"
+      variant="ghost"
+    >
+      {isTogglingFavorite ? (
+        <LoaderCircle aria-hidden="true" className="size-4 animate-spin" />
+      ) : (
+        <Star
+          aria-hidden="true"
+          className={cn("size-4", isFavorite && "fill-yellow-400")}
+        />
       )}
     </Button>
   );

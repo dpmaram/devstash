@@ -1,11 +1,11 @@
 "use client";
 
 import { Dialog } from "@base-ui/react/dialog";
-import { Edit2, Heart, Loader, Trash2, X } from "lucide-react";
+import { Edit2, Loader, Star, Trash2, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
-import { deleteCollection, updateCollection } from "@/actions/collections";
+import { deleteCollection, toggleCollectionFavoriteAction, updateCollection } from "@/actions/collections";
 import type { DashboardCollection } from "@/lib/db/collections";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -26,6 +26,7 @@ export function CollectionDetailActions({
   onClose?: () => void;
 }) {
   const router = useRouter();
+  const [isFavorite, setIsFavorite] = useState(collection.isFavorite);
   const [editDraft, setEditDraft] = useState({
     name: collection.name,
     description: collection.description || "",
@@ -33,7 +34,38 @@ export function CollectionDetailActions({
   const [isEditOpen, setIsEditOpen] = useState(initialMode === "edit");
   const [isDeleteOpen, setIsDeleteOpen] = useState(initialMode === "delete");
   const [isSaving, setIsSaving] = useState(false);
+  const [isTogglingFavorite, setIsTogglingFavorite] = useState(false);
   const [toast, setToast] = useState<ActionToast>(null);
+
+  async function handleToggleFavorite() {
+    const previousFavorite = isFavorite;
+
+    // Optimistic UI update
+    setIsFavorite(!isFavorite);
+    setIsTogglingFavorite(true);
+
+    try {
+      const result = await toggleCollectionFavoriteAction(collection.id);
+
+      if (!result.success) {
+        // Revert on failure
+        setIsFavorite(previousFavorite);
+        setToast({
+          message: result.error || "Unable to update favorite status. Try again.",
+          tone: "error",
+        });
+      }
+    } catch {
+      // Revert on error
+      setIsFavorite(previousFavorite);
+      setToast({
+        message: "Unable to update favorite status. Try again.",
+        tone: "error",
+      });
+    } finally {
+      setIsTogglingFavorite(false);
+    }
+  }
 
   function handleEditClose() {
     setIsEditOpen(false);
@@ -149,14 +181,26 @@ export function CollectionDetailActions({
           <Trash2 className="size-4" />
         </Button>
 
-        {/* Favorite Button (placeholder) */}
+        {/* Favorite Button */}
         <Button
-          className="h-9 w-9 p-0"
-          disabled
-          title="Favorites coming soon"
+          aria-label={isFavorite ? "Remove from favorites" : "Add to favorites"}
+          className={cn(
+            "h-9 w-9 p-0",
+            isFavorite && "text-yellow-400 hover:text-yellow-300"
+          )}
+          disabled={isTogglingFavorite}
+          onClick={handleToggleFavorite}
+          title={isFavorite ? "Remove from favorites" : "Add to favorites"}
           variant="ghost"
         >
-          <Heart className="size-4" />
+          {isTogglingFavorite ? (
+            <Loader aria-hidden="true" className="size-4 animate-spin" />
+          ) : (
+            <Star
+              aria-hidden="true"
+              className={cn("size-4", isFavorite && "fill-yellow-400")}
+            />
+          )}
         </Button>
       </div>
 

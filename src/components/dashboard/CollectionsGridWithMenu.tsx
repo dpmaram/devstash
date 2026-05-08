@@ -5,7 +5,7 @@ import { Edit2, Loader, Trash2, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
-import { deleteCollection, updateCollection } from "@/actions/collections";
+import { deleteCollection, toggleCollectionFavoriteAction, updateCollection } from "@/actions/collections";
 import type { DashboardCollection } from "@/lib/db/collections";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -18,16 +18,40 @@ type ActionToast = {
 } | null;
 
 export function CollectionsGridWithMenu({
-  collections,
+  collections: initialCollections,
 }: {
   collections: DashboardCollection[];
 }) {
   const router = useRouter();
+  const [collections, setCollections] = useState(initialCollections);
   const [editingCollection, setEditingCollection] = useState<DashboardCollection | null>(null);
   const [deletingCollection, setDeletingCollection] = useState<DashboardCollection | null>(null);
   const [editDraft, setEditDraft] = useState({ name: "", description: "" });
   const [isSaving, setIsSaving] = useState(false);
   const [toast, setToast] = useState<ActionToast>(null);
+
+  async function handleToggleFavorite(collection: DashboardCollection) {
+    const previousFavorite = collection.isFavorite;
+
+    // Optimistic UI update
+    setCollections((prevCollections) =>
+      prevCollections.map((c) =>
+        c.id === collection.id ? { ...c, isFavorite: !c.isFavorite } : c
+      )
+    );
+
+    // Call server action
+    const result = await toggleCollectionFavoriteAction(collection.id);
+
+    if (!result.success) {
+      // Revert on failure
+      setCollections((prevCollections) =>
+        prevCollections.map((c) =>
+          c.id === collection.id ? { ...c, isFavorite: previousFavorite } : c
+        )
+      );
+    }
+  }
 
   function handleEditClick(collection: DashboardCollection) {
     setEditingCollection(collection);
@@ -147,9 +171,7 @@ export function CollectionsGridWithMenu({
             key={collection.id}
             onEdit={handleEditClick}
             onDelete={handleDeleteClick}
-            onFavorite={() => {
-              // Favorite functionality to be implemented
-            }}
+            onFavorite={handleToggleFavorite}
           />
         ))}
       </div>
