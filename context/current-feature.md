@@ -1,26 +1,18 @@
-# Current Feature: Pagination
+# Current Feature
 
 ## Status
 
 <!-- Not Started|In Progress|Completed -->
 
-In Progress
+Not Started
 
 ## Goals
 
-- Add pagination to `/items/[type]` and `/collections/[id]` pages
-- Render pagination controls at the bottom with numbered page links and prev/next actions
-- Disable prev/next controls when those pages are not available
-- Apply constants: `ITEMS_PER_PAGE = 21`, `COLLECTIONS_PER_PAGE = 21`
-- Keep dashboard limits: `DASHBOARD_COLLECTIONS_LIMIT = 6`, `DASHBOARD_RECENT_ITEMS_LIMIT = 10`
-- Fetch only data needed for the current page (no full-table fetches)
+<!-- Add goals for the active feature here -->
 
 ## Notes
 
-- Source spec: `context/features/pagination-spec.md`
-- Pagination applies to type-based item listing and collection detail listing surfaces
-- UX requires explicit previous/next disable states
-- Data layer must paginate at query-time, not in-memory after fetching all rows
+<!-- Add notes or constraints for the active feature here -->
 
 ## History
 
@@ -201,3 +193,4 @@ In Progress
 - 2026-05-06 09:25 EDT - Fixed collection slug links like `/collections/react-patterns` by adding a dynamic collection detail route, collection-by-slug lookup, and collection item listing query. Verified the route regression test, full local tests, lint, TypeScript, whitespace check, and browser rendering of `/collections/react-patterns`.
 - 2026-05-06 10:34 EDT - Completed collection management feature, merged it into `main`, deleted the local feature branch, and cleared current feature details.
 - 2026-05-07 EDT - Loaded Collection Detail Actions from inline user request. Feature adds edit modal, delete with confirmation, and favorite placeholder button to `/collections/[slug]`. Items are preserved on collection delete.
+- 2026-05-07 EDT - Completed Pagination on branch `feature/pagination` with query-time pagination for `/items/[type]` and `/collections/[slug]`, shared page-size/dashboard constants, reusable numbered page controls with disabled previous/next states, and verification via TypeScript, lint, tests, and production build.
