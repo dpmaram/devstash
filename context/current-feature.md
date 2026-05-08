@@ -1,45 +1,44 @@
-# Current Feature: Add Favorite Button to Drawer, Collection Page, and Cards
+# Current Feature: Add Client-Side Sorting to Favorites Page
 
 ## Status
 
 <!-- Not Started|In Progress|Completed -->
 
-In Progress
+Not Started
 
 ## Goals
 
 <!-- Add goals for the active feature here -->
 
-- Add favorite star button to ItemDrawer component
-- Add favorite star button to collection detail page header
-- Add favorite star button to item cards (image thumbnails, file rows, list views)
-- Button toggles isFavorite state and persists to database via server action
-- Button shows filled (yellow) star when favorited, outline star when not favorited
-- Show loading/disabled state while persisting to prevent double-clicks
-- Optimistic UI update to show button state change immediately
-- Create server action `toggleItemFavorite()` to toggle item favorite status
-- Create server action `toggleCollectionFavorite()` to toggle collection favorite status
-- Add tests for toggle functionality with success/error cases
-- Maintain consistency across all UI surfaces (drawer, cards, collection page)
+- Implement client-side sorting on the favorites page with three sort options: name, date, and item type
+- Add sort controls to FavoritesListView component (likely a dropdown or button group)
+- Support sorting by item name (A-Z, Z-A)
+- Support sorting by date (newest first, oldest first)
+- Support sorting by item type (alphabetical)
+- Persist user's sort preference in local state or localStorage for consistency across sessions
+- Maintain responsive design on mobile and desktop
+- Show current sort option in the UI
+- All sort operations should be instant (client-side only, no server call)
+- Ensure sort order is applied consistently across both items and collections sections
 
 ## Notes
 
 <!-- Add notes or constraints for the active feature here -->
 
-- Item and Collection models already have `isFavorite: Boolean @default(false)` in schema
-- Use lucide-react `Star` icon (filled when favorited, outline when not)
-- Color favorited stars yellow-400 to match existing design
-- Server actions should return `{ success, error?, data? }` response shape per conventions
-- Validate ownership (userId) in server actions before toggling
-- ItemDrawer already displays isFavorite in header; add toggle button there
-- Collection page already shows isFavorite; add toggle button to header
-- ItemCards already show isFavorite indicator; add interactive button
-- Consider adding favorite state to relevant query shapes if needed for optimization
+- FavoritesListView component is located in src/components/dashboard/ and displays items and collections
+- Data is already queried server-side and passed to client component
+- Consider storing sort preference in localStorage so it persists across page reloads
+- Items and collections should be sortable independently or together depending on design
+- Icon suggestions: use lucide-react chevron or arrow icons for sort direction indicators
+- May need to extract sortable data fields from ItemDetail and CollectionDetail types
+- No database changes needed - all sorting is client-side
 
 ## History
 
 <!-- Keep this updated. Earliest to latest -->
 
+- 2026-05-08 EDT - Loaded Add Client-Side Sorting to Favorites Page feature from inline description and set status to Not Started.
+- 2026-05-08 EDT - In Progress on Add Favorite Button to Drawer, Collection Page, and Cards: Completed server-side layer (toggleItemFavorite, toggleCollectionFavorite server actions and database functions), ItemActionBar with favorite toggle callback and optimistic UI, ItemCards component with FavoriteButton component (ImageThumbnailCard, FileItemRow, PinnedItemCard, RecentItemRow), all tests passing (252/252), TypeScript clean. Pending: collection detail page favorite button, collection card buttons, linting, feature completion workflow.
 - 2026-05-08 EDT - Loaded Add Favorite Button to Drawer, Collection Page, and Cards feature from inline description and set status to Not Started.
 - 2026-05-08 EDT - Completed Favorites Page on branch `feature/favorites-page` with data layer `src/lib/db/favorites.ts` that queries favorited items and collections using proper type summaries and shaping, protected `/favorites` route with auth guard and metadata, `FavoritesListView` client component with compact monospace list showing type icon, title, type badge, and relative date for each item/collection, empty state when no favorites, separate sections for items and collections with counts, item rows open ItemDrawer (placeholder), collection rows link to `/collections/[slug]`, Heart icon button added to TopBar linking to `/favorites`, middleware updated to protect `/favorites/:path*`, 252 tests passing (no new tests needed for data layer as it uses existing patterns), linting clean, TypeScript clean. Ready for review.
 - 2026-05-08 EDT - Started Favorites Page on branch `feature/favorites-page`.
