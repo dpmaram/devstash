@@ -1,5 +1,8 @@
 import { prisma } from "@/lib/prisma";
-import { DASHBOARD_COLLECTIONS_LIMIT } from "@/lib/pagination";
+import {
+  DASHBOARD_COLLECTIONS_LIMIT,
+  getPaginationOffset,
+} from "@/lib/pagination";
 
 import {
   dashboardCollectionSelect,
@@ -25,6 +28,7 @@ type DashboardCollectionData = {
 
 type DashboardCollectionsOptions = {
   limit?: number;
+  page?: number;
   user?: DashboardUser | null;
   userEmail?: string;
 };
@@ -252,10 +256,14 @@ export async function getDashboardCollections(
     return [];
   }
 
+  const page = Math.max(options.page ?? 1, 1);
+  const take = options.limit ?? DASHBOARD_COLLECTIONS_LIMIT;
+
   const collections = await prisma.collection.findMany({
     where: { userId: user.id },
     orderBy: [{ updatedAt: "desc" }, { name: "asc" }],
-    take: options.limit ?? DASHBOARD_COLLECTIONS_LIMIT,
+    skip: getPaginationOffset(page, take),
+    take,
     select: dashboardCollectionSelect,
   });
   const typeSummariesByCollectionId = await getCollectionTypeSummaries(
@@ -267,6 +275,20 @@ export async function getDashboardCollections(
       toCollectionRecord(collection, typeSummariesByCollectionId),
     ),
   );
+}
+
+export async function getDashboardCollectionCount(
+  options: Pick<DashboardCollectionsOptions, "user" | "userEmail"> = {},
+) {
+  const user = await resolveDashboardUser(options);
+
+  if (!user) {
+    return 0;
+  }
+
+  return prisma.collection.count({
+    where: { userId: user.id },
+  });
 }
 
 export async function getDashboardCollectionBySlug(

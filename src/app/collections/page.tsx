@@ -1,27 +1,57 @@
 import { auth } from "@/auth";
 import { DashboardChrome } from "@/components/dashboard/DashboardChrome";
 import { CollectionsGridWithMenu } from "@/components/dashboard/CollectionsGridWithMenu";
+import { PaginationControls } from "@/components/dashboard/PaginationControls";
+import { getSearchIndexAction } from "@/actions/search";
 import { toCurrentUser } from "@/lib/auth/current-user";
 import {
+  getDashboardCollectionCount,
   getDashboardCollections,
 } from "@/lib/db/collections";
 import { getDashboardUserForSession } from "@/lib/db/dashboard-user";
 import { getDashboardItemTypes } from "@/lib/db/items";
 import { mockDashboardData } from "@/lib/mock-data";
-import { getSearchIndexAction } from "@/actions/search";
+import {
+  COLLECTIONS_PER_PAGE,
+  getTotalPages,
+  parsePageNumber,
+} from "@/lib/pagination";
 
 export const dynamic = "force-dynamic";
 
-export default async function CollectionsPage() {
+type SearchParams = Record<string, string | string[] | undefined>;
+
+type CollectionsPageProps = {
+  searchParams?: Promise<SearchParams>;
+};
+
+function getSearchParam(params: SearchParams | undefined, key: string) {
+  const value = params?.[key];
+
+  return Array.isArray(value) ? value[0] : value;
+}
+
+export default async function CollectionsPage({
+  searchParams,
+}: CollectionsPageProps) {
+  const resolvedSearchParams = await searchParams;
+  const currentPage = parsePageNumber(getSearchParam(resolvedSearchParams, "page"));
   const session = await auth();
   const dashboardUser = await getDashboardUserForSession(session?.user);
   const currentUser = toCurrentUser(session?.user, mockDashboardData.currentUser);
-  const [collections, itemTypes, sidebarCollections, searchIndex] = await Promise.all([
-    getDashboardCollections({ limit: 50, user: dashboardUser }),
-    getDashboardItemTypes({ user: dashboardUser }),
-    getDashboardCollections({ limit: 20, user: dashboardUser }),
-    getSearchIndexAction(),
-  ]);
+  const [collections, totalCollectionCount, itemTypes, sidebarCollections, searchIndex] =
+    await Promise.all([
+      getDashboardCollections({
+        limit: COLLECTIONS_PER_PAGE,
+        page: currentPage,
+        user: dashboardUser,
+      }),
+      getDashboardCollectionCount({ user: dashboardUser }),
+      getDashboardItemTypes({ user: dashboardUser }),
+      getDashboardCollections({ limit: 20, user: dashboardUser }),
+      getSearchIndexAction(),
+    ]);
+  const totalPages = getTotalPages(totalCollectionCount, COLLECTIONS_PER_PAGE);
 
   return (
     <DashboardChrome
@@ -44,6 +74,12 @@ export default async function CollectionsPage() {
         </div>
 
         <CollectionsGridWithMenu collections={collections} />
+
+        <PaginationControls
+          currentPage={Math.min(currentPage, totalPages)}
+          getPageHref={(page) => `/collections?page=${page}`}
+          totalPages={totalPages}
+        />
       </section>
     </DashboardChrome>
   );
