@@ -4,7 +4,7 @@
 
 <!-- Not Started|In Progress|Completed -->
 
-In Progress
+Completed
 
 ## Goals
 
@@ -30,6 +30,19 @@ In Progress
 <!-- Keep this updated. Earliest to latest -->
 
 - 2026-05-07 EDT - Loaded Global Search / Command Palette from `context/features/global-search-spec.md` and set status to Not Started.
+- 2026-05-07 EDT - Created feature/global-search-command-palette branch and implemented:
+  - `src/lib/fuzzy-search.ts` - Generic fuzzy search with smart scoring algorithm
+  - `src/lib/db/search.ts` - Server-side search index fetching from database
+  - `src/actions/search.ts` - Server action wrapper for authenticated search access
+  - `src/components/dashboard/SearchCommand.tsx` - cmdk-based command palette UI with grouped results
+  - Integrated SearchCommand into DashboardChrome and all dashboard pages
+  - Keyboard shortcut: Cmd+K (Mac) / Ctrl+K (Windows)
+  - Results show item type icons, titles, previews, and collection item counts
+  - Navigation to item detail (/items/{id}) or collection detail (/collections/{slug})
+  - Fixed Prisma field references and ESLint errors
+  - All tests passing (234), lint clean, production build succeeds
+  - Merged feature branch to main and deleted branch
+  - Status set to Completed
 
 <!-- Any extra notes -->
 
