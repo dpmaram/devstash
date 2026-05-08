@@ -1,7 +1,7 @@
 "use client";
 
 import { Dialog } from "@base-ui/react/dialog";
-import { Edit2, Heart, Loader, Trash2, X } from "lucide-react";
+import { Edit2, Loader, Trash2, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
@@ -10,45 +10,50 @@ import type { DashboardCollection } from "@/lib/db/collections";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
+import { CollectionCardWithMenu } from "./CollectionCardWithMenu";
 
 type ActionToast = {
   message: string;
   tone: "error" | "success";
 } | null;
 
-export function CollectionDetailActions({
-  collection,
-  initialMode,
-  onClose,
+export function CollectionsGridWithMenu({
+  collections,
 }: {
-  collection: DashboardCollection;
-  initialMode?: "edit" | "delete";
-  onClose?: () => void;
+  collections: DashboardCollection[];
 }) {
   const router = useRouter();
-  const [editDraft, setEditDraft] = useState({
-    name: collection.name,
-    description: collection.description || "",
-  });
-  const [isEditOpen, setIsEditOpen] = useState(initialMode === "edit");
-  const [isDeleteOpen, setIsDeleteOpen] = useState(initialMode === "delete");
+  const [editingCollection, setEditingCollection] = useState<DashboardCollection | null>(null);
+  const [deletingCollection, setDeletingCollection] = useState<DashboardCollection | null>(null);
+  const [editDraft, setEditDraft] = useState({ name: "", description: "" });
   const [isSaving, setIsSaving] = useState(false);
   const [toast, setToast] = useState<ActionToast>(null);
 
+  function handleEditClick(collection: DashboardCollection) {
+    setEditingCollection(collection);
+    setEditDraft({
+      name: collection.name,
+      description: collection.description || "",
+    });
+  }
+
   function handleEditClose() {
-    setIsEditOpen(false);
-    onClose?.();
+    setEditingCollection(null);
+    setEditDraft({ name: "", description: "" });
+  }
+
+  function handleDeleteClick(collection: DashboardCollection) {
+    setDeletingCollection(collection);
   }
 
   function handleDeleteClose() {
-    setIsDeleteOpen(false);
-    onClose?.();
+    setDeletingCollection(null);
   }
 
   async function handleEditSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
-    if (!editDraft.name.trim() || isSaving) {
+    if (!editDraft.name.trim() || isSaving || !editingCollection) {
       return;
     }
 
@@ -56,7 +61,7 @@ export function CollectionDetailActions({
 
     try {
       const result = await updateCollection({
-        collectionId: collection.id,
+        collectionId: editingCollection.id,
         name: editDraft.name,
         description: editDraft.description || null,
       });
@@ -69,7 +74,7 @@ export function CollectionDetailActions({
         return;
       }
 
-      setIsEditOpen(false);
+      handleEditClose();
       setToast({
         message: "Collection updated.",
         tone: "success",
@@ -86,10 +91,12 @@ export function CollectionDetailActions({
   }
 
   async function handleDeleteConfirm() {
+    if (!deletingCollection) return;
+
     setIsSaving(true);
 
     try {
-      const result = await deleteCollection(collection.id);
+      const result = await deleteCollection(deletingCollection.id);
 
       if (!result.success) {
         setToast({
@@ -99,15 +106,12 @@ export function CollectionDetailActions({
         return;
       }
 
-      setIsDeleteOpen(false);
+      handleDeleteClose();
       setToast({
         message: "Collection deleted.",
         tone: "success",
       });
-      setTimeout(() => {
-        router.push("/dashboard");
-        router.refresh();
-      }, 500);
+      router.refresh();
     } catch {
       setToast({
         message: "Unable to delete collection. Try again.",
@@ -116,6 +120,14 @@ export function CollectionDetailActions({
     } finally {
       setIsSaving(false);
     }
+  }
+
+  if (collections.length === 0) {
+    return (
+      <div className="rounded-lg border border-devstash-line bg-white/[0.025] p-5 text-sm text-muted-foreground md:col-span-2 2xl:col-span-3">
+        No collections yet.
+      </div>
+    );
   }
 
   return (
@@ -128,43 +140,22 @@ export function CollectionDetailActions({
         />
       ) : null}
 
-      <div className="flex items-center gap-2">
-        {/* Edit Button */}
-        <Button
-          className="h-9 w-9 p-0"
-          onClick={() => setIsEditOpen(true)}
-          title="Edit collection"
-          variant="ghost"
-        >
-          <Edit2 className="size-4" />
-        </Button>
-
-        {/* Delete Button */}
-        <Button
-          className="h-9 w-9 p-0"
-          onClick={() => setIsDeleteOpen(true)}
-          title="Delete collection"
-          variant="ghost"
-        >
-          <Trash2 className="size-4" />
-        </Button>
-
-        {/* Favorite Button (placeholder) */}
-        <Button
-          className="h-9 w-9 p-0"
-          disabled
-          title="Favorites coming soon"
-          variant="ghost"
-        >
-          <Heart className="size-4" />
-        </Button>
+      <div className="grid gap-4 md:grid-cols-2 2xl:grid-cols-3">
+        {collections.map((collection) => (
+          <CollectionCardWithMenu
+            collection={collection}
+            key={collection.id}
+            onEdit={handleEditClick}
+            onDelete={handleDeleteClick}
+            onFavorite={() => {
+              // Favorite functionality to be implemented
+            }}
+          />
+        ))}
       </div>
 
       {/* Edit Modal */}
-      <Dialog.Root
-        onOpenChange={(open) => (open ? setIsEditOpen(true) : handleEditClose())}
-        open={isEditOpen}
-      >
+      <Dialog.Root onOpenChange={(open) => !open && handleEditClose()} open={!!editingCollection}>
         <Dialog.Portal>
           <Dialog.Backdrop className="fixed inset-0 z-[70] bg-black/75 opacity-100 transition-opacity duration-200 data-[ending-style]:opacity-0 data-[starting-style]:opacity-0" />
           <Dialog.Popup className="fixed left-1/2 top-1/2 z-[80] flex max-h-[calc(100vh-2rem)] w-[calc(100vw-2rem)] max-w-xl -translate-x-1/2 -translate-y-1/2 flex-col rounded-lg border border-devstash-line bg-[#0b0d10] shadow-2xl shadow-black/50 outline-none transition duration-200 data-[ending-style]:scale-95 data-[ending-style]:opacity-0 data-[starting-style]:scale-95 data-[starting-style]:opacity-0">
@@ -249,10 +240,7 @@ export function CollectionDetailActions({
       </Dialog.Root>
 
       {/* Delete Confirmation Dialog */}
-      <Dialog.Root
-        onOpenChange={(open) => (open ? setIsDeleteOpen(true) : handleDeleteClose())}
-        open={isDeleteOpen}
-      >
+      <Dialog.Root onOpenChange={(open) => !open && handleDeleteClose()} open={!!deletingCollection}>
         <Dialog.Portal>
           <Dialog.Backdrop className="fixed inset-0 z-[70] bg-black/75 opacity-100 transition-opacity duration-200 data-[ending-style]:opacity-0 data-[starting-style]:opacity-0" />
           <Dialog.Popup className="fixed left-1/2 top-1/2 z-[80] flex max-h-[calc(100vh-2rem)] w-[calc(100vw-2rem)] max-w-md -translate-x-1/2 -translate-y-1/2 flex-col rounded-lg border border-devstash-line bg-[#0b0d10] shadow-2xl shadow-black/50 outline-none transition duration-200 data-[ending-style]:scale-95 data-[ending-style]:opacity-0 data-[starting-style]:scale-95 data-[starting-style]:opacity-0">
@@ -280,7 +268,7 @@ export function CollectionDetailActions({
 
             <div className="space-y-4 px-5 py-5">
               <p className="text-base text-muted-foreground">
-                Are you sure you want to delete <strong>{collection.name}</strong>?
+                Are you sure you want to delete <strong>{deletingCollection?.name}</strong>?
               </p>
               <div className="rounded-lg border border-amber-600/30 bg-amber-950/20 p-3">
                 <p className="text-sm text-amber-200">
