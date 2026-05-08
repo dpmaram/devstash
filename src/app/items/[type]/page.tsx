@@ -20,14 +20,28 @@ import { mockDashboardData } from "@/lib/mock-data";
 
 export const dynamic = "force-dynamic";
 
+type SearchParams = Record<string, string | string[] | undefined>;
+
 type ItemsByTypePageProps = {
   params: Promise<{
     type: string;
   }>;
+  searchParams?: Promise<SearchParams>;
 };
 
-export default async function ItemsByTypePage({ params }: ItemsByTypePageProps) {
+function getSearchParam(params: SearchParams | undefined, key: string) {
+  const value = params?.[key];
+
+  return Array.isArray(value) ? value[0] : value;
+}
+
+export default async function ItemsByTypePage({
+  params,
+  searchParams,
+}: ItemsByTypePageProps) {
   const { type } = await params;
+  const resolvedSearchParams = await searchParams;
+  const initialItemId = getSearchParam(resolvedSearchParams, "itemId") ?? null;
   const normalizedTypeSlug = normalizeItemTypeRouteSlug(type);
   const session = await auth();
   const dashboardUser = await getDashboardUserForSession(session?.user);
@@ -95,6 +109,7 @@ export default async function ItemsByTypePage({ params }: ItemsByTypePageProps) 
                 : "cards"
           }
           emptyMessage={`No ${itemType.label.toLowerCase()} saved yet.`}
+          initialItemId={initialItemId}
           items={items}
         />
       </section>

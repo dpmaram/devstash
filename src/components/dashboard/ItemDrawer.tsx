@@ -21,7 +21,7 @@ import {
   X,
 } from "lucide-react";
 import { useEffect, useId, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 
 import {
   deleteItem as deleteItemAction,
@@ -107,16 +107,37 @@ export function ItemCardGrid({
   availableCollections = [],
   displayMode = "cards",
   emptyMessage = "No items yet.",
+  initialItemId,
   items,
 }: {
   availableCollections?: DashboardCollection[];
   displayMode?: "cards" | "fileList" | "imageGallery";
   emptyMessage?: string;
+  initialItemId?: string | null;
   items: DashboardItem[];
 }) {
+  const pathname = usePathname();
+  const router = useRouter();
   const drawer = useItemDrawer();
   const isImageGallery = displayMode === "imageGallery";
   const isFileList = displayMode === "fileList";
+  const openedFromQueryRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (!initialItemId || openedFromQueryRef.current === initialItemId) {
+      return;
+    }
+
+    const matchedItem = items.find((item) => item.id === initialItemId);
+
+    if (!matchedItem) {
+      return;
+    }
+
+    openedFromQueryRef.current = initialItemId;
+    void drawer.openItem(matchedItem);
+    router.replace(pathname);
+  }, [drawer, initialItemId, items, pathname, router]);
 
   return (
     <>
