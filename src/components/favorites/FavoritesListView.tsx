@@ -7,6 +7,7 @@ import {
   ChevronRight,
   Database,
   ExternalLink,
+  ArrowUpDown,
 } from "lucide-react";
 
 import type { DashboardItem } from "@/lib/db/item-shaping";
@@ -15,7 +16,19 @@ import {
   itemTypeIcons,
   itemTypeIconClasses,
 } from "@/components/dashboard/dashboard-icons";
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+
+type SortType = "name" | "date" | "type";
+type SortDirection = "asc" | "desc";
+
+type SortPreference = {
+  type: SortType;
+  direction: SortDirection;
+};
+
+const SORT_STORAGE_KEY = "favorites-sort";
+const DEFAULT_SORT: SortPreference = { type: "date", direction: "desc" };
 
 type FavoritesData = {
   items: DashboardItem[];
@@ -28,8 +41,114 @@ type FavoritesListViewProps = {
   data: FavoritesData;
 };
 
+function getSortPreference(): SortPreference {
+  if (typeof window === "undefined") return DEFAULT_SORT;
+  
+  try {
+    const stored = localStorage.getItem(SORT_STORAGE_KEY);
+    return stored ? JSON.parse(stored) : DEFAULT_SORT;
+  } catch {
+    return DEFAULT_SORT;
+  }
+}
+
+function setSortPreference(pref: SortPreference): void {
+  if (typeof window === "undefined") return;
+  
+  try {
+    localStorage.setItem(SORT_STORAGE_KEY, JSON.stringify(pref));
+  } catch {
+    // Silently fail if localStorage is unavailable
+  }
+}
+
+function sortItems(items: DashboardItem[], sort: SortPreference): DashboardItem[] {
+  const sorted = [...items];
+
+  switch (sort.type) {
+    case "name":
+      sorted.sort((a, b) =>
+        sort.direction === "asc"
+          ? a.title.localeCompare(b.title)
+          : b.title.localeCompare(a.title)
+      );
+      break;
+    case "date":
+      sorted.sort((a, b) => {
+        const aDate = new Date(a.updatedAt).getTime();
+        const bDate = new Date(b.updatedAt).getTime();
+        return sort.direction === "asc" ? aDate - bDate : bDate - aDate;
+      });
+      break;
+    case "type":
+      sorted.sort((a, b) =>
+        sort.direction === "asc"
+          ? a.itemType.name.localeCompare(b.itemType.name)
+          : b.itemType.name.localeCompare(a.itemType.name)
+      );
+      break;
+  }
+
+  return sorted;
+}
+
+function sortCollections(
+  collections: DashboardCollection[],
+  sort: SortPreference
+): DashboardCollection[] {
+  const sorted = [...collections];
+
+  switch (sort.type) {
+    case "name":
+      sorted.sort((a, b) =>
+        sort.direction === "asc"
+          ? a.name.localeCompare(b.name)
+          : b.name.localeCompare(a.name)
+      );
+      break;
+    case "date":
+      sorted.sort((a, b) => {
+        const aDate = new Date(a.updatedAt).getTime();
+        const bDate = new Date(b.updatedAt).getTime();
+        return sort.direction === "asc" ? aDate - bDate : bDate - aDate;
+      });
+      break;
+    case "type":
+      // Collections don't have a "type" field, so sort by item count as fallback
+      sorted.sort((a, b) =>
+        sort.direction === "asc"
+          ? a.itemCount - b.itemCount
+          : b.itemCount - a.itemCount
+      );
+      break;
+  }
+
+  return sorted;
+}
+
 export function FavoritesListView({ data }: FavoritesListViewProps) {
   const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
+  const [sort, setSort] = useState<SortPreference>(() => getSortPreference());
+
+  // Update sort and persist to localStorage
+  function handleSortChange(newSort: SortPreference) {
+    setSort(newSort);
+    setSortPreference(newSort);
+  }
+
+  // Toggle sort direction
+  function toggleDirection() {
+    const newDirection: SortDirection = sort.direction === "asc" ? "desc" : "asc";
+    const newSort: SortPreference = {
+      ...sort,
+      direction: newDirection,
+    };
+    handleSortChange(newSort);
+  }
+
+  // Apply sorting to data
+  const sortedItems = sortItems(data.items, sort);
+  const sortedCollections = sortCollections(data.collections, sort);
 
   const isEmpty = data.itemsCount === 0 && data.collectionsCount === 0;
 
@@ -51,6 +170,53 @@ export function FavoritesListView({ data }: FavoritesListViewProps) {
 
   return (
     <div className="space-y-6">
+      {/* Sort Controls */}
+      <div className="flex flex-wrap items-center gap-2">
+        <span className="text-sm text-muted-foreground">Sort by:</span>
+        <div className="flex gap-1">
+          {(["name", "date", "type"] as const).map((sortType) => (
+            <Button
+              key={sortType}
+              onClick={() => {
+                const newDirection: SortDirection =
+                  sort.type === sortType && sort.direction === "desc" ? "asc" : "desc";
+                handleSortChange({
+                  type: sortType,
+                  direction: newDirection,
+                });
+              }}
+              size="sm"
+              variant={sort.type === sortType ? "default" : "outline"}
+              className={cn(
+                "gap-1.5",
+                sort.type === sortType &&
+                  "bg-white/10 text-white hover:bg-white/20"
+              )}
+            >
+              <span>{sortType === "date" ? "Date" : sortType === "type" ? "Type" : "Name"}</span>
+              {sort.type === sortType && (
+                <ArrowUpDown
+                  className={cn(
+                    "size-3.5",
+                    sort.direction === "desc" && "rotate-180"
+                  )}
+                />
+              )}
+            </Button>
+          ))}
+        </div>
+        <Button
+          onClick={toggleDirection}
+          size="sm"
+          variant="ghost"
+          title={`Sort ${sort.direction === "asc" ? "descending" : "ascending"}`}
+          className="gap-1"
+        >
+          <ArrowUpDown
+            className={cn("size-4", sort.direction === "desc" && "rotate-180")}
+          />
+        </Button>
+      </div>
       {/* Items Section */}
       {data.itemsCount > 0 && (
         <section className="space-y-3">
@@ -60,7 +226,7 @@ export function FavoritesListView({ data }: FavoritesListViewProps) {
           </h2>
           <article className="rounded-lg border border-devstash-line bg-white/[0.035]">
             <div className="divide-y divide-devstash-line/50">
-              {data.items.map((item) => {
+              {sortedItems.map((item) => {
                 const IconComponent = itemTypeIcons[item.typeSlug as keyof typeof itemTypeIcons];
                 const iconClass =
                   itemTypeIconClasses[item.typeSlug as keyof typeof itemTypeIconClasses];
@@ -126,7 +292,7 @@ export function FavoritesListView({ data }: FavoritesListViewProps) {
           </h2>
           <article className="rounded-lg border border-devstash-line bg-white/[0.035]">
             <div className="divide-y divide-devstash-line/50">
-              {data.collections.map((collection) => (
+              {sortedCollections.map((collection) => (
                 <Link
                   key={collection.id}
                   href={`/collections/${collection.slug}`}
