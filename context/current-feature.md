@@ -1,41 +1,18 @@
-# Current Feature: Favorites Page
+# Current Feature
 
 ## Status
 
 <!-- Not Started|In Progress|Completed -->
 
-Completed
+Not Started
 
 ## Goals
 
 <!-- Add goals for the active feature here -->
 
-- Add star icon button to TopBar linking to /favorites
-- Create protected /favorites route with auth guard
-- Fetch all user favorited items and collections from database
-- Display compact list view with type icon, title, type badge, and date added per row
-- Show separate sections for items and collections with counts
-- Click item row opens ItemDrawer, click collection row navigates to /collections/[slug]
-- Show empty state message when user has no favorites
-- Sort favorites by most recently favorited (updatedAt descending)
-- Style with monospace/semi-monospace font, minimal padding, high density (VS Code/terminal aesthetic)
-- Subtle hover states, no cards or heavy borders, clean lines only
-
 ## Notes
 
 <!-- Add notes or constraints for the active feature here -->
-
-- Spec file: `context/features/favorites-spec.md`
-- Requires `isFavorite` or `favorite` boolean and `favoritedAt` timestamp on Item and Collection models in Prisma
-- TopBar: Add star icon button in header area linking to `/favorites`
-- Route: Protected `/favorites` page similar to `/collections` and `/items` with auth guard
-- Data layer: Query for User's favorited items and collections with proper filtering and ownership checks
-- List rows: Compact single-line format with type icon, title, type/collection badge, favorited date
-- Item interaction: Click opens ItemDrawer (reuse existing ItemDrawer component)
-- Collection interaction: Click navigates to `/collections/[slug]` (reuse existing detail route)
-- Empty state: Show message when both item and collection lists are empty
-- Sorting: Most recently favorited first (ORDER BY favoritedAt DESC or updatedAt DESC)
-- UI: Terminal/VS Code density aesthetic - monospace font, tight line height, minimal padding, clean lines
 
 ## History
 
