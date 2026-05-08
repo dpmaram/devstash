@@ -1,4 +1,8 @@
 import { prisma } from "@/lib/prisma";
+import {
+  DASHBOARD_RECENT_ITEMS_LIMIT,
+  getPaginationOffset,
+} from "@/lib/pagination";
 
 import {
   dashboardItemListSelect,
@@ -39,6 +43,7 @@ type DashboardItemsByTypeOptions = Pick<
   DashboardItemsOptions,
   "limit" | "user" | "userEmail"
 > & {
+  page?: number;
   typeSlug: string;
 };
 
@@ -46,6 +51,7 @@ type DashboardItemsByCollectionOptions = Pick<
   DashboardItemsOptions,
   "limit" | "user" | "userEmail"
 > & {
+  page?: number;
   collectionSlug: string;
 };
 
@@ -312,7 +318,7 @@ export async function getDashboardRecentItems(
   const items = await prisma.item.findMany({
     where: { userId: user.id },
     orderBy: [{ updatedAt: "desc" }, { title: "asc" }],
-    take: options.limit ?? 10,
+    take: options.limit ?? DASHBOARD_RECENT_ITEMS_LIMIT,
     select: dashboardItemListSelect,
   });
 
@@ -328,6 +334,9 @@ export async function getDashboardItemsByTypeSlug(
     return [];
   }
 
+  const page = Math.max(options.page ?? 1, 1);
+  const take = options.limit ?? 50;
+
   const items = await prisma.item.findMany({
     where: {
       userId: user.id,
@@ -336,11 +345,31 @@ export async function getDashboardItemsByTypeSlug(
       },
     },
     orderBy: [{ updatedAt: "desc" }, { title: "asc" }],
-    take: options.limit ?? 50,
+    skip: getPaginationOffset(page, take),
+    take,
     select: dashboardItemListSelect,
   });
 
   return items.map((item) => toDashboardItem(item));
+}
+
+export async function getDashboardItemCountByTypeSlug(
+  options: Pick<DashboardItemsByTypeOptions, "typeSlug" | "user" | "userEmail">,
+) {
+  const user = await resolveDashboardUser(options);
+
+  if (!user) {
+    return 0;
+  }
+
+  return prisma.item.count({
+    where: {
+      userId: user.id,
+      itemType: {
+        slug: normalizeItemTypeRouteSlug(options.typeSlug),
+      },
+    },
+  });
 }
 
 export async function getDashboardItemsByCollectionSlug(
@@ -351,6 +380,9 @@ export async function getDashboardItemsByCollectionSlug(
   if (!user) {
     return [];
   }
+
+  const page = Math.max(options.page ?? 1, 1);
+  const take = options.limit ?? 50;
 
   const collectionSlug = options.collectionSlug.trim().toLowerCase();
   const items = await prisma.item.findMany({
@@ -366,11 +398,41 @@ export async function getDashboardItemsByCollectionSlug(
       },
     },
     orderBy: [{ updatedAt: "desc" }, { title: "asc" }],
-    take: options.limit ?? 50,
+    skip: getPaginationOffset(page, take),
+    take,
     select: dashboardItemListSelect,
   });
 
   return items.map((item) => toDashboardItem(item));
+}
+
+export async function getDashboardItemCountByCollectionSlug(
+  options: Pick<
+    DashboardItemsByCollectionOptions,
+    "collectionSlug" | "user" | "userEmail"
+  >,
+) {
+  const user = await resolveDashboardUser(options);
+
+  if (!user) {
+    return 0;
+  }
+
+  const collectionSlug = options.collectionSlug.trim().toLowerCase();
+
+  return prisma.item.count({
+    where: {
+      userId: user.id,
+      collections: {
+        some: {
+          collection: {
+            slug: collectionSlug,
+            userId: user.id,
+          },
+        },
+      },
+    },
+  });
 }
 
 export async function getDashboardItemTypes(

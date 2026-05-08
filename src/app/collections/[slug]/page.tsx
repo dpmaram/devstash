@@ -4,6 +4,7 @@ import { auth } from "@/auth";
 import { CollectionDetailActions } from "@/components/dashboard/CollectionDetailActions";
 import { DashboardChrome } from "@/components/dashboard/DashboardChrome";
 import { ItemCardGrid } from "@/components/dashboard/ItemDrawer";
+import { PaginationControls } from "@/components/dashboard/PaginationControls";
 import { getAccentBorderStyle } from "@/components/dashboard/accent-border-style";
 import { toCurrentUser } from "@/lib/auth/current-user";
 import {
@@ -13,10 +14,16 @@ import {
 import { getDashboardUserForSession } from "@/lib/db/dashboard-user";
 import { getSearchIndexAction } from "@/actions/search";
 import {
+  getDashboardItemCountByCollectionSlug,
   getDashboardItemsByCollectionSlug,
   getDashboardItemTypes,
 } from "@/lib/db/items";
 import { mockDashboardData } from "@/lib/mock-data";
+import {
+  COLLECTIONS_PER_PAGE,
+  getTotalPages,
+  parsePageNumber,
+} from "@/lib/pagination";
 
 export const dynamic = "force-dynamic";
 
@@ -24,12 +31,25 @@ type CollectionDetailPageProps = {
   params: Promise<{
     slug: string;
   }>;
+  searchParams?: Promise<Record<string, string | string[] | undefined>>;
 };
+
+function getSearchParam(
+  params: Record<string, string | string[] | undefined> | undefined,
+  key: string,
+) {
+  const value = params?.[key];
+
+  return Array.isArray(value) ? value[0] : value;
+}
 
 export default async function CollectionDetailPage({
   params,
+  searchParams,
 }: CollectionDetailPageProps) {
   const { slug } = await params;
+  const resolvedSearchParams = await searchParams;
+  const currentPage = parsePageNumber(getSearchParam(resolvedSearchParams, "page"));
   const session = await auth();
   const dashboardUser = await getDashboardUserForSession(session?.user);
   const currentUser = toCurrentUser(session?.user, mockDashboardData.currentUser);
@@ -44,10 +64,19 @@ export default async function CollectionDetailPage({
     notFound();
   }
 
-  const items = await getDashboardItemsByCollectionSlug({
-    collectionSlug: collection.slug,
-    user: dashboardUser,
-  });
+  const [items, totalItemCount] = await Promise.all([
+    getDashboardItemsByCollectionSlug({
+      collectionSlug: collection.slug,
+      user: dashboardUser,
+      limit: COLLECTIONS_PER_PAGE,
+      page: currentPage,
+    }),
+    getDashboardItemCountByCollectionSlug({
+      collectionSlug: collection.slug,
+      user: dashboardUser,
+    }),
+  ]);
+  const totalPages = getTotalPages(totalItemCount, COLLECTIONS_PER_PAGE);
 
   return (
     <DashboardChrome
@@ -85,6 +114,12 @@ export default async function CollectionDetailPage({
           availableCollections={sidebarCollections}
           emptyMessage="No items in this collection yet."
           items={items}
+        />
+
+        <PaginationControls
+          currentPage={Math.min(currentPage, totalPages)}
+          getPageHref={(page) => `/collections/${collection.slug}?page=${page}`}
+          totalPages={totalPages}
         />
       </section>
     </DashboardChrome>

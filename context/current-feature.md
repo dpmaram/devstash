@@ -1,35 +1,35 @@
-# Current Feature: Global Search / Command Palette
+# Current Feature: Pagination
 
 ## Status
 
 <!-- Not Started|In Progress|Completed -->
 
-Completed
+In Progress
 
 ## Goals
 
-- Open with Cmd+K (Mac) / Ctrl+K (Windows)
-- Fuzzy search across all items and collections
-- Grouped results: Items section, Collections section
-- Keyboard navigation (arrow keys, Enter to select)
-- Show item type icon and collection item count
-- Navigate to item drawer or collection page on select
-- TopBar search input opens palette on click
-- Show ⌘K hint in search input placeholder
+- Add pagination to `/items/[type]` and `/collections/[id]` pages
+- Render pagination controls at the bottom with numbered page links and prev/next actions
+- Disable prev/next controls when those pages are not available
+- Apply constants: `ITEMS_PER_PAGE = 21`, `COLLECTIONS_PER_PAGE = 21`
+- Keep dashboard limits: `DASHBOARD_COLLECTIONS_LIMIT = 6`, `DASHBOARD_RECENT_ITEMS_LIMIT = 10`
+- Fetch only data needed for the current page (no full-table fetches)
 
 ## Notes
 
-- Use shadcn `cmdk` component (Command)
-- Client-side fuzzy search (no server round-trips)
-- Pre-fetch searchable data on app load
-- Search data: items (id, title, type, content preview), collections (id, name, itemCount)
-- Reuse existing data fetching functions
+- Source spec: `context/features/pagination-spec.md`
+- Pagination applies to type-based item listing and collection detail listing surfaces
+- UX requires explicit previous/next disable states
+- Data layer must paginate at query-time, not in-memory after fetching all rows
 
 ## History
 
 <!-- Keep this updated. Earliest to latest -->
 
 - 2026-05-07 EDT - Loaded Global Search / Command Palette from `context/features/global-search-spec.md` and set status to Not Started.
+- 2026-05-07 EDT - Loaded Pagination from `context/features/pagination-spec.md` and set status to Not Started.
+- 2026-05-07 EDT - Started Pagination on branch `feature/pagination`.
+- 2026-05-07 EDT - Implemented pagination with query-time data fetching for `/items/[type]` and `/collections/[slug]`, added reusable previous/next + numbered page controls, introduced shared pagination/dashboard limit constants, and verified with `npx tsc --noEmit`, `npm run lint`, and `npm test`.
 - 2026-05-07 EDT - Created feature/global-search-command-palette branch and implemented:
   - `src/lib/fuzzy-search.ts` - Generic fuzzy search with smart scoring algorithm
   - `src/lib/db/search.ts` - Server-side search index fetching from database

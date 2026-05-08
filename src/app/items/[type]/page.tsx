@@ -4,12 +4,14 @@ import { auth } from "@/auth";
 import { DashboardChrome } from "@/components/dashboard/DashboardChrome";
 import { ItemCardGrid } from "@/components/dashboard/ItemDrawer";
 import { NewItemDialog } from "@/components/dashboard/NewItemDialog";
+import { PaginationControls } from "@/components/dashboard/PaginationControls";
 import { toCurrentUser } from "@/lib/auth/current-user";
 import { isCreateItemTypeSlug } from "@/lib/create-item-types";
 import { getDashboardCollections } from "@/lib/db/collections";
 import { getDashboardUserForSession } from "@/lib/db/dashboard-user";
 import { getSearchIndexAction } from "@/actions/search";
 import {
+  getDashboardItemCountByTypeSlug,
   getDashboardItemsByTypeSlug,
   getDashboardItemTypes,
   normalizeItemTypeRouteSlug,
@@ -17,6 +19,11 @@ import {
 import { shouldUseFileList } from "@/lib/file-list";
 import { shouldUseImageGallery } from "@/lib/image-gallery";
 import { mockDashboardData } from "@/lib/mock-data";
+import {
+  getTotalPages,
+  ITEMS_PER_PAGE,
+  parsePageNumber,
+} from "@/lib/pagination";
 
 export const dynamic = "force-dynamic";
 
@@ -42,6 +49,7 @@ export default async function ItemsByTypePage({
   const { type } = await params;
   const resolvedSearchParams = await searchParams;
   const initialItemId = getSearchParam(resolvedSearchParams, "itemId") ?? null;
+  const currentPage = parsePageNumber(getSearchParam(resolvedSearchParams, "page"));
   const normalizedTypeSlug = normalizeItemTypeRouteSlug(type);
   const session = await auth();
   const dashboardUser = await getDashboardUserForSession(session?.user);
@@ -59,10 +67,19 @@ export default async function ItemsByTypePage({
     notFound();
   }
 
-  const items = await getDashboardItemsByTypeSlug({
-    typeSlug: itemType.slug,
-    user: dashboardUser,
-  });
+  const [items, totalItemCount] = await Promise.all([
+    getDashboardItemsByTypeSlug({
+      typeSlug: itemType.slug,
+      user: dashboardUser,
+      limit: ITEMS_PER_PAGE,
+      page: currentPage,
+    }),
+    getDashboardItemCountByTypeSlug({
+      typeSlug: itemType.slug,
+      user: dashboardUser,
+    }),
+  ]);
+  const totalPages = getTotalPages(totalItemCount, ITEMS_PER_PAGE);
   const canCreateItemType = isCreateItemTypeSlug(itemType.slug);
 
   return (
@@ -111,6 +128,12 @@ export default async function ItemsByTypePage({
           emptyMessage={`No ${itemType.label.toLowerCase()} saved yet.`}
           initialItemId={initialItemId}
           items={items}
+        />
+
+        <PaginationControls
+          currentPage={Math.min(currentPage, totalPages)}
+          getPageHref={(page) => `/items/${itemType.slug}?page=${page}`}
+          totalPages={totalPages}
         />
       </section>
     </DashboardChrome>

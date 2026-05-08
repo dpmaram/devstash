@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { DASHBOARD_COLLECTIONS_LIMIT } from "@/lib/pagination";
 
 import {
   dashboardCollectionSelect,
@@ -254,7 +255,7 @@ export async function getDashboardCollections(
   const collections = await prisma.collection.findMany({
     where: { userId: user.id },
     orderBy: [{ updatedAt: "desc" }, { name: "asc" }],
-    take: options.limit ?? 6,
+    take: options.limit ?? DASHBOARD_COLLECTIONS_LIMIT,
     select: dashboardCollectionSelect,
   });
   const typeSummariesByCollectionId = await getCollectionTypeSummaries(
