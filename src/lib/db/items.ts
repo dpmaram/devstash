@@ -435,6 +435,14 @@ export async function getDashboardItemCountByCollectionSlug(
   });
 }
 
+export async function getUserItemCount(userId: string) {
+  return prisma.item.count({
+    where: {
+      userId,
+    },
+  });
+}
+
 export async function getDashboardItemTypes(
   options: Pick<DashboardItemsOptions, "user" | "userEmail"> = {},
 ): Promise<DashboardItemType[]> {

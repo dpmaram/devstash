@@ -3,10 +3,13 @@
 import { z } from "zod";
 
 import { auth } from "@/auth";
+import { canCreateItem, canUseUploads } from "@/lib/billing/usage-limits";
+import { getUserBillingState } from "@/lib/db/billing";
 import { getDashboardUserForSession } from "@/lib/db/dashboard-user";
 import {
   createItem as createItemRecord,
   deleteItem as deleteItemRecord,
+  getUserItemCount,
   updateItem as updateItemRecord,
   toggleItemFavorite,
   toggleItemPin,
@@ -143,6 +146,8 @@ type CreateItemActionDeps = {
   } | null>;
   createItem: (input: CreateItemInput) => Promise<ItemDetail | null>;
   getDashboardUserForSession: typeof getDashboardUserForSession;
+  getUserBillingState?: typeof getUserBillingState;
+  getUserItemCount?: typeof getUserItemCount;
 };
 
 type UpdateItemActionDeps = {
@@ -199,6 +204,8 @@ const defaultCreateItemActionDeps: CreateItemActionDeps = {
   auth,
   createItem: createItemRecord,
   getDashboardUserForSession,
+  getUserBillingState,
+  getUserItemCount,
 };
 
 const defaultUpdateItemActionDeps: UpdateItemActionDeps = {
@@ -247,6 +254,43 @@ export async function handleCreateItem(
       success: false,
       error: "Unable to create item.",
     };
+  }
+
+  const billingState = await (deps.getUserBillingState ?? getUserBillingState)(
+    dashboardUser.id,
+  );
+
+  if (!billingState) {
+    return {
+      success: false,
+      error: "Unable to create item.",
+    };
+  }
+
+  const itemCount = await (deps.getUserItemCount ?? getUserItemCount)(
+    dashboardUser.id,
+  );
+  const itemCreationDecision = canCreateItem({
+    planTier: billingState.planTier,
+    currentItemCount: itemCount,
+  });
+
+  if (!itemCreationDecision.allowed) {
+    return {
+      success: false,
+      error: "Free plan limit reached: 50 items. Upgrade to Pro for unlimited items.",
+    };
+  }
+
+  if (isUploadItemTypeSlug(parsedData.data.typeSlug)) {
+    const uploadDecision = canUseUploads(billingState.planTier);
+
+    if (!uploadDecision.allowed) {
+      return {
+        success: false,
+        error: "Uploads are available on Pro plans only.",
+      };
+    }
   }
 
   if (

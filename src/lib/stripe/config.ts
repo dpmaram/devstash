@@ -12,6 +12,8 @@ export type StripePriceConfig = {
   proAnnualPriceId: string;
 };
 
+export type StripeBillingCycle = "monthly" | "annual";
+
 export function getRequiredStripeEnvVar(
   name: StripeRequiredEnvVar,
   env: NodeJS.ProcessEnv = process.env,
@@ -43,6 +45,26 @@ export function getStripePriceConfig(
     proMonthlyPriceId: getRequiredStripeEnvVar("STRIPE_PRICE_PRO_MONTHLY", env),
     proAnnualPriceId: getRequiredStripeEnvVar("STRIPE_PRICE_PRO_ANNUAL", env),
   };
+}
+
+export function getStripePriceIdForCycle(
+  billingCycle: StripeBillingCycle,
+  env: NodeJS.ProcessEnv = process.env,
+) {
+  const priceConfig = getStripePriceConfig(env);
+
+  return billingCycle === "annual"
+    ? priceConfig.proAnnualPriceId
+    : priceConfig.proMonthlyPriceId;
+}
+
+export function getAppBaseUrl(env: NodeJS.ProcessEnv = process.env) {
+  return (
+    env.APP_URL ??
+    env.NEXTAUTH_URL ??
+    env.NEXT_PUBLIC_APP_URL ??
+    "http://localhost:3000"
+  );
 }
 
 export function getStripeWebhookSecret(env: NodeJS.ProcessEnv = process.env) {

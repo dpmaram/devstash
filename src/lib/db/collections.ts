@@ -291,6 +291,14 @@ export async function getDashboardCollectionCount(
   });
 }
 
+export async function getUserCollectionCount(userId: string) {
+  return prisma.collection.count({
+    where: {
+      userId,
+    },
+  });
+}
+
 export async function getDashboardCollectionBySlug(
   options: DashboardCollectionBySlugOptions,
 ) {

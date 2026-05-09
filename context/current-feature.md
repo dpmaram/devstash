@@ -1,12 +1,18 @@
-# Current Feature
+# Current Feature: Stripe Integration - Phase 2 (Integration and UI)
 
 ## Status
 
 <!-- Not Started|In Progress|Completed -->
 
-Not Started
+In Progress
 
 ## Goals
+
+- Implement Stripe checkout and billing portal authenticated API routes.
+- Implement Stripe webhook handling with signature verification for subscription lifecycle events.
+- Enforce server-side feature gates for item creation, collection creation, and uploads.
+- Add settings billing UI and wire homepage pricing CTAs to checkout flows.
+- Document Stripe setup and local Stripe CLI webhook verification workflow.
 
 <!-- Add goals for the active feature here -->
 
@@ -16,11 +22,21 @@ Not Started
 
 <!-- Add notes or constraints for the active feature here -->
 
+- Spec source: `context/features/stripe-integration-phase-2-spec.md`.
+- Prerequisite: Phase 1 core infrastructure must be in place.
+- Required webhook events: `checkout.session.completed`, `customer.subscription.updated`, `customer.subscription.deleted`.
+- Keep all Stripe API handlers under Node.js runtime and preserve `route.ts` delegator + `route-handler.ts` logic split.
+- Gates must be enforced server-side; UI checks alone are not sufficient.
+
 
 
 ## History
 
 <!-- Keep this updated. Earliest to latest -->
+
+- 2026-05-09 EDT - Implemented Stripe Integration - Phase 2 (Integration and UI) on branch `feature/stripe-integration-phase-2-integration-ui`: added Stripe checkout, portal, and webhook API routes with Node runtime and route-handler delegation; wired webhook signature verification and subscription lifecycle updates; enforced server-side plan gates for item creation, collection creation, and uploads; added Settings billing panel with checkout/portal actions; wired homepage pricing checkout CTA for monthly/annual cycles; added Stripe route and gating tests; and documented Stripe env + CLI webhook workflow in README. Verified with `npm test`, `npm run lint`, and `npx tsc --noEmit`.
+- 2026-05-09 EDT - Started Stripe Integration - Phase 2 (Integration and UI) on branch `feature/stripe-integration-phase-2-integration-ui`.
+- 2026-05-09 EDT - Loaded Stripe Integration - Phase 2 (Integration and UI) spec from `context/features/stripe-integration-phase-2-spec.md` and set status to Not Started.
 
 - 2026-05-09 EDT - Started Stripe Integration - Phase 1 (Core Infrastructure) on branch `feature/stripe-integration-phase-1-core-infrastructure`.
 - 2026-05-09 EDT - Implemented Auth and Dashboard Nav Branding Alignment on branch `feature/auth-dashboard-nav-branding-alignment`: added homepage-style top navigation to sign-in and register via `AuthShell`, replaced dashboard sidebar boxed `DS` branding with the homepage-style folder icon mark, and aligned homepage logo marks to the same folder icon style for consistency. Verified with `npx tsc --noEmit` and `npm run lint`.

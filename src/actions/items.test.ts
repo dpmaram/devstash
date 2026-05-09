@@ -35,6 +35,17 @@ const itemDetail: ItemDetail = {
   accentColor: "#3b82f6",
 };
 
+const proBillingDeps = {
+  getUserBillingState: async () => ({
+    id: "user_123",
+    planTier: "PRO" as const,
+    isPro: true,
+    stripeCustomerId: "cus_123",
+    stripeSubscriptionId: "sub_123",
+  }),
+  getUserItemCount: async () => 0,
+};
+
 describe("createItem action", () => {
   it("rejects invalid payloads before auth or database writes", async () => {
     const { handleCreateItem } = await import("./items");
@@ -105,6 +116,7 @@ describe("createItem action", () => {
         tags: ["react", "hooks"],
       },
       {
+        ...proBillingDeps,
         auth: async () => ({
           user: {
             id: "signed_in_user",
@@ -153,6 +165,7 @@ describe("createItem action", () => {
         collectionIds: [" collection_alpha ", "collection_alpha", "collection_beta"],
       },
       {
+        ...proBillingDeps,
         auth: async () => ({
           user: {
             id: "user_123",
@@ -220,6 +233,7 @@ describe("createItem action", () => {
         tags: ["architecture"],
       },
       {
+        ...proBillingDeps,
         auth: async () => ({
           user: {
             id: "signed_in_user",
@@ -268,6 +282,7 @@ describe("createItem action", () => {
         tags: ["architecture"],
       },
       {
+        ...proBillingDeps,
         auth: async () => ({
           user: {
             id: "user_123",
@@ -326,6 +341,7 @@ describe("createItem action", () => {
         tags: ["prompting"],
       },
       {
+        ...proBillingDeps,
         auth: async () => ({
           user: {
             id: "user_123",
@@ -341,6 +357,44 @@ describe("createItem action", () => {
     assert.deepEqual(result, {
       success: false,
       error: "Unable to create item.",
+    });
+  });
+
+  it("blocks creation when the free plan item limit is reached", async () => {
+    const { handleCreateItem } = await import("./items");
+
+    const result = await handleCreateItem(
+      {
+        typeSlug: "note",
+        title: "Overflow note",
+        content: "one more item",
+      },
+      {
+        auth: async () => ({
+          user: {
+            id: "user_123",
+          },
+        }),
+        getUserBillingState: async () => ({
+          id: "user_123",
+          planTier: "FREE",
+          isPro: false,
+          stripeCustomerId: null,
+          stripeSubscriptionId: null,
+        }),
+        getUserItemCount: async () => 50,
+        createItem: async () => {
+          throw new Error("createItem should not be called");
+        },
+        getDashboardUserForSession: async () => ({
+          id: "user_123",
+        }),
+      },
+    );
+
+    assert.deepEqual(result, {
+      success: false,
+      error: "Free plan limit reached: 50 items. Upgrade to Pro for unlimited items.",
     });
   });
 });
