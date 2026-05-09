@@ -2,7 +2,6 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { auth } from "@/auth";
-import { InlineUpgradeCta } from "@/components/billing/InlineUpgradeCta";
 import { DashboardChrome } from "@/components/dashboard/DashboardChrome";
 import { ItemCardGrid } from "@/components/dashboard/ItemDrawer";
 import { NewItemDialog } from "@/components/dashboard/NewItemDialog";
@@ -98,10 +97,12 @@ export default async function ItemsByTypePage({
               unlock uploads, secure file access, and media organization.
             </p>
             <div className="mt-6 flex flex-wrap gap-3">
-              <InlineUpgradeCta
-                cancelPath={itemType.href}
-                contextLabel={itemType.label}
-              />
+              <Link
+                className={buttonVariants({ size: "lg" })}
+                href="/upgrade"
+              >
+                View Pricing & Upgrade
+              </Link>
               <Link
                 className={buttonVariants({ size: "lg", variant: "outline" })}
                 href="/dashboard"
