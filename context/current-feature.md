@@ -1,28 +1,22 @@
-# Current Feature: Auth and Dashboard Nav Branding Alignment
+# Current Feature
 
 ## Status
 
 <!-- Not Started|In Progress|Completed -->
 
-In Progress
+Not Started
 
 ## Goals
 
 <!-- Add goals for the active feature here -->
 
-- Add the homepage top navigation pattern to the sign-in page.
-- Add the homepage top navigation pattern to the sign-up/register page.
-- Update dashboard navigation branding to use the same homepage logo icon style.
-- Remove the boxed "DS" mark from dashboard nav branding and replace it with the homepage folder-style icon.
-- Keep navigation links and auth flows functional after UI updates.
+
 
 ## Notes
 
 <!-- Add notes or constraints for the active feature here -->
 
-- Loaded from inline request via feature workflow `load` action.
-- Request details: "add the homepage top nav to the sign in and sign up pages. Then add the same folder icon that the homepage nav has for the logo to the dashboard nav, delete the box with the DS".
-- Scope is UI/layout branding updates only; no auth behavior change requested.
+
 
 ## History
 
@@ -205,3 +199,5 @@ In Progress
 - 2026-05-07 EDT - Loaded Collection Detail Actions from inline user request. Feature adds edit modal, delete with confirmation, and favorite placeholder button to `/collections/[slug]`. Items are preserved on collection delete.
 - 2026-05-07 EDT - Completed Pagination on branch `feature/pagination` with query-time pagination for `/items/[type]` and `/collections/[slug]`, shared page-size/dashboard constants, reusable numbered page controls with disabled previous/next states, and verification via TypeScript, lint, tests, and production build.
 - 2026-05-08 EDT - Completed Editor Preferences Settings on branch `feature/editor-preferences-settings` with Prisma schema update (`editorPreferences Json?`), migration `20260508123422_add_editor_preferences`, server actions `updateEditorPreferences()` and `getEditorPreferences()`, utility file with Zod schema and defaults, `EditorPreferencesPanel` component with font size (12-28px), tab size (2/4/8), theme dropdown (vs-dark/monokai/github-dark), word wrap toggle, minimap toggle, auto-save with success/error toasts, `EditorPreferencesContext` provider for distributing preferences, CodeEditor component wired to load and apply preferences on mount, settings page integration, 18 new unit tests covering schema validation and defaults (252 total tests passing), all TypeScript/lint/production build verified.
+
+- 2026-05-09 EDT - Completed Auth and Dashboard Nav Branding Alignment, merged branch `feature/auth-dashboard-nav-branding-alignment` into `main`, removed the local feature branch, added homepage-style top nav to sign-in and register, replaced dashboard boxed DS branding with a folder icon mark, and verified with `npm test`, `npx tsc --noEmit`, and `npm run lint`.
