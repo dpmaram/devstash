@@ -1,7 +1,11 @@
 import assert from "node:assert/strict";
 import { describe, it } from "vitest";
 
-import { attachSessionUserId, resolveAuthRedirect } from "./session";
+import {
+  attachSessionUserId,
+  resolveAuthRedirect,
+  syncTokenBillingState,
+} from "./session";
 
 describe("attachSessionUserId", () => {
   it("copies the JWT subject onto session.user.id", () => {
@@ -16,11 +20,15 @@ describe("attachSessionUserId", () => {
       },
       token: {
         sub: "user_123",
+        planTier: "PRO",
+        isPro: true,
       },
     });
 
     assert.ok(session.user);
     assert.equal(session.user.id, "user_123");
+    assert.equal(session.user.planTier, "PRO");
+    assert.equal(session.user.isPro, true);
   });
 
   it("leaves the session unchanged when no user or subject is present", () => {
@@ -35,6 +43,48 @@ describe("attachSessionUserId", () => {
         token: {},
       }),
       session,
+    );
+  });
+});
+
+describe("syncTokenBillingState", () => {
+  it("updates JWT billing values from the data layer", async () => {
+    const token = await syncTokenBillingState({
+      token: {
+        sub: "user_123",
+      },
+      getUserBillingStateById: async () => ({
+        planTier: "PRO",
+        isPro: true,
+      }),
+    });
+
+    assert.equal(token.planTier, "PRO");
+    assert.equal(token.isPro, true);
+  });
+
+  it("falls back to Free billing values when the user is missing", async () => {
+    const token = await syncTokenBillingState({
+      token: {
+        sub: "missing_user",
+      },
+      getUserBillingStateById: async () => null,
+    });
+
+    assert.equal(token.planTier, "FREE");
+    assert.equal(token.isPro, false);
+  });
+
+  it("leaves JWT unchanged when there is no subject", async () => {
+    const token = {
+      email: "ada@example.com",
+    };
+
+    assert.equal(
+      await syncTokenBillingState({
+        token,
+      }),
+      token,
     );
   });
 });
