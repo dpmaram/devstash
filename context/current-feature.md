@@ -1,4 +1,4 @@
-# Current Feature: Pinned Items
+# Current Feature: DevStash Homepage Mockup
 
 ## Status
 
@@ -10,31 +10,41 @@ Completed
 
 <!-- Add goals for the active feature here -->
 
-- Create `toggleItemPin` server action with auth validation and ownership verification
-- Make Pin button in ItemDrawer clickable and functional
-- Implement optimistic UI updates for instant feedback when pinning/unpinning
-- Show toast notifications on success/error
-- Ensure pinned items sort to top of listings
-- Follow the same pattern as the Favorite Button implementation
-- Support pinned items only (not collections)
-- Keep pin icon on ItemCard as a static indicator (no toggle)
+- Create a marketing homepage prototype for DevStash in `prototypes/homepage/`
+- Add output files: `index.html`, `styles.css`, and `script.js`
+- Implement dark theme design with item-type accent colors (snippet, prompt, command, note, file, image, URL)
+- Build hero with chaos-to-order visual: animated chaos container, center transform arrow, and dashboard preview
+- Add fixed top navigation with links and Sign In / Get Started actions
+- Add hero text with gradient headline, supporting copy, and CTA buttons
+- Build feature grid section with 6 cards and accent-color treatment
+- Build AI section with Pro badge, checklist, and code editor mockup with AI generated tags demo
+- Build pricing section with Free vs Pro plans, Most Popular badge, and yearly pricing toggle
+- Add CTA section and footer with logo, links, and current year
+- Implement animations: requestAnimationFrame chaos motion, arrow pulse, scroll reveal, and navbar opacity on scroll
+- Ensure full responsive behavior with mobile stacking and rotated arrow
 
 ## Notes
 
 <!-- Add notes or constraints for the active feature here -->
 
-- ItemDrawer component is in `src/components/dashboard/` with existing (non-functional) Pin button
-- Pin button should behave like the Favorite Button: optimistic UI, server action call, error reversion
-- Need to verify if `isPinned` field exists on Item model in Prisma schema
-- Pinned items appear in the "Pinned" section on dashboard (PinnedItemCard component)
-- Should follow database ownership patterns (userId checks)
-- Items only - collections do not have a pin feature
-- Toast notifications for user feedback (success/error states)
+- Spec source: `context/features/homepage-mockup-spec.md`
+- Output is a standalone prototype and should not alter existing app routes/components
+- Hero visual has 3 core elements side by side on desktop: chaos container, arrow, dashboard preview
+- Chaos icons should include developer-tool references (Notion, GitHub, Slack, VS Code, tabs, terminal, text file, bookmark)
+- Chaos animation requires random drift, wall bounce, subtle rotate/scale pulse, and mouse-repel interaction
+- On mobile, hero visual stacks vertically and arrow rotates 90 degrees to point downward
+- Navbar should become more opaque as the page scrolls
+- Scroll-based reveal animation should be applied to major sections
 
 ## History
 
 <!-- Keep this updated. Earliest to latest -->
 
+- 2026-05-09 EDT - Completed DevStash Homepage Mockup, merged branch `feature/homepage-mockup` into `main`, and published static prototype files to `public/` so `http://localhost:3000/index.html` loads correctly during local dev.
+- 2026-05-09 EDT - Tested DevStash Homepage Mockup implementation: validated `prototypes/homepage/script.js` syntax with `node --check`, ran `npx tsc --noEmit` (clean), `npm run lint` (clean), and `npm test` (252/252 passing).
+- 2026-05-09 EDT - Implemented DevStash Homepage Mockup prototype on branch `feature/homepage-mockup` in `prototypes/homepage/` with standalone `index.html`, `styles.css`, and `script.js`. Added fixed nav, hero copy and CTAs, chaos-to-order visual (animated chaos container, pulsing transform arrow, dashboard preview), features grid, AI section, pricing cards with monthly/yearly toggle (`$8/mo` and `$72/yr`), CTA section, and footer with current year. Implemented requestAnimationFrame chaos motion with wall bounce and mouse-repel behavior, scroll reveal animation, and navbar opacity-on-scroll behavior. Added responsive layout for mobile including stacked hero visual and rotated arrow.
+- 2026-05-09 EDT - Started DevStash Homepage Mockup on branch `feature/homepage-mockup`.
+- 2026-05-09 EDT - Loaded DevStash Homepage Mockup spec from `context/features/homepage-mockup-spec.md` and set status to Not Started.
 - 2026-05-09 EDT - Completed Pinned Items, merged branch `feature/pinned-items` into `main`, deleted local feature branch, and left the Pin icon on ItemCards as a static indicator while enabling Pin toggle only in ItemDrawer.
 - 2026-05-08 EDT - Implemented Pinned Items on branch `feature/pinned-items` with: database helper `toggleItemPin()` in `src/lib/db/items.ts` (ownership-validated `isPinned` toggle), server action `toggleItemPinAction()` in `src/actions/items.ts` following existing auth/validation response patterns, ItemDrawer Pin action wired with optimistic UI and revert-on-failure, loading state while pin toggle is in flight, success/error toast notifications for pin/unpin outcomes, and `router.refresh()` after successful pin updates. Updated dashboard item listing queries (`getDashboardRecentItems`, `getDashboardItemsByTypeSlug`, `getDashboardItemsByCollectionSlug`) to sort pinned items first via `orderBy: [{ isPinned: "desc" }, { updatedAt: "desc" }, { title: "asc" }]`. Verified: TypeScript clean, ESLint clean, all 252 tests passing.
 - 2026-05-08 EDT - Started Pinned Items on branch `feature/pinned-items`.
