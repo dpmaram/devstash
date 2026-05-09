@@ -317,7 +317,7 @@ export async function getDashboardRecentItems(
 
   const items = await prisma.item.findMany({
     where: { userId: user.id },
-    orderBy: [{ updatedAt: "desc" }, { title: "asc" }],
+    orderBy: [{ isPinned: "desc" }, { updatedAt: "desc" }, { title: "asc" }],
     take: options.limit ?? DASHBOARD_RECENT_ITEMS_LIMIT,
     select: dashboardItemListSelect,
   });
@@ -344,7 +344,7 @@ export async function getDashboardItemsByTypeSlug(
         slug: normalizeItemTypeRouteSlug(options.typeSlug),
       },
     },
-    orderBy: [{ updatedAt: "desc" }, { title: "asc" }],
+    orderBy: [{ isPinned: "desc" }, { updatedAt: "desc" }, { title: "asc" }],
     skip: getPaginationOffset(page, take),
     take,
     select: dashboardItemListSelect,
@@ -397,7 +397,7 @@ export async function getDashboardItemsByCollectionSlug(
         },
       },
     },
-    orderBy: [{ updatedAt: "desc" }, { title: "asc" }],
+    orderBy: [{ isPinned: "desc" }, { updatedAt: "desc" }, { title: "asc" }],
     skip: getPaginationOffset(page, take),
     take,
     select: dashboardItemListSelect,
@@ -968,6 +968,27 @@ export async function toggleItemFavorite(
   await prisma.item.update({
     where: { id: itemId },
     data: { isFavorite: !item.isFavorite },
+  });
+
+  return true;
+}
+
+export async function toggleItemPin(
+  itemId: string,
+  userId: string,
+): Promise<boolean> {
+  const item = await prisma.item.findUnique({
+    where: { id: itemId },
+    select: { userId: true, isPinned: true },
+  });
+
+  if (!item || item.userId !== userId) {
+    return false;
+  }
+
+  await prisma.item.update({
+    where: { id: itemId },
+    data: { isPinned: !item.isPinned },
   });
 
   return true;

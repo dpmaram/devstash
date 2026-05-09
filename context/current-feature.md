@@ -1,42 +1,43 @@
-# Current Feature: Add Client-Side Sorting to Favorites Page
+# Current Feature: Pinned Items
 
 ## Status
 
 <!-- Not Started|In Progress|Completed -->
 
-Completed
+In Progress
 
 ## Goals
 
 <!-- Add goals for the active feature here -->
 
-- Implement client-side sorting on the favorites page with three sort options: name, date, and item type
-- Add sort controls to FavoritesListView component (likely a dropdown or button group)
-- Support sorting by item name (A-Z, Z-A)
-- Support sorting by date (newest first, oldest first)
-- Support sorting by item type (alphabetical)
-- Persist user's sort preference in local state or localStorage for consistency across sessions
-- Maintain responsive design on mobile and desktop
-- Show current sort option in the UI
-- All sort operations should be instant (client-side only, no server call)
-- Ensure sort order is applied consistently across both items and collections sections
+- Create `toggleItemPin` server action with auth validation and ownership verification
+- Make Pin button in ItemDrawer clickable and functional
+- Implement optimistic UI updates for instant feedback when pinning/unpinning
+- Show toast notifications on success/error
+- Ensure pinned items sort to top of listings
+- Follow the same pattern as the Favorite Button implementation
+- Support pinned items only (not collections)
+- Keep pin icon on ItemCard as a static indicator (no toggle)
 
 ## Notes
 
 <!-- Add notes or constraints for the active feature here -->
 
-- FavoritesListView component is located in src/components/dashboard/ and displays items and collections
-- Data is already queried server-side and passed to client component
-- Consider storing sort preference in localStorage so it persists across page reloads
-- Items and collections should be sortable independently or together depending on design
-- Icon suggestions: use lucide-react chevron or arrow icons for sort direction indicators
-- May need to extract sortable data fields from ItemDetail and CollectionDetail types
-- No database changes needed - all sorting is client-side
+- ItemDrawer component is in `src/components/dashboard/` with existing (non-functional) Pin button
+- Pin button should behave like the Favorite Button: optimistic UI, server action call, error reversion
+- Need to verify if `isPinned` field exists on Item model in Prisma schema
+- Pinned items appear in the "Pinned" section on dashboard (PinnedItemCard component)
+- Should follow database ownership patterns (userId checks)
+- Items only - collections do not have a pin feature
+- Toast notifications for user feedback (success/error states)
 
 ## History
 
 <!-- Keep this updated. Earliest to latest -->
 
+- 2026-05-08 EDT - Implemented Pinned Items on branch `feature/pinned-items` with: database helper `toggleItemPin()` in `src/lib/db/items.ts` (ownership-validated `isPinned` toggle), server action `toggleItemPinAction()` in `src/actions/items.ts` following existing auth/validation response patterns, ItemDrawer Pin action wired with optimistic UI and revert-on-failure, loading state while pin toggle is in flight, success/error toast notifications for pin/unpin outcomes, and `router.refresh()` after successful pin updates. Updated dashboard item listing queries (`getDashboardRecentItems`, `getDashboardItemsByTypeSlug`, `getDashboardItemsByCollectionSlug`) to sort pinned items first via `orderBy: [{ isPinned: "desc" }, { updatedAt: "desc" }, { title: "asc" }]`. Verified: TypeScript clean, ESLint clean, all 252 tests passing.
+- 2026-05-08 EDT - Started Pinned Items on branch `feature/pinned-items`.
+- 2026-05-08 EDT - Loaded Pinned Items from `context/features/pinned-spec.md` and set status to Not Started.
 - 2026-05-08 EDT - Completed Add Client-Side Sorting to Favorites Page on branch `feature/favorites-sorting` with: SortType union ("name", "date", "type"), SortDirection type ("asc", "desc"), SortPreference type combining both, sort utility functions for items and collections, localStorage persistence with getSortPreference/setSortPreference functions, state management with lazy useState initializer, UI controls as button group with sort type selection and direction toggle, ArrowUpDown icon rotation for direction indicator, handleSortChange function with optimistic state update and persistence, consistent sorting applied to both items and collections sections. Verified: TypeScript clean, ESLint clean, all 252 tests passing. Ready for merge.
 - 2026-05-08 EDT - Started Add Client-Side Sorting to Favorites Page on branch `feature/favorites-sorting`.
 - 2026-05-08 EDT - Loaded Add Client-Side Sorting to Favorites Page feature from inline description and set status to Not Started.

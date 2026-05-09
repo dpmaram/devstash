@@ -27,6 +27,7 @@ import {
   deleteItem as deleteItemAction,
   updateItem as updateItemAction,
   toggleItemFavoriteAction,
+  toggleItemPinAction,
 } from "@/actions/items";
 import { CollectionPicker } from "@/components/dashboard/CollectionPicker";
 import { CodeEditor } from "@/components/dashboard/CodeEditor";
@@ -557,6 +558,51 @@ function ItemDetailSheet({
                   });
                 }
               }}
+              onTogglePin={async () => {
+                if (!state.item) return;
+                
+                const previousPinned = state.item.isPinned;
+                const nextPinned = !state.item.isPinned;
+                
+                // Optimistic UI update
+                replaceItem({
+                  ...state.item,
+                  isPinned: nextPinned,
+                });
+                
+                // Call server action
+                try {
+                  const result = await toggleItemPinAction(state.item.id);
+
+                  if (!result.success) {
+                    // Revert on failure
+                    replaceItem({
+                      ...state.item,
+                      isPinned: previousPinned,
+                    });
+                    setToast({
+                      message: result.error ?? "Unable to update pinned status.",
+                      tone: "error",
+                    });
+                    return;
+                  }
+
+                  setToast({
+                    message: nextPinned ? "Item pinned." : "Item unpinned.",
+                    tone: "success",
+                  });
+                  router.refresh();
+                } catch {
+                  replaceItem({
+                    ...state.item,
+                    isPinned: previousPinned,
+                  });
+                  setToast({
+                    message: "Unable to update pinned status. Try again.",
+                    tone: "error",
+                  });
+                }
+              }}
             />
           )}
 
@@ -595,13 +641,16 @@ function ItemActionBar({
   onDelete,
   onEdit,
   onToggleFavorite,
+  onTogglePin,
 }: {
   item: ItemDetail | null;
   onDelete: () => void;
   onEdit: () => void;
   onToggleFavorite?: () => void | Promise<void>;
+  onTogglePin?: () => void | Promise<void>;
 }) {
   const [isTogglingFavorite, setIsTogglingFavorite] = useState(false);
+  const [isTogglingPin, setIsTogglingPin] = useState(false);
 
   async function handleToggleFavorite() {
     setIsTogglingFavorite(true);
@@ -609,6 +658,15 @@ function ItemActionBar({
       await onToggleFavorite?.();
     } finally {
       setIsTogglingFavorite(false);
+    }
+  }
+
+  async function handleTogglePin() {
+    setIsTogglingPin(true);
+    try {
+      await onTogglePin?.();
+    } finally {
+      setIsTogglingPin(false);
     }
   }
 
@@ -648,9 +706,16 @@ function ItemActionBar({
       />
       <ActionButton
         active={item?.isPinned}
-        disabled={!item}
-        icon={<Pin className="size-5" />}
+        disabled={!item || isTogglingPin}
+        icon={
+          isTogglingPin ? (
+            <LoaderCircle aria-hidden="true" className="size-5 animate-spin" />
+          ) : (
+            <Pin className="size-5" />
+          )
+        }
         label="Pin"
+        onClick={handleTogglePin}
       />
       <ActionButton
         disabled={!item}
