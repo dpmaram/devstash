@@ -4,7 +4,7 @@
 
 <!-- Not Started|In Progress|Completed -->
 
-In Progress
+Completed
 
 ## Goals
 
@@ -35,6 +35,7 @@ In Progress
 
 <!-- Keep this updated. Earliest to latest -->
 
+- 2026-05-09 EDT - Completed Pinned Items, merged branch `feature/pinned-items` into `main`, deleted local feature branch, and left the Pin icon on ItemCards as a static indicator while enabling Pin toggle only in ItemDrawer.
 - 2026-05-08 EDT - Implemented Pinned Items on branch `feature/pinned-items` with: database helper `toggleItemPin()` in `src/lib/db/items.ts` (ownership-validated `isPinned` toggle), server action `toggleItemPinAction()` in `src/actions/items.ts` following existing auth/validation response patterns, ItemDrawer Pin action wired with optimistic UI and revert-on-failure, loading state while pin toggle is in flight, success/error toast notifications for pin/unpin outcomes, and `router.refresh()` after successful pin updates. Updated dashboard item listing queries (`getDashboardRecentItems`, `getDashboardItemsByTypeSlug`, `getDashboardItemsByCollectionSlug`) to sort pinned items first via `orderBy: [{ isPinned: "desc" }, { updatedAt: "desc" }, { title: "asc" }]`. Verified: TypeScript clean, ESLint clean, all 252 tests passing.
 - 2026-05-08 EDT - Started Pinned Items on branch `feature/pinned-items`.
 - 2026-05-08 EDT - Loaded Pinned Items from `context/features/pinned-spec.md` and set status to Not Started.
