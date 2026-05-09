@@ -6,6 +6,11 @@ import authConfig from "@/auth.config";
 const { auth } = NextAuth(authConfig);
 
 export const proxy = auth((request) => {
+  // Allow public access to upgrade page
+  if (request.nextUrl.pathname.startsWith("/upgrade")) {
+    return NextResponse.next();
+  }
+
   if (request.auth) {
     return NextResponse.next();
   }
