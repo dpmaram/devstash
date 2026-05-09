@@ -80,6 +80,7 @@ export function DashboardChrome({
         <div className="min-w-0 flex-1">
           <TopBar
             collections={collections}
+            currentUser={currentUser}
             newItemInitialTypeSlug={newItemInitialTypeSlug}
             itemTypes={itemTypes}
             onOpenMobileSidebar={() => setIsMobileSidebarOpen(true)}
@@ -94,12 +95,14 @@ export function DashboardChrome({
 
 function TopBar({
   collections,
+  currentUser,
   itemTypes,
   newItemInitialTypeSlug,
   onOpenMobileSidebar,
   onOpenSearch,
 }: {
   collections: DashboardCollection[];
+  currentUser: CurrentUser;
   itemTypes: DashboardItemType[];
   newItemInitialTypeSlug?: string | null;
   onOpenMobileSidebar: () => void;
@@ -137,6 +140,13 @@ function TopBar({
       </button>
 
       <div className="flex shrink-0 items-center gap-2">
+        {currentUser.planTier === "free" && (
+          <Link href="/upgrade" className="hidden sm:flex">
+            <Button variant="ghost" className="text-muted-foreground hover:text-foreground">
+              Upgrade
+            </Button>
+          </Link>
+        )}
         <Link
           href="/favorites"
           className="flex h-11 w-11 items-center justify-center rounded-lg border border-devstash-line bg-white/[0.04] text-muted-foreground transition hover:bg-white/[0.08] hover:text-red-400"
