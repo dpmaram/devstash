@@ -1,45 +1,36 @@
-# Current Feature: Homepage (App Implementation)
+# Current Activity: UI Reviewer Agent
 
 ## Status
 
 <!-- Not Started|In Progress|Completed -->
 
-Completed
+In Progress
 
 ## Goals
 
 <!-- Add goals for the active feature here -->
 
-- Implement the real app homepage at `/` using the prototype as source
-- Use server components by default and client components only for interactive features
-- Use Tailwind and shadcn/ui patterns consistent with the existing codebase
-- Keep implementation clean and DRY with reusable homepage sections and shared data structures
-- Preserve mockup visual hierarchy, dark theme, and item-type accent colors
-- Implement interactive behavior: chaos animation, pricing toggle, scroll reveal, nav scroll state
-- Ensure all homepage links and buttons route to correct app destinations
-- Ensure responsive layout behavior matches the mockup intent
-- Verify lint, typecheck, and tests pass after implementation
+- Review UI pages for visual issues (alignment, spacing, contrast, hierarchy)
+- Validate responsiveness at 375px, 768px, and 1280px
+- Evaluate accessibility basics: alt text, hit target sizes, visible focus states, and non-color indicators
+- Evaluate marketing quality: above-the-fold value proposition clarity, CTA prominence, social proof, and hierarchy
+- Use Playwright-based page inspection and provide concise numbered issues to fix
 
 ## Notes
 
 <!-- Add notes or constraints for the active feature here -->
 
-- Spec source: `context/features/homepage-spec.md`
-- Source prototype: `prototypes/homepage/index.html`, `prototypes/homepage/styles.css`, `prototypes/homepage/script.js`
-- Keep `src/app/page.tsx` as server component and move interactivity to focused client components
-- Interactive candidates: `ChaosAnimation`, `PricingToggle`, `ScrollReveal`, optional `NavScrollState`
-- Required route targets:
-	- Logo -> `/`
-	- Features -> `/#features`
-	- Pricing -> `/#pricing`
-	- Sign In -> `/sign-in`
-	- Primary CTAs -> `/register`
-- Avoid final duplication via static `public/index.html` as app homepage implementation source
+- Agent source: `.github/agents/ui-reviewer.md`
+- Reviewer mode expects Playwright-based visual validation and concise issue output
+- Primary checks: visual quality, responsiveness, accessibility, and marketing effectiveness
+- Keep findings actionable and grouped by issue severity/impact
 
 ## History
 
 <!-- Keep this updated. Earliest to latest -->
 
+- 2026-05-09 EDT - Started UI Reviewer agent workflow on branch `feature/ui-reviewer`.
+- 2026-05-09 EDT - Loaded UI Reviewer agent from `.github/agents/ui-reviewer.md` and set status to Not Started.
 - 2026-05-09 EDT - Completed Homepage (App Implementation), merged branch `feature/homepage-app-implementation` into `main`, and delivered the production app homepage at `/` with server-first sections plus focused client interactivity components.
 - 2026-05-09 EDT - Implemented Homepage (App Implementation) on branch `feature/homepage-app-implementation`: replaced `src/app/page.tsx` with a server-rendered marketing homepage shell using reusable sections, created focused client components `ChaosAnimation`, `PricingToggle`, `Reveal`, and `NavScrollState` under `src/components/homepage/`, preserved mockup structure and accent colors, wired required routes (`/`, `/#features`, `/#pricing`, `/sign-in`, `/register`), and kept interactivity isolated to client components only. Verified: TypeScript clean, ESLint clean, tests passing (252/252).
 - 2026-05-09 EDT - Started Homepage (App Implementation) on branch `feature/homepage-app-implementation`.
