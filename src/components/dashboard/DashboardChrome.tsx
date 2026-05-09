@@ -141,10 +141,11 @@ function TopBar({
 
       <div className="flex shrink-0 items-center gap-1 sm:gap-2">
         {currentUser.planTier === "free" && (
-          <Link href="/upgrade">
-            <Button variant="ghost" className="text-muted-foreground hover:text-foreground">
-              Upgrade
-            </Button>
+          <Link 
+            href="/upgrade"
+            className="rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition hover:bg-white/[0.06] hover:text-foreground"
+          >
+            Upgrade
           </Link>
         )}
         <Link

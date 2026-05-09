@@ -18,6 +18,7 @@ export const proxy = auth((request) => {
 
 export const config = {
   matcher: [
+    "/upgrade/:path*",
     "/dashboard/:path*",
     "/collections/:path*",
     "/items/:path*",
