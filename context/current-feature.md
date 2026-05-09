@@ -1,12 +1,18 @@
-# Current Feature
+# Current Feature: Stripe Integration - Phase 1 (Core Infrastructure)
 
 ## Status
 
 <!-- Not Started|In Progress|Completed -->
 
-Not Started
+In Progress
 
 ## Goals
+
+- Build Stripe core infrastructure (config, server client, billing data layer).
+- Add a reusable usage-limits module for Free vs Pro decisions.
+- Implement auth session sync for `isPro` and `planTier`.
+- Add and pass unit tests for the usage-limits module.
+- Keep checkout, webhooks, feature-gating enforcement, and billing UI out of Phase 1.
 
 <!-- Add goals for the active feature here -->
 
@@ -17,12 +23,19 @@ Not Started
 <!-- Add notes or constraints for the active feature here -->
 
 
+- Spec source: `context/features/stripe-integration-phase-1-spec.md`.
+- Reference plan: `docs/stripe-integration-plan.md`.
+- Phase 1 is infrastructure-only and should not introduce end-user billing flows.
+- Unit tests are required for `src/lib/billing/usage-limits.ts` in this phase.
+
 
 ## History
 
 <!-- Keep this updated. Earliest to latest -->
 
+- 2026-05-09 EDT - Started Stripe Integration - Phase 1 (Core Infrastructure) on branch `feature/stripe-integration-phase-1-core-infrastructure`.
 - 2026-05-09 EDT - Implemented Auth and Dashboard Nav Branding Alignment on branch `feature/auth-dashboard-nav-branding-alignment`: added homepage-style top navigation to sign-in and register via `AuthShell`, replaced dashboard sidebar boxed `DS` branding with the homepage-style folder icon mark, and aligned homepage logo marks to the same folder icon style for consistency. Verified with `npx tsc --noEmit` and `npm run lint`.
+- 2026-05-09 EDT - Loaded Stripe Integration - Phase 1 (Core Infrastructure) spec from `context/features/stripe-integration-phase-1-spec.md` and set status to Not Started.
 - 2026-05-09 EDT - Started Auth and Dashboard Nav Branding Alignment on branch `feature/auth-dashboard-nav-branding-alignment`.
 - 2026-05-09 EDT - Loaded Auth and Dashboard Nav Branding Alignment from inline description and set status to Not Started.
 - 2026-05-09 EDT - Started UI Reviewer agent workflow on branch `feature/ui-reviewer`.
