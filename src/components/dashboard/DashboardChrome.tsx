@@ -275,35 +275,48 @@ function SidebarContent({
 
       <nav className="min-h-0 flex-1 overflow-y-auto px-3 py-6">
         <SidebarSection isCollapsed={isCollapsed} title="Types">
-          {itemTypes.map((itemType) => (
-            <Link
-              className="flex h-11 items-center gap-3 rounded-lg px-3 text-sm text-zinc-300 transition hover:bg-white/[0.06] hover:text-white"
-              href={itemType.href}
-              key={itemType.id}
-              onClick={variant === "mobile" ? onCloseMobile : undefined}
-              title={isCollapsed ? itemType.label : undefined}
-            >
-              {renderSidebarItemTypeIcon(itemType.slug)}
-              {!isCollapsed ? (
-                <>
-                  <span className="min-w-0 flex-1 truncate text-base">
-                    {itemType.label}
-                  </span>
-                  {shouldShowSidebarProBadge(itemType.slug) ? (
-                    <Badge
-                      className="h-5 rounded-md border-devstash-line bg-white/[0.04] px-1.5 text-[0.62rem] font-semibold text-muted-foreground"
-                      variant="outline"
-                    >
-                      {SIDEBAR_PRO_BADGE_LABEL}
-                    </Badge>
-                  ) : null}
-                  <span className="text-sm text-muted-foreground">
-                    {itemType.itemCount}
-                  </span>
-                </>
-              ) : null}
-            </Link>
-          ))}
+          {itemTypes.map((itemType) => {
+            const isProOnlyType = shouldShowSidebarProBadge(itemType.slug);
+            const shouldShowUpgradeHint =
+              currentUser.planTier === "free" && isProOnlyType;
+
+            return (
+              <Link
+                className="flex h-11 items-center gap-3 rounded-lg px-3 text-sm text-zinc-300 transition hover:bg-white/[0.06] hover:text-white"
+                href={itemType.href}
+                key={itemType.id}
+                onClick={variant === "mobile" ? onCloseMobile : undefined}
+                title={
+                  isCollapsed
+                    ? shouldShowUpgradeHint
+                      ? `${itemType.label} (Pro feature - upgrade required)`
+                      : itemType.label
+                    : undefined
+                }
+              >
+                {renderSidebarItemTypeIcon(itemType.slug)}
+                {!isCollapsed ? (
+                  <>
+                    <span className="min-w-0 flex-1 truncate text-base">
+                      {itemType.label}
+                    </span>
+                    {shouldShowUpgradeHint ? (
+                      <Badge
+                        className="h-5 rounded-md border-devstash-line bg-white/[0.04] px-1.5 text-[0.62rem] font-semibold text-muted-foreground"
+                        title="Upgrade to Pro to access this section"
+                        variant="outline"
+                      >
+                        {SIDEBAR_PRO_BADGE_LABEL}
+                      </Badge>
+                    ) : null}
+                    <span className="text-sm text-muted-foreground">
+                      {itemType.itemCount}
+                    </span>
+                  </>
+                ) : null}
+              </Link>
+            );
+          })}
         </SidebarSection>
 
         <SidebarSection isCollapsed={isCollapsed} title="Favorite Collections">

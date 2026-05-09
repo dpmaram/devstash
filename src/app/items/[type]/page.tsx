@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { auth } from "@/auth";
@@ -5,7 +6,10 @@ import { DashboardChrome } from "@/components/dashboard/DashboardChrome";
 import { ItemCardGrid } from "@/components/dashboard/ItemDrawer";
 import { NewItemDialog } from "@/components/dashboard/NewItemDialog";
 import { PaginationControls } from "@/components/dashboard/PaginationControls";
+import { buttonVariants } from "@/components/ui/button";
 import { toCurrentUser } from "@/lib/auth/current-user";
+import { shouldRequireProForItemType } from "@/lib/billing/item-type-gates";
+import { getUserBillingState } from "@/lib/db/billing";
 import { isCreateItemTypeSlug } from "@/lib/create-item-types";
 import { getDashboardCollections } from "@/lib/db/collections";
 import { getDashboardUserForSession } from "@/lib/db/dashboard-user";
@@ -24,6 +28,7 @@ import {
   ITEMS_PER_PAGE,
   parsePageNumber,
 } from "@/lib/pagination";
+import { cn } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
@@ -65,6 +70,54 @@ export default async function ItemsByTypePage({
 
   if (!itemType) {
     notFound();
+  }
+
+  const billingState = dashboardUser
+    ? await getUserBillingState(dashboardUser.id)
+    : null;
+  const isProUser = billingState?.isPro ?? false;
+
+  if (shouldRequireProForItemType(itemType.slug, isProUser)) {
+    return (
+      <DashboardChrome
+        collections={sidebarCollections}
+        currentUser={currentUser}
+        itemTypes={itemTypes}
+        searchIndex={searchIndex}
+      >
+        <section className="space-y-8 p-5 sm:p-6 lg:p-8">
+          <div className="rounded-xl border border-devstash-line bg-white/[0.04] p-6 sm:p-8">
+            <p className="text-sm font-medium uppercase tracking-wide text-muted-foreground">
+              Pro Feature
+            </p>
+            <h1 className="mt-2 text-3xl font-semibold text-white sm:text-4xl">
+              Upgrade to Access {itemType.label}
+            </h1>
+            <p className="mt-3 max-w-2xl text-base text-muted-foreground">
+              File and image libraries are available on Pro plans. Upgrade to
+              unlock uploads, secure file access, and media organization.
+            </p>
+            <div className="mt-6 flex flex-wrap gap-3">
+              <Link
+                className={cn(
+                  buttonVariants({ size: "lg" }),
+                  "bg-gradient-to-r from-[#3b82f6] to-[#6366f1] text-white hover:opacity-90",
+                )}
+                href="/settings"
+              >
+                Upgrade to Pro
+              </Link>
+              <Link
+                className={buttonVariants({ size: "lg", variant: "outline" })}
+                href="/dashboard"
+              >
+                Back to Dashboard
+              </Link>
+            </div>
+          </div>
+        </section>
+      </DashboardChrome>
+    );
   }
 
   const [items, totalItemCount] = await Promise.all([

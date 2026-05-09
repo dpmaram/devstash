@@ -55,4 +55,39 @@ describe("toCurrentUser", () => {
       },
     );
   });
+
+  it("maps FREE session tier to a free current user plan", () => {
+    assert.equal(
+      toCurrentUser(
+        {
+          id: "user_123",
+          name: "Ada Lovelace",
+          email: "ada@example.com",
+          image: null,
+          planTier: "FREE",
+        },
+        fallbackUser,
+      ).planTier,
+      "free",
+    );
+  });
+
+  it("maps PRO session tier to a pro current user plan", () => {
+    assert.equal(
+      toCurrentUser(
+        {
+          id: "user_123",
+          name: "Ada Lovelace",
+          email: "ada@example.com",
+          image: null,
+          planTier: "PRO",
+        },
+        {
+          ...fallbackUser,
+          planTier: "free",
+        },
+      ).planTier,
+      "pro",
+    );
+  });
 });

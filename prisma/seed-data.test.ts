@@ -42,8 +42,6 @@ describe("seed data", () => {
       "react-patterns",
       "ai-workflows",
       "devops",
-      "terminal-commands",
-      "design-resources",
     ]);
     assert.deepEqual(itemTypesByCollection["react-patterns"], [
       "snippet",
@@ -52,13 +50,14 @@ describe("seed data", () => {
     ]);
     assert.deepEqual(itemTypesByCollection["ai-workflows"], ["prompt", "prompt", "prompt"]);
     assert.deepEqual(itemTypesByCollection["devops"], ["snippet", "command", "link", "link"]);
-    assert.deepEqual(itemTypesByCollection["terminal-commands"], [
-      "command",
-      "command",
-      "command",
-      "command",
-    ]);
-    assert.deepEqual(itemTypesByCollection["design-resources"], ["link", "link", "link", "link"]);
+
+    const totalItems = seedCollections.reduce(
+      (count, collection) => count + collection.items.length,
+      0,
+    );
+
+    assert.equal(seedCollections.length, 3);
+    assert.ok(totalItems < 50);
   });
 
   it("uses real URLs for seeded links", () => {
@@ -66,7 +65,7 @@ describe("seed data", () => {
       collection.items.filter((item) => item.typeSlug === "link"),
     );
 
-    assert.equal(links.length, 6);
+    assert.equal(links.length, 2);
 
     for (const link of links) {
       assert.match(link.url ?? "", /^https:\/\/[^\s]+$/);

@@ -146,6 +146,26 @@ async function seedDemoCollections(userId: string) {
   }
 }
 
+async function resetDemoUserContent(userId: string) {
+  await prisma.item.deleteMany({
+    where: {
+      userId,
+    },
+  });
+
+  await prisma.collection.deleteMany({
+    where: {
+      userId,
+    },
+  });
+
+  await prisma.tag.deleteMany({
+    where: {
+      userId,
+    },
+  });
+}
+
 async function clearSeedItemRelationships() {
   const itemIds = seedCollections.flatMap((collection) =>
     collection.items.map((item) => item.id),
@@ -279,6 +299,7 @@ async function main() {
   const user = await seedDemoUser();
 
   await seedSystemItemTypes();
+  await resetDemoUserContent(user.id);
   await seedDemoCollections(user.id);
   await seedItems(user.id);
 

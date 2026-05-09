@@ -8,12 +8,18 @@ export function toCurrentUser(
 ): CurrentUser {
   const email = sessionUser?.email ?? fallbackUser.email;
   const name = sessionUser?.name ?? email ?? fallbackUser.name;
+  const planTier =
+    typeof sessionUser?.planTier === "string"
+      ? sessionUser.planTier.toUpperCase() === "PRO"
+        ? "pro"
+        : "free"
+      : fallbackUser.planTier;
 
   return {
     id: sessionUser?.id ?? fallbackUser.id,
     name,
     email,
     avatarUrl: sessionUser?.image ?? null,
-    planTier: fallbackUser.planTier,
+    planTier,
   };
 }
