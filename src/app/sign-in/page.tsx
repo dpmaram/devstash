@@ -41,6 +41,7 @@ export default async function SignInPage({ searchParams }: SignInPageProps) {
   return (
     <AuthShell
       eyebrow="Welcome back"
+      showMarketingNav
       subtitle="Open your saved snippets, commands, prompts, notes, files, images, and links."
       title="Sign in to DevStash"
     >

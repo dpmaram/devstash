@@ -34,6 +34,7 @@ export default async function RegisterPage({ searchParams }: RegisterPageProps) 
   return (
     <AuthShell
       eyebrow="Create account"
+      showMarketingNav
       subtitle="Start collecting the working knowledge you reuse across projects."
       title="Join DevStash"
     >

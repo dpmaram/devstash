@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Folder } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
@@ -111,8 +112,8 @@ export function Homepage() {
         <NavScrollState targetId="marketing-nav" />
         <div className="mx-auto flex min-h-20 w-full max-w-6xl items-center justify-between px-4 sm:px-6 lg:px-8">
           <Link className="inline-flex items-center gap-2.5 font-semibold text-zinc-100" href="/">
-            <span className="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-[#3b82f6] to-[#6366f1] font-mono text-xs text-white">
-              DS
+            <span className="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-[#3b82f6] to-[#6366f1] text-white">
+              <Folder aria-hidden="true" className="size-4" />
             </span>
             <span className="text-base">DevStash</span>
           </Link>
@@ -366,8 +367,8 @@ export function Homepage() {
         <div className="mx-auto grid max-w-6xl gap-10 px-4 sm:px-6 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:px-8">
           <div>
             <Link className="inline-flex items-center gap-2.5 font-semibold text-zinc-100" href="/">
-              <span className="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-[#3b82f6] to-[#6366f1] font-mono text-xs text-white">
-                DS
+              <span className="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-[#3b82f6] to-[#6366f1] text-white">
+                <Folder aria-hidden="true" className="size-4" />
               </span>
               <span className="text-base">DevStash</span>
             </Link>

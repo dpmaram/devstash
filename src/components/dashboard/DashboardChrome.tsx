@@ -238,8 +238,8 @@ function SidebarContent({
   return (
     <>
       <div className="flex h-20 items-center gap-3 border-b border-devstash-line px-4">
-        <div className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-violet-500 text-sm font-semibold text-white">
-          DS
+        <div className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-[#3b82f6] to-[#6366f1] text-white">
+          <Folder aria-hidden="true" className="size-5" />
         </div>
         {!isCollapsed ? (
           <div className="min-w-0 flex-1">

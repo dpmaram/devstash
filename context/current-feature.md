@@ -1,4 +1,4 @@
-# Current Activity: UI Reviewer Agent
+# Current Feature: Auth and Dashboard Nav Branding Alignment
 
 ## Status
 
@@ -10,25 +10,27 @@ In Progress
 
 <!-- Add goals for the active feature here -->
 
-- Review UI pages for visual issues (alignment, spacing, contrast, hierarchy)
-- Validate responsiveness at 375px, 768px, and 1280px
-- Evaluate accessibility basics: alt text, hit target sizes, visible focus states, and non-color indicators
-- Evaluate marketing quality: above-the-fold value proposition clarity, CTA prominence, social proof, and hierarchy
-- Use Playwright-based page inspection and provide concise numbered issues to fix
+- Add the homepage top navigation pattern to the sign-in page.
+- Add the homepage top navigation pattern to the sign-up/register page.
+- Update dashboard navigation branding to use the same homepage logo icon style.
+- Remove the boxed "DS" mark from dashboard nav branding and replace it with the homepage folder-style icon.
+- Keep navigation links and auth flows functional after UI updates.
 
 ## Notes
 
 <!-- Add notes or constraints for the active feature here -->
 
-- Agent source: `.github/agents/ui-reviewer.md`
-- Reviewer mode expects Playwright-based visual validation and concise issue output
-- Primary checks: visual quality, responsiveness, accessibility, and marketing effectiveness
-- Keep findings actionable and grouped by issue severity/impact
+- Loaded from inline request via feature workflow `load` action.
+- Request details: "add the homepage top nav to the sign in and sign up pages. Then add the same folder icon that the homepage nav has for the logo to the dashboard nav, delete the box with the DS".
+- Scope is UI/layout branding updates only; no auth behavior change requested.
 
 ## History
 
 <!-- Keep this updated. Earliest to latest -->
 
+- 2026-05-09 EDT - Implemented Auth and Dashboard Nav Branding Alignment on branch `feature/auth-dashboard-nav-branding-alignment`: added homepage-style top navigation to sign-in and register via `AuthShell`, replaced dashboard sidebar boxed `DS` branding with the homepage-style folder icon mark, and aligned homepage logo marks to the same folder icon style for consistency. Verified with `npx tsc --noEmit` and `npm run lint`.
+- 2026-05-09 EDT - Started Auth and Dashboard Nav Branding Alignment on branch `feature/auth-dashboard-nav-branding-alignment`.
+- 2026-05-09 EDT - Loaded Auth and Dashboard Nav Branding Alignment from inline description and set status to Not Started.
 - 2026-05-09 EDT - Started UI Reviewer agent workflow on branch `feature/ui-reviewer`.
 - 2026-05-09 EDT - Loaded UI Reviewer agent from `.github/agents/ui-reviewer.md` and set status to Not Started.
 - 2026-05-09 EDT - Completed Homepage (App Implementation), merged branch `feature/homepage-app-implementation` into `main`, and delivered the production app homepage at `/` with server-first sections plus focused client interactivity components.
