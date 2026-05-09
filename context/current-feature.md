@@ -1,18 +1,12 @@
-# Current Feature: Stripe Integration - Phase 2 (Integration and UI)
+# Current Feature
 
 ## Status
 
 <!-- Not Started|In Progress|Completed -->
 
-In Progress
+Not Started
 
 ## Goals
-
-- Implement Stripe checkout and billing portal authenticated API routes.
-- Implement Stripe webhook handling with signature verification for subscription lifecycle events.
-- Enforce server-side feature gates for item creation, collection creation, and uploads.
-- Add settings billing UI and wire homepage pricing CTAs to checkout flows.
-- Document Stripe setup and local Stripe CLI webhook verification workflow.
 
 <!-- Add goals for the active feature here -->
 
@@ -21,14 +15,6 @@ In Progress
 ## Notes
 
 <!-- Add notes or constraints for the active feature here -->
-
-- Spec source: `context/features/stripe-integration-phase-2-spec.md`.
-- Prerequisite: Phase 1 core infrastructure must be in place.
-- Required webhook events: `checkout.session.completed`, `customer.subscription.updated`, `customer.subscription.deleted`.
-- Keep all Stripe API handlers under Node.js runtime and preserve `route.ts` delegator + `route-handler.ts` logic split.
-- Gates must be enforced server-side; UI checks alone are not sufficient.
-
-
 
 ## History
 
@@ -220,3 +206,4 @@ In Progress
 
 - 2026-05-09 EDT - Completed Auth and Dashboard Nav Branding Alignment, merged branch `feature/auth-dashboard-nav-branding-alignment` into `main`, removed the local feature branch, added homepage-style top nav to sign-in and register, replaced dashboard boxed DS branding with a folder icon mark, and verified with `npm test`, `npx tsc --noEmit`, and `npm run lint`.
 - 2026-05-09 EDT - Completed Stripe Integration - Phase 1 (Core Infrastructure), merged branch `feature/stripe-integration-phase-1-core-infrastructure` into `main`, added Stripe server config/client modules, billing database helpers, JWT/session billing-state sync, and usage-limits module with full unit coverage. Verified with `npm test`, `npm run lint`, and `npx tsc --noEmit`.
+- 2026-05-09 EDT - Completed Stripe Integration - Phase 2 (Integration and UI), merged branch `feature/stripe-integration-phase-2-integration-ui` into `main`, added Stripe checkout/portal/webhook routes, enforced server-side billing gates for items/collections/uploads, added Settings billing panel and homepage pricing checkout wiring, added Stripe route and gating tests, and documented Stripe setup plus Stripe CLI webhook verification in README. Verified with `npm test`, `npm run lint`, and `npx tsc --noEmit`.
