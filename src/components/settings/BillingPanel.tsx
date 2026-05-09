@@ -88,10 +88,10 @@ export function BillingPanel({ isPro, planTier }: BillingPanelProps) {
         </p>
       </div>
 
-      <div className="rounded-lg border border-devstash-line bg-white/[0.03] p-4">
+      <div className="rounded-lg border border-devstash-line bg-white/[0.08] p-4">
         <p className="text-sm text-muted-foreground">Current plan</p>
         <p className="mt-1 text-lg font-semibold text-white">{planLabel}</p>
-        <p className="mt-1 text-sm text-muted-foreground">
+        <p className={cn("mt-1 text-sm font-medium", isPro ? "text-blue-300" : "text-muted-foreground")}>
           Plan tier: {planTier}
         </p>
       </div>
