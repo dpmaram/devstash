@@ -3,6 +3,8 @@ import { randomUUID } from "node:crypto";
 import type { Session } from "next-auth";
 
 import { auth } from "@/auth";
+import { canUseUploads } from "@/lib/billing/usage-limits";
+import { getUserBillingState } from "@/lib/db/billing";
 import { getDashboardUserForSession } from "@/lib/db/dashboard-user";
 import { getS3Config, putStoredFile } from "@/lib/storage/s3";
 import {
@@ -14,6 +16,7 @@ type UploadRouteDeps = {
   auth: () => Promise<Session | null>;
   createUploadId: () => string;
   getDashboardUserForSession: typeof getDashboardUserForSession;
+  getUserBillingState?: typeof getUserBillingState;
   getUploadPrefix?: () => string;
   putStoredFile: typeof putStoredFile;
 };
@@ -22,6 +25,7 @@ const defaultUploadRouteDeps: UploadRouteDeps = {
   auth,
   createUploadId: randomUUID,
   getDashboardUserForSession,
+  getUserBillingState,
   getUploadPrefix: () => getS3Config().uploadPrefix,
   putStoredFile,
 };
@@ -54,6 +58,36 @@ export async function handleUploadFile(
       },
       {
         status: 400,
+      },
+    );
+  }
+
+  const billingState = await (deps.getUserBillingState ?? getUserBillingState)(
+    dashboardUser.id,
+  );
+
+  if (!billingState) {
+    return Response.json(
+      {
+        success: false,
+        error: "Unable to upload file.",
+      },
+      {
+        status: 400,
+      },
+    );
+  }
+
+  const uploadDecision = canUseUploads(billingState.planTier);
+
+  if (!uploadDecision.allowed) {
+    return Response.json(
+      {
+        success: false,
+        error: "Uploads are available on Pro plans only.",
+      },
+      {
+        status: 403,
       },
     );
   }

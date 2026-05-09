@@ -25,6 +25,17 @@ const dashboardCollection: DashboardCollection = {
   ],
 };
 
+const proBillingDeps = {
+  getUserBillingState: async () => ({
+    id: "user_123",
+    planTier: "PRO" as const,
+    isPro: true,
+    stripeCustomerId: "cus_123",
+    stripeSubscriptionId: "sub_123",
+  }),
+  getUserCollectionCount: async () => 0,
+};
+
 describe("createCollection action", () => {
   it("rejects invalid payloads before auth or database writes", async () => {
     const { handleCreateCollection } = await import("./collections");
@@ -86,6 +97,7 @@ describe("createCollection action", () => {
         description: "  Deploy flows and release commands.  ",
       },
       {
+        ...proBillingDeps,
         auth: async () => ({
           user: {
             id: "signed_in_user",
@@ -126,6 +138,7 @@ describe("createCollection action", () => {
         name: "Launch Recipes",
       },
       {
+        ...proBillingDeps,
         auth: async () => ({
           user: {
             id: "user_123",
@@ -141,6 +154,42 @@ describe("createCollection action", () => {
     assert.deepEqual(result, {
       success: false,
       error: "Unable to create collection.",
+    });
+  });
+
+  it("blocks collection creation when the free plan collection limit is reached", async () => {
+    const { handleCreateCollection } = await import("./collections");
+
+    const result = await handleCreateCollection(
+      {
+        name: "Overflow Collection",
+      },
+      {
+        auth: async () => ({
+          user: {
+            id: "user_123",
+          },
+        }),
+        getUserBillingState: async () => ({
+          id: "user_123",
+          planTier: "FREE",
+          isPro: false,
+          stripeCustomerId: null,
+          stripeSubscriptionId: null,
+        }),
+        getUserCollectionCount: async () => 3,
+        createCollection: async () => {
+          throw new Error("createCollection should not be called");
+        },
+        getDashboardUserForSession: async () => ({
+          id: "user_123",
+        }),
+      },
+    );
+
+    assert.deepEqual(result, {
+      success: false,
+      error: "Free plan limit reached: 3 collections. Upgrade to Pro for unlimited collections.",
     });
   });
 });

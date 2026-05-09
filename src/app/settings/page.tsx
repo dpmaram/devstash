@@ -4,8 +4,10 @@ import { redirect } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 
 import { auth } from "@/auth";
+import { BillingPanel } from "@/components/settings/BillingPanel";
 import { EditorPreferencesPanel } from "@/components/editor/EditorPreferencesPanel";
 import { ProfileActions } from "@/components/profile/ProfileActions";
+import { getUserBillingState } from "@/lib/db/billing";
 import { getProfileData } from "@/lib/db/profile";
 
 export const dynamic = "force-dynamic";
@@ -26,6 +28,8 @@ export default async function SettingsPage() {
   if (!profileData) {
     redirect("/sign-in?callbackUrl=%2Fsettings");
   }
+
+  const billingState = await getUserBillingState(session.user.id);
 
   return (
     <main className="min-h-screen bg-devstash-bg px-5 py-6 text-foreground sm:px-8">
@@ -53,6 +57,13 @@ export default async function SettingsPage() {
           <ProfileActions
             canChangePassword={profileData.user.canChangePassword}
             email={profileData.user.email}
+          />
+        </section>
+
+        <section className="space-y-4">
+          <BillingPanel
+            isPro={billingState?.isPro ?? false}
+            planTier={billingState?.planTier ?? "FREE"}
           />
         </section>
 

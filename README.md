@@ -67,6 +67,53 @@ npm run db:test
 
 `npm test` runs Vitest in Node mode for server actions and utilities. Component-rendering and DOM tests are intentionally outside this unit test suite.
 
+## Stripe Billing Setup
+
+Set Stripe variables in your local `.env` file:
+
+```bash
+STRIPE_SECRET_KEY="sk_test_..."
+STRIPE_PUBLISHABLE_KEY="pk_test_..."
+STRIPE_WEBHOOK_SECRET="whsec_..."
+STRIPE_PRICE_PRO_MONTHLY="price_..."
+STRIPE_PRICE_PRO_ANNUAL="price_..."
+APP_URL="http://localhost:3000"
+```
+
+Create a recurring `DevStash Pro` product in Stripe and configure these two prices:
+
+- Monthly: `$8`
+- Annual: `$72`
+
+### Local webhook verification with Stripe CLI
+
+1. Start the dev server:
+
+```bash
+npm run dev
+```
+
+2. Forward Stripe webhooks to the app:
+
+```bash
+stripe listen --forward-to localhost:3000/api/stripe/webhook
+```
+
+3. Trigger and verify billing events:
+
+```bash
+stripe trigger checkout.session.completed
+stripe trigger customer.subscription.updated
+stripe trigger customer.subscription.deleted
+```
+
+4. Confirm behavior in app:
+
+- Checkout upgrades users to Pro
+- Subscription updates keep DB/session in sync
+- Subscription deletion downgrades to Free
+- Free users are blocked for uploads and plan limits
+
 ## Project Context
 
 Start with these files before feature work:

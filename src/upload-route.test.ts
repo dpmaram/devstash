@@ -18,6 +18,7 @@ describe("upload route", () => {
           auth: () => Promise<null>;
           createUploadId: () => string;
           getDashboardUserForSession: () => Promise<never>;
+          getUserBillingState?: () => Promise<never>;
           putStoredFile: () => Promise<never>;
         },
       ) => Promise<Response>;
@@ -54,6 +55,13 @@ describe("upload route", () => {
           getDashboardUserForSession: (sessionUser: {
             id: string;
           }) => Promise<{ id: string }>;
+          getUserBillingState: () => Promise<{
+            id: string;
+            planTier: "PRO";
+            isPro: true;
+            stripeCustomerId: string;
+            stripeSubscriptionId: string;
+          }>;
           putStoredFile: () => Promise<never>;
         },
       ) => Promise<Response>;
@@ -70,6 +78,13 @@ describe("upload route", () => {
         createUploadId: () => "upload_123",
         getDashboardUserForSession: async () => ({
           id: "user_123",
+        }),
+        getUserBillingState: async () => ({
+          id: "user_123",
+          planTier: "PRO",
+          isPro: true,
+          stripeCustomerId: "cus_123",
+          stripeSubscriptionId: "sub_123",
         }),
         putStoredFile: async () => {
           throw new Error("putStoredFile should not be called");
@@ -94,6 +109,13 @@ describe("upload route", () => {
           getDashboardUserForSession: (sessionUser: {
             id: string;
           }) => Promise<{ id: string }>;
+          getUserBillingState: () => Promise<{
+            id: string;
+            planTier: "PRO";
+            isPro: true;
+            stripeCustomerId: string;
+            stripeSubscriptionId: string;
+          }>;
           putStoredFile: () => Promise<never>;
         },
       ) => Promise<Response>;
@@ -117,6 +139,13 @@ describe("upload route", () => {
           createUploadId: () => "upload_123",
           getDashboardUserForSession: async () => ({
             id: "user_123",
+          }),
+          getUserBillingState: async () => ({
+            id: "user_123",
+            planTier: "PRO",
+            isPro: true,
+            stripeCustomerId: "cus_123",
+            stripeSubscriptionId: "sub_123",
           }),
           putStoredFile: async () => {
             throw new Error("Forbidden");
@@ -145,6 +174,13 @@ describe("upload route", () => {
           getDashboardUserForSession: (sessionUser: {
             id: string;
           }) => Promise<{ id: string }>;
+          getUserBillingState: () => Promise<{
+            id: string;
+            planTier: "PRO";
+            isPro: true;
+            stripeCustomerId: string;
+            stripeSubscriptionId: string;
+          }>;
           putStoredFile: (input: {
             body: Uint8Array;
             contentLength: number;
@@ -173,6 +209,13 @@ describe("upload route", () => {
             id: "demo_user",
           };
         },
+        getUserBillingState: async () => ({
+          id: "demo_user",
+          planTier: "PRO",
+          isPro: true,
+          stripeCustomerId: "cus_123",
+          stripeSubscriptionId: "sub_123",
+        }),
         putStoredFile: async (input) => {
           storedKeys.push(input.key);
           assert.equal(input.contentType, "image/png");
@@ -194,6 +237,60 @@ describe("upload route", () => {
         fileSize: 11,
         fileUrl: "devstash/api/uploads/dm/demo_user/upload_123-screen-shot.png",
       },
+    });
+  });
+
+  it("blocks uploads for users on the free plan", async () => {
+    const route = (await import("./app/api/uploads/route-handler")) as unknown as {
+      handleUploadFile: (
+        request: Request,
+        deps: {
+          auth: () => Promise<{ user: { id: string } }>;
+          createUploadId: () => string;
+          getDashboardUserForSession: (sessionUser: {
+            id: string;
+          }) => Promise<{ id: string }>;
+          getUserBillingState: () => Promise<{
+            id: string;
+            planTier: "FREE";
+            isPro: false;
+            stripeCustomerId: null;
+            stripeSubscriptionId: null;
+          }>;
+          putStoredFile: () => Promise<never>;
+        },
+      ) => Promise<Response>;
+    };
+
+    const response = await route.handleUploadFile(
+      createUploadRequest("file", createFile("notes.md", "text/markdown")),
+      {
+        auth: async () => ({
+          user: {
+            id: "user_123",
+          },
+        }),
+        createUploadId: () => "upload_123",
+        getDashboardUserForSession: async () => ({
+          id: "user_123",
+        }),
+        getUserBillingState: async () => ({
+          id: "user_123",
+          planTier: "FREE",
+          isPro: false,
+          stripeCustomerId: null,
+          stripeSubscriptionId: null,
+        }),
+        putStoredFile: async () => {
+          throw new Error("putStoredFile should not be called");
+        },
+      },
+    );
+
+    assert.equal(response.status, 403);
+    assert.deepEqual(await response.json(), {
+      success: false,
+      error: "Uploads are available on Pro plans only.",
     });
   });
 });

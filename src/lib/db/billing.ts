@@ -101,3 +101,48 @@ export async function deactivateProBilling(
     },
   });
 }
+
+export async function getUserBillingStateByStripeCustomerId(
+  stripeCustomerId: string,
+): Promise<UserBillingState | null> {
+  return prisma.user.findUnique({
+    where: {
+      stripeCustomerId,
+    },
+    select: {
+      id: true,
+      planTier: true,
+      isPro: true,
+      stripeCustomerId: true,
+      stripeSubscriptionId: true,
+    },
+  });
+}
+
+export async function activateProBillingByStripeCustomerId(
+  stripeCustomerId: string,
+  stripeSubscriptionId: string,
+): Promise<UserBillingState | null> {
+  const user = await getUserBillingStateByStripeCustomerId(stripeCustomerId);
+
+  if (!user) {
+    return null;
+  }
+
+  return activateProBilling(user.id, {
+    stripeCustomerId,
+    stripeSubscriptionId,
+  });
+}
+
+export async function deactivateProBillingByStripeCustomerId(
+  stripeCustomerId: string,
+): Promise<UserBillingState | null> {
+  const user = await getUserBillingStateByStripeCustomerId(stripeCustomerId);
+
+  if (!user) {
+    return null;
+  }
+
+  return deactivateProBilling(user.id);
+}

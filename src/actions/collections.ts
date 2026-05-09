@@ -3,9 +3,12 @@
 import { z } from "zod";
 
 import { auth } from "@/auth";
+import { canCreateCollection } from "@/lib/billing/usage-limits";
+import { getUserBillingState } from "@/lib/db/billing";
 import { getDashboardUserForSession } from "@/lib/db/dashboard-user";
 import {
   createCollection as createCollectionRecord,
+  getUserCollectionCount,
   toggleCollectionFavorite,
   type CreateCollectionInput,
   type DashboardCollection,
@@ -37,6 +40,8 @@ type CreateCollectionActionDeps = {
   } | null>;
   createCollection: (input: CreateCollectionInput) => Promise<DashboardCollection | null>;
   getDashboardUserForSession: typeof getDashboardUserForSession;
+  getUserBillingState?: typeof getUserBillingState;
+  getUserCollectionCount?: typeof getUserCollectionCount;
 };
 
 type CreateCollectionActionResult =
@@ -53,6 +58,8 @@ const defaultCreateCollectionActionDeps: CreateCollectionActionDeps = {
   auth,
   createCollection: createCollectionRecord,
   getDashboardUserForSession,
+  getUserBillingState,
+  getUserCollectionCount,
 };
 
 function getValidationError(error: z.ZodError) {
@@ -87,6 +94,32 @@ export async function handleCreateCollection(
     return {
       success: false,
       error: "Unable to create collection.",
+    };
+  }
+
+  const billingState = await (deps.getUserBillingState ?? getUserBillingState)(
+    dashboardUser.id,
+  );
+
+  if (!billingState) {
+    return {
+      success: false,
+      error: "Unable to create collection.",
+    };
+  }
+
+  const collectionCount = await (
+    deps.getUserCollectionCount ?? getUserCollectionCount
+  )(dashboardUser.id);
+  const collectionCreationDecision = canCreateCollection({
+    planTier: billingState.planTier,
+    currentCollectionCount: collectionCount,
+  });
+
+  if (!collectionCreationDecision.allowed) {
+    return {
+      success: false,
+      error: "Free plan limit reached: 3 collections. Upgrade to Pro for unlimited collections.",
     };
   }
 

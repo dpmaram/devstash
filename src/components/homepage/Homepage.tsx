@@ -329,15 +329,6 @@ export function Homepage() {
                 <li>AI features and smart tagging</li>
                 <li>Priority support</li>
               </ul>
-              <Link
-                className={cn(
-                  buttonVariants({ size: "lg" }),
-                  "mt-6 bg-gradient-to-r from-[#3b82f6] to-[#6366f1] text-white hover:opacity-90",
-                )}
-                href="/register"
-              >
-                Upgrade to Pro
-              </Link>
             </Reveal>
           </div>
         </div>
