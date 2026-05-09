@@ -72,6 +72,18 @@ function normalizeBillingCycle(value: unknown): StripeBillingCycle {
   return value === "annual" ? "annual" : "monthly";
 }
 
+function getCheckoutErrorMessage(error: unknown) {
+  if (error instanceof Error) {
+    if (error.message.startsWith("Missing required Stripe environment variable")) {
+      return "Stripe billing is not configured yet. Please set Stripe environment variables and try again.";
+    }
+
+    return error.message;
+  }
+
+  return "Unable to start checkout.";
+}
+
 export async function handleStripeCheckoutPost(
   request: Request,
   deps: CheckoutRouteDeps = defaultCheckoutRouteDeps,
@@ -158,39 +170,53 @@ export async function handleStripeCheckoutPost(
     );
   }
 
-  const appBaseUrl = deps.getAppBaseUrl();
-  const checkoutSession = await stripe.checkout.sessions.create({
-    mode: "subscription",
-    customer: stripeCustomerId,
-    client_reference_id: dashboardUser.id,
-    metadata: {
-      userId: dashboardUser.id,
-      billingCycle,
-    },
-    line_items: [
-      {
-        price: deps.getStripePriceIdForCycle(billingCycle),
-        quantity: 1,
+  try {
+    const appBaseUrl = deps.getAppBaseUrl();
+    const checkoutSession = await stripe.checkout.sessions.create({
+      mode: "subscription",
+      customer: stripeCustomerId,
+      client_reference_id: dashboardUser.id,
+      metadata: {
+        userId: dashboardUser.id,
+        billingCycle,
       },
-    ],
-    success_url: `${appBaseUrl}/settings?billing=success`,
-    cancel_url: `${appBaseUrl}/settings?billing=cancelled`,
-  });
+      line_items: [
+        {
+          price: deps.getStripePriceIdForCycle(billingCycle),
+          quantity: 1,
+        },
+      ],
+      success_url: `${appBaseUrl}/settings?billing=success`,
+      cancel_url: `${appBaseUrl}/settings?billing=cancelled`,
+    });
 
-  if (!checkoutSession.url) {
+    if (!checkoutSession.url) {
+      return Response.json(
+        {
+          success: false,
+          error: "Unable to start checkout.",
+        },
+        {
+          status: 502,
+        },
+      );
+    }
+
+    return Response.json({
+      success: true,
+      url: checkoutSession.url,
+    });
+  } catch (error) {
+    console.error("POST /api/stripe/checkout failed", error);
+
     return Response.json(
       {
         success: false,
-        error: "Unable to start checkout.",
+        error: getCheckoutErrorMessage(error),
       },
       {
-        status: 502,
+        status: 500,
       },
     );
   }
-
-  return Response.json({
-    success: true,
-    url: checkoutSession.url,
-  });
 }

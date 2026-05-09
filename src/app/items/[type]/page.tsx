@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { auth } from "@/auth";
+import { InlineUpgradeCta } from "@/components/billing/InlineUpgradeCta";
 import { DashboardChrome } from "@/components/dashboard/DashboardChrome";
 import { ItemCardGrid } from "@/components/dashboard/ItemDrawer";
 import { NewItemDialog } from "@/components/dashboard/NewItemDialog";
@@ -28,7 +29,6 @@ import {
   ITEMS_PER_PAGE,
   parsePageNumber,
 } from "@/lib/pagination";
-import { cn } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
@@ -98,15 +98,10 @@ export default async function ItemsByTypePage({
               unlock uploads, secure file access, and media organization.
             </p>
             <div className="mt-6 flex flex-wrap gap-3">
-              <Link
-                className={cn(
-                  buttonVariants({ size: "lg" }),
-                  "bg-gradient-to-r from-[#3b82f6] to-[#6366f1] text-white hover:opacity-90",
-                )}
-                href="/settings"
-              >
-                Upgrade to Pro
-              </Link>
+              <InlineUpgradeCta
+                cancelPath={itemType.href}
+                contextLabel={itemType.label}
+              />
               <Link
                 className={buttonVariants({ size: "lg", variant: "outline" })}
                 href="/dashboard"

@@ -109,4 +109,68 @@ describe("stripe checkout route", () => {
       url: "https://checkout.stripe.com/session/cs_123",
     });
   });
+
+  it("returns a configuration error when Stripe env vars are missing", async () => {
+    const { handleStripeCheckoutPost } = await import(
+      "./app/api/stripe/checkout/route-handler"
+    );
+
+    const response = await handleStripeCheckoutPost(
+      new Request("http://localhost/api/stripe/checkout", {
+        method: "POST",
+      }),
+      {
+        auth: async () => ({
+          user: {
+            id: "signed_in_user",
+            email: "demo@devstash.io",
+          },
+          expires: "",
+        }),
+        getAppBaseUrl: () => "http://localhost:3000",
+        getDashboardUserForSession: async () => ({
+          id: "dashboard_user",
+        }),
+        getStripePriceIdForCycle: () => {
+          throw new Error(
+            "Missing required Stripe environment variable: STRIPE_PRICE_PRO_MONTHLY",
+          );
+        },
+        getStripeServerClient: () => ({
+          customers: {
+            create: async () => ({ id: "cus_123" }),
+          },
+          checkout: {
+            sessions: {
+              create: async () => ({
+                id: "cs_123",
+                url: "https://checkout.stripe.com/session/cs_123",
+              }),
+            },
+          },
+        }),
+        getUserBillingState: async () => ({
+          id: "dashboard_user",
+          planTier: "FREE",
+          isPro: false,
+          stripeCustomerId: "cus_123",
+          stripeSubscriptionId: null,
+        }),
+        setStripeCustomerId: async () => ({
+          id: "dashboard_user",
+          planTier: "FREE",
+          isPro: false,
+          stripeCustomerId: "cus_123",
+          stripeSubscriptionId: null,
+        }),
+      },
+    );
+
+    assert.equal(response.status, 500);
+    assert.deepEqual(await response.json(), {
+      success: false,
+      error:
+        "Stripe billing is not configured yet. Please set Stripe environment variables and try again.",
+    });
+  });
 });
