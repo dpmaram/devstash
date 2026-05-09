@@ -57,7 +57,7 @@ export const currentUser: CurrentUser = {
   name: "John Doe",
   email: "durga.maram@gmail.com",
   avatarUrl: null,
-  planTier: "pro",
+  planTier: "free",
 };
 
 export const itemTypes: ItemType[] = [
