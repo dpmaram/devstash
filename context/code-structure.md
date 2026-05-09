@@ -5,17 +5,20 @@
 - `src/app/layout.tsx` - root app shell and metadata.
 - `src/app/page.tsx` - current marketing/dashboard mockup entry page.
 - `src/app/dashboard/page.tsx` - database-backed dashboard route.
+- `src/app/upgrade/page.tsx` - public upgrade page with pricing comparison and checkout flow.
 - `src/app/globals.css` - Tailwind CSS v4 theme, design tokens, and global styles.
 
 ## Components
 
 - `src/components/dashboard/DashboardShell.tsx` - server component that fetches dashboard data and renders the dashboard content.
-- `src/components/dashboard/DashboardChrome.tsx` - client component for the dashboard frame, responsive sidebar, search bar, and user area.
+- `src/components/dashboard/DashboardChrome.tsx` - client component for the dashboard frame, responsive sidebar, search bar, and user area with upgrade button for free users.
 - `src/components/dashboard/ItemDrawer.tsx` - item detail drawer, edit/delete actions, and detail rendering.
 - `src/components/dashboard/ItemCards.tsx` - dashboard item cards/list rows, quick-copy controls, and file/image list presentation.
 - `src/components/dashboard/FileUpload.tsx` - drag-and-drop upload input used by file and image creation.
 - `src/components/dashboard/dashboard-icons.ts` - item type icon mapping and color classes.
 - `src/components/dashboard/sidebar-pro-badge.ts` - sidebar Pro badge rules.
+- `src/components/billing/UpgradePage.tsx` - client component rendering pricing comparison, billing cycle toggle, and Stripe checkout initiation.
+- `src/components/settings/BillingPanel.tsx` - settings page billing display, current plan info, and upgrade link for free users.
 - `src/components/ui/` - shadcn/ui-style primitives used by dashboard components.
 
 ## Data Layer
