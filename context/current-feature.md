@@ -1,4 +1,4 @@
-# Current Feature: DevStash Homepage Mockup
+# Current Feature: Homepage (App Implementation)
 
 ## Status
 
@@ -10,36 +10,40 @@ Completed
 
 <!-- Add goals for the active feature here -->
 
-- Create a marketing homepage prototype for DevStash in `prototypes/homepage/`
-- Add output files: `index.html`, `styles.css`, and `script.js`
-- Implement dark theme design with item-type accent colors (snippet, prompt, command, note, file, image, URL)
-- Build hero with chaos-to-order visual: animated chaos container, center transform arrow, and dashboard preview
-- Add fixed top navigation with links and Sign In / Get Started actions
-- Add hero text with gradient headline, supporting copy, and CTA buttons
-- Build feature grid section with 6 cards and accent-color treatment
-- Build AI section with Pro badge, checklist, and code editor mockup with AI generated tags demo
-- Build pricing section with Free vs Pro plans, Most Popular badge, and yearly pricing toggle
-- Add CTA section and footer with logo, links, and current year
-- Implement animations: requestAnimationFrame chaos motion, arrow pulse, scroll reveal, and navbar opacity on scroll
-- Ensure full responsive behavior with mobile stacking and rotated arrow
+- Implement the real app homepage at `/` using the prototype as source
+- Use server components by default and client components only for interactive features
+- Use Tailwind and shadcn/ui patterns consistent with the existing codebase
+- Keep implementation clean and DRY with reusable homepage sections and shared data structures
+- Preserve mockup visual hierarchy, dark theme, and item-type accent colors
+- Implement interactive behavior: chaos animation, pricing toggle, scroll reveal, nav scroll state
+- Ensure all homepage links and buttons route to correct app destinations
+- Ensure responsive layout behavior matches the mockup intent
+- Verify lint, typecheck, and tests pass after implementation
 
 ## Notes
 
 <!-- Add notes or constraints for the active feature here -->
 
-- Spec source: `context/features/homepage-mockup-spec.md`
-- Output is a standalone prototype and should not alter existing app routes/components
-- Hero visual has 3 core elements side by side on desktop: chaos container, arrow, dashboard preview
-- Chaos icons should include developer-tool references (Notion, GitHub, Slack, VS Code, tabs, terminal, text file, bookmark)
-- Chaos animation requires random drift, wall bounce, subtle rotate/scale pulse, and mouse-repel interaction
-- On mobile, hero visual stacks vertically and arrow rotates 90 degrees to point downward
-- Navbar should become more opaque as the page scrolls
-- Scroll-based reveal animation should be applied to major sections
+- Spec source: `context/features/homepage-spec.md`
+- Source prototype: `prototypes/homepage/index.html`, `prototypes/homepage/styles.css`, `prototypes/homepage/script.js`
+- Keep `src/app/page.tsx` as server component and move interactivity to focused client components
+- Interactive candidates: `ChaosAnimation`, `PricingToggle`, `ScrollReveal`, optional `NavScrollState`
+- Required route targets:
+	- Logo -> `/`
+	- Features -> `/#features`
+	- Pricing -> `/#pricing`
+	- Sign In -> `/sign-in`
+	- Primary CTAs -> `/register`
+- Avoid final duplication via static `public/index.html` as app homepage implementation source
 
 ## History
 
 <!-- Keep this updated. Earliest to latest -->
 
+- 2026-05-09 EDT - Completed Homepage (App Implementation), merged branch `feature/homepage-app-implementation` into `main`, and delivered the production app homepage at `/` with server-first sections plus focused client interactivity components.
+- 2026-05-09 EDT - Implemented Homepage (App Implementation) on branch `feature/homepage-app-implementation`: replaced `src/app/page.tsx` with a server-rendered marketing homepage shell using reusable sections, created focused client components `ChaosAnimation`, `PricingToggle`, `Reveal`, and `NavScrollState` under `src/components/homepage/`, preserved mockup structure and accent colors, wired required routes (`/`, `/#features`, `/#pricing`, `/sign-in`, `/register`), and kept interactivity isolated to client components only. Verified: TypeScript clean, ESLint clean, tests passing (252/252).
+- 2026-05-09 EDT - Started Homepage (App Implementation) on branch `feature/homepage-app-implementation`.
+- 2026-05-09 EDT - Loaded Homepage (App Implementation) spec from `context/features/homepage-spec.md` and set status to Not Started.
 - 2026-05-09 EDT - Completed DevStash Homepage Mockup, merged branch `feature/homepage-mockup` into `main`, and published static prototype files to `public/` so `http://localhost:3000/index.html` loads correctly during local dev.
 - 2026-05-09 EDT - Tested DevStash Homepage Mockup implementation: validated `prototypes/homepage/script.js` syntax with `node --check`, ran `npx tsc --noEmit` (clean), `npm run lint` (clean), and `npm test` (252/252 passing).
 - 2026-05-09 EDT - Implemented DevStash Homepage Mockup prototype on branch `feature/homepage-mockup` in `prototypes/homepage/` with standalone `index.html`, `styles.css`, and `script.js`. Added fixed nav, hero copy and CTAs, chaos-to-order visual (animated chaos container, pulsing transform arrow, dashboard preview), features grid, AI section, pricing cards with monthly/yearly toggle (`$8/mo` and `$72/yr`), CTA section, and footer with current year. Implemented requestAnimationFrame chaos motion with wall bounce and mouse-repel behavior, scroll reveal animation, and navbar opacity-on-scroll behavior. Added responsive layout for mobile including stacked hero visual and rotated arrow.
