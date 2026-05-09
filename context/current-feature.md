@@ -1,18 +1,12 @@
-# Current Feature: Stripe Integration - Phase 1 (Core Infrastructure)
+# Current Feature
 
 ## Status
 
 <!-- Not Started|In Progress|Completed -->
 
-In Progress
+Not Started
 
 ## Goals
-
-- Build Stripe core infrastructure (config, server client, billing data layer).
-- Add a reusable usage-limits module for Free vs Pro decisions.
-- Implement auth session sync for `isPro` and `planTier`.
-- Add and pass unit tests for the usage-limits module.
-- Keep checkout, webhooks, feature-gating enforcement, and billing UI out of Phase 1.
 
 <!-- Add goals for the active feature here -->
 
@@ -22,11 +16,6 @@ In Progress
 
 <!-- Add notes or constraints for the active feature here -->
 
-
-- Spec source: `context/features/stripe-integration-phase-1-spec.md`.
-- Reference plan: `docs/stripe-integration-plan.md`.
-- Phase 1 is infrastructure-only and should not introduce end-user billing flows.
-- Unit tests are required for `src/lib/billing/usage-limits.ts` in this phase.
 
 
 ## History
@@ -214,3 +203,4 @@ In Progress
 - 2026-05-08 EDT - Completed Editor Preferences Settings on branch `feature/editor-preferences-settings` with Prisma schema update (`editorPreferences Json?`), migration `20260508123422_add_editor_preferences`, server actions `updateEditorPreferences()` and `getEditorPreferences()`, utility file with Zod schema and defaults, `EditorPreferencesPanel` component with font size (12-28px), tab size (2/4/8), theme dropdown (vs-dark/monokai/github-dark), word wrap toggle, minimap toggle, auto-save with success/error toasts, `EditorPreferencesContext` provider for distributing preferences, CodeEditor component wired to load and apply preferences on mount, settings page integration, 18 new unit tests covering schema validation and defaults (252 total tests passing), all TypeScript/lint/production build verified.
 
 - 2026-05-09 EDT - Completed Auth and Dashboard Nav Branding Alignment, merged branch `feature/auth-dashboard-nav-branding-alignment` into `main`, removed the local feature branch, added homepage-style top nav to sign-in and register, replaced dashboard boxed DS branding with a folder icon mark, and verified with `npm test`, `npx tsc --noEmit`, and `npm run lint`.
+- 2026-05-09 EDT - Completed Stripe Integration - Phase 1 (Core Infrastructure), merged branch `feature/stripe-integration-phase-1-core-infrastructure` into `main`, added Stripe server config/client modules, billing database helpers, JWT/session billing-state sync, and usage-limits module with full unit coverage. Verified with `npm test`, `npm run lint`, and `npx tsc --noEmit`.
