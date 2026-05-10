@@ -69,7 +69,7 @@ import {
 import type { DashboardCollection } from "@/lib/db/collections";
 import { shouldUseMarkdownEditor } from "@/lib/markdown-editor";
 import { cn } from "@/lib/utils";
-import { generateAutoTags } from "@/actions/ai";
+import { generateAutoDescription, generateAutoTags } from "@/actions/ai";
 
 type ItemDetailResponse =
   | {
@@ -343,6 +343,7 @@ function ItemDetailSheet({
   const [formError, setFormError] = useState<string | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isGeneratingDescription, setIsGeneratingDescription] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isSuggestingTags, setIsSuggestingTags] = useState(false);
   const [mode, setMode] = useState<"edit" | "view">("view");
@@ -410,6 +411,52 @@ function ItemDetailSheet({
       });
     } finally {
       setIsSuggestingTags(false);
+    }
+  }
+
+  async function generateDescription() {
+    if (
+      !state.item ||
+      !draft ||
+      draft.itemId !== state.item.id ||
+      isGeneratingDescription
+    ) {
+      return;
+    }
+
+    setIsGeneratingDescription(true);
+
+    try {
+      const result = await generateAutoDescription({
+        typeSlug: state.item.typeSlug,
+        title: draft.title,
+        description: draft.description,
+        content: draft.content,
+        url: draft.url,
+        fileName: state.item.fileName ?? "",
+        language: draft.language,
+        tags: getDraftTags(draft.tagsText),
+      });
+
+      if (!result.success) {
+        setToast({
+          message: result.error,
+          tone: "error",
+        });
+        return;
+      }
+
+      setDraft({
+        ...draft,
+        description: result.data.description,
+      });
+    } catch {
+      setToast({
+        message: "Unable to generate a description right now.",
+        tone: "error",
+      });
+    } finally {
+      setIsGeneratingDescription(false);
     }
   }
 
@@ -534,6 +581,7 @@ function ItemDetailSheet({
       setFormError(null);
       setIsDeleteDialogOpen(false);
       setIsDeleting(false);
+      setIsGeneratingDescription(false);
       setIsSaving(false);
       setIsSuggestingTags(false);
       setMode("view");
@@ -700,6 +748,7 @@ function ItemDetailSheet({
                   availableCollections={availableCollections}
                   draft={draft}
                   error={formError}
+                  isGeneratingDescription={isGeneratingDescription}
                   isProUser={isProUser}
                   isSaving={isSaving}
                   isSuggestingTags={isSuggestingTags}
@@ -713,6 +762,7 @@ function ItemDetailSheet({
                   }}
                   onRejectSuggestedTag={rejectSuggestedTag}
                   onSave={saveEdit}
+                  onGenerateDescription={generateDescription}
                   onSuggestTags={suggestTags}
                   suggestedTags={suggestedTags}
                 />
@@ -921,12 +971,14 @@ function ItemEditForm({
   availableCollections,
   draft,
   error,
+  isGeneratingDescription,
   isProUser,
   isSaving,
   isSuggestingTags,
   item,
   onAcceptSuggestedTag,
   onChange,
+  onGenerateDescription,
   onRejectSuggestedTag,
   onSave,
   onSuggestTags,
@@ -935,12 +987,14 @@ function ItemEditForm({
   availableCollections: DashboardCollection[];
   draft: ItemEditDraft;
   error: string | null;
+  isGeneratingDescription: boolean;
   isProUser: boolean;
   isSaving: boolean;
   isSuggestingTags: boolean;
   item: ItemDetail;
   onAcceptSuggestedTag: (tag: string) => void;
   onChange: (draft: ItemEditDraft) => void;
+  onGenerateDescription: () => void;
   onRejectSuggestedTag: (tag: string) => void;
   onSave: () => void;
   onSuggestTags: () => void;
@@ -1003,6 +1057,28 @@ function ItemEditForm({
             rows={3}
             value={draft.description}
           />
+          {isProUser ? (
+            <div className="mt-2 flex justify-end">
+              <Button
+                aria-label="Generate description"
+                className="size-9 rounded-md"
+                disabled={isSaving || isGeneratingDescription}
+                onClick={onGenerateDescription}
+                title="Generate description"
+                type="button"
+                variant="ghost"
+              >
+                {isGeneratingDescription ? (
+                  <LoaderCircle
+                    aria-hidden="true"
+                    className="size-4 animate-spin"
+                  />
+                ) : (
+                  <Sparkles aria-hidden="true" className="size-4" />
+                )}
+              </Button>
+            </div>
+          ) : null}
         </EditField>
 
         <EditField htmlFor={tagsId} label="Tags">

@@ -12,7 +12,7 @@ import {
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
-import { generateAutoTags } from "@/actions/ai";
+import { generateAutoDescription, generateAutoTags } from "@/actions/ai";
 import { createItem as createItemAction } from "@/actions/items";
 import { CollectionPicker } from "@/components/dashboard/CollectionPicker";
 import { CodeEditor } from "@/components/dashboard/CodeEditor";
@@ -80,6 +80,7 @@ export function NewItemDialog({
   const [error, setError] = useState<string | null>(null);
   const [isOpen, setIsOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [isGeneratingDescription, setIsGeneratingDescription] = useState(false);
   const [isSuggestingTags, setIsSuggestingTags] = useState(false);
   const [suggestedTags, setSuggestedTags] = useState<string[]>([]);
   const [toast, setToast] = useState<NewItemToast>(null);
@@ -99,9 +100,50 @@ export function NewItemDialog({
   function resetForm() {
     setDraft(createInitialNewItemDraft(initialTypeSlug));
     setError(null);
+    setIsGeneratingDescription(false);
     setIsSaving(false);
     setIsSuggestingTags(false);
     setSuggestedTags([]);
+  }
+
+  async function handleGenerateDescription() {
+    if (isSaving || isGeneratingDescription) {
+      return;
+    }
+
+    setIsGeneratingDescription(true);
+
+    try {
+      const result = await generateAutoDescription({
+        typeSlug: draft.typeSlug,
+        title: draft.title,
+        description: draft.description,
+        content: draft.content,
+        url: draft.url,
+        fileName: draft.fileName,
+        language: draft.language,
+        tags: getDraftTags(draft.tagsText),
+      });
+
+      if (!result.success) {
+        setToast({
+          message: result.error,
+          tone: "error",
+        });
+        return;
+      }
+
+      updateDraft({
+        description: result.data.description,
+      });
+    } catch {
+      setToast({
+        message: "Unable to generate a description right now.",
+        tone: "error",
+      });
+    } finally {
+      setIsGeneratingDescription(false);
+    }
   }
 
   async function handleSuggestTags() {
@@ -339,6 +381,28 @@ export function NewItemDialog({
                     rows={3}
                     value={draft.description}
                   />
+                  {isPro ? (
+                    <div className="mt-2 flex justify-end">
+                      <Button
+                        aria-label="Generate description"
+                        className="size-9 rounded-md"
+                        disabled={isSaving || isGeneratingDescription}
+                        onClick={handleGenerateDescription}
+                        title="Generate description"
+                        type="button"
+                        variant="ghost"
+                      >
+                        {isGeneratingDescription ? (
+                          <LoaderCircle
+                            aria-hidden="true"
+                            className="size-4 animate-spin"
+                          />
+                        ) : (
+                          <Sparkles aria-hidden="true" className="size-4" />
+                        )}
+                      </Button>
+                    </div>
+                  ) : null}
                 </EditField>
 
                 <EditField label="Tags">

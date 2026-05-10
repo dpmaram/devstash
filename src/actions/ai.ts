@@ -15,13 +15,24 @@ const autoTagSchema = z.object({
   tags: z.array(z.string().trim().min(1)).default([]),
 });
 
+const autoDescriptionSchema = z.object({
+  typeSlug: z.string().trim().max(32).optional().default(""),
+  title: z.string().trim().max(200).optional().default(""),
+  description: z.string().trim().max(1_000).optional().default(""),
+  content: z.string().max(20_000).optional().default(""),
+  url: z.string().trim().max(2_000).optional().default(""),
+  fileName: z.string().trim().max(260).optional().default(""),
+  language: z.string().trim().max(120).optional().default(""),
+  tags: z.array(z.string().trim().min(1)).default([]),
+});
+
 type AutoTagResponseClient = {
   responses: {
     create: (input: {
       model: string;
       instructions: string;
       input: string;
-      text: {
+      text?: {
         format: {
           type: "json_object";
         };
@@ -116,6 +127,86 @@ function buildModelInput(input: z.infer<typeof autoTagSchema>) {
       ? `Existing tags (avoid duplicates): ${existingTags.join(", ")}`
       : "Existing tags: (none)",
   ].join("\n");
+}
+
+function buildDescriptionInput(input: z.infer<typeof autoDescriptionSchema>) {
+  const truncatedContent = input.content.slice(0, 2_000).trim();
+  const existingTags = normalizeTags(input.tags);
+  const lines = [
+    "Write a concise description summary for this developer knowledge item.",
+    "Output plain text only.",
+    "Use 1 sentence by default and at most 2 short sentences.",
+  ];
+
+  if (input.typeSlug) {
+    lines.push(`Type: ${input.typeSlug}`);
+  }
+
+  if (input.title) {
+    lines.push(`Title: ${input.title}`);
+  }
+
+  if (input.description) {
+    lines.push(`Current description: ${input.description}`);
+  }
+
+  if (truncatedContent) {
+    lines.push(`Content: ${truncatedContent}`);
+  }
+
+  if (input.url) {
+    lines.push(`URL: ${input.url}`);
+  }
+
+  if (input.fileName) {
+    lines.push(`File name: ${input.fileName}`);
+  }
+
+  if (input.language) {
+    lines.push(`Language: ${input.language}`);
+  }
+
+  if (existingTags.length > 0) {
+    lines.push(`Tags: ${existingTags.join(", ")}`);
+  }
+
+  return lines.join("\n");
+}
+
+function hasDescriptionContext(input: z.infer<typeof autoDescriptionSchema>) {
+  return Boolean(
+    input.title ||
+      input.description ||
+      input.content.trim() ||
+      input.url ||
+      input.fileName ||
+      input.language ||
+      input.tags.length > 0,
+  );
+}
+
+function normalizeDescriptionSummary(summary: string) {
+  const cleaned = summary
+    .replace(/\s+/g, " ")
+    .replace(/^[-*]\s+/, "")
+    .trim();
+
+  if (!cleaned) {
+    return "";
+  }
+
+  const sentenceParts = cleaned
+    .split(/(?<=[.!?])\s+/)
+    .map((part) => part.trim())
+    .filter(Boolean);
+
+  const limited = sentenceParts.slice(0, 2).join(" ").trim();
+
+  if (limited) {
+    return limited;
+  }
+
+  return cleaned.slice(0, 280).trim();
 }
 
 export async function handleGenerateAutoTags(
@@ -223,4 +314,121 @@ export async function handleGenerateAutoTags(
 
 export async function generateAutoTags(data: unknown) {
   return handleGenerateAutoTags(data);
+}
+
+type GenerateAutoDescriptionResult =
+  | {
+      success: true;
+      data: {
+        description: string;
+      };
+    }
+  | {
+      success: false;
+      error: string;
+    };
+
+export async function handleGenerateAutoDescription(
+  data: unknown,
+  deps: GenerateAutoTagsDeps = defaultDeps,
+): Promise<GenerateAutoDescriptionResult> {
+  const parsedData = autoDescriptionSchema.safeParse(data);
+
+  if (!parsedData.success) {
+    return {
+      success: false,
+      error: parsedData.error.issues[0]?.message ?? "Invalid input.",
+    };
+  }
+
+  if (!hasDescriptionContext(parsedData.data)) {
+    return {
+      success: false,
+      error: "Add a title, content, URL, or file name first.",
+    };
+  }
+
+  const session = await deps.auth();
+
+  if (!session?.user?.id) {
+    return {
+      success: false,
+      error: "You must be signed in.",
+    };
+  }
+
+  const dashboardUser = await deps.getDashboardUserForSession(session.user);
+
+  if (!dashboardUser) {
+    return {
+      success: false,
+      error: "Unable to generate a description right now.",
+    };
+  }
+
+  const billingState = await deps.getUserBillingState(dashboardUser.id);
+
+  if (!billingState?.isPro) {
+    return {
+      success: false,
+      error: "AI description suggestions are available on Pro plans only.",
+    };
+  }
+
+  const rateLimitResult = await deps.checkUserRateLimit(
+    "aiAutoTags",
+    dashboardUser.id,
+  );
+
+  if (!rateLimitResult.success) {
+    return {
+      success: false,
+      error: `AI description suggestion limit reached. ${rateLimitResult.error}`,
+    };
+  }
+
+  const client = deps.getOpenAIClient();
+
+  if (!client) {
+    return {
+      success: false,
+      error: "AI service is not configured yet.",
+    };
+  }
+
+  try {
+    const response = await client.responses.create({
+      model: AI_MODEL,
+      instructions:
+        "You write concise descriptions for developer notes. Return plain text in one short sentence unless a second sentence adds essential clarity.",
+      input: buildDescriptionInput(parsedData.data),
+    });
+
+    const description = normalizeDescriptionSummary(response.output_text ?? "");
+
+    if (!description) {
+      return {
+        success: false,
+        error: "Unable to generate a description right now.",
+      };
+    }
+
+    return {
+      success: true,
+      data: {
+        description,
+      },
+    };
+  } catch (error) {
+    console.error("generateAutoDescription error:", error);
+
+    return {
+      success: false,
+      error: "Unable to generate a description right now.",
+    };
+  }
+}
+
+export async function generateAutoDescription(data: unknown) {
+  return handleGenerateAutoDescription(data);
 }
