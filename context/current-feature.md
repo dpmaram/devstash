@@ -1,31 +1,16 @@
-# Current Feature: AI Auto-Tagging
+# Current Feature
 
 ## Status
 
 <!-- Not Started|In Progress|Completed -->
 
-In Progress
-
 ## Goals
 
 <!-- Add goals for the active feature here -->
 
-- Add OpenAI-backed tag suggestion flow using `gpt-5-nano` and the Responses API.
-- Implement `generateAutoTags` server action with auth, Pro gating, validation, and rate limiting.
-- Add AI suggestion UX in both New Item dialog and Item Drawer edit mode with accept/reject controls.
-- Enforce 20 requests/hour AI rate limit and robust error/toast handling.
-- Add focused unit tests for the auto-tagging server action behavior.
-
-
 ## Notes
 
 <!-- Add notes or constraints for the active feature here -->
-
-- Use OpenAI Responses API (`client.responses.create`) with `text.format: { type: "json_object" }`; do not use Chat Completions for `gpt-5-nano`.
-- Handle model responses that may return either `{ "tags": [...] }` or an array format, then normalize tags to lowercase.
-- Truncate item content to 2000 chars before calling the model.
-- This is Pro-only and requires both server-side enforcement and UI-level gating.
-- `OPENAI_API_KEY` is already available in local env.
 
 ## History
 
@@ -190,3 +175,4 @@ In Progress
 - 2026-05-10 EDT - Loaded AI Auto-Tagging spec from `context/features/ai-auto-tag-spec.md`, set current feature to "AI Auto-Tagging", captured goals/notes for OpenAI Responses API + Pro gating + rate limits, and set status to Not Started.
 - 2026-05-10 EDT - Started AI Auto-Tagging on branch `feature/ai-auto-tagging` and set status to In Progress.
 - 2026-05-10 EDT - Implemented AI Auto-Tagging foundation and UX: added OpenAI client utility (`src/lib/ai/openai-client.ts`), `generateAutoTags` server action with auth/pro/rate-limit checks and Responses API parsing (`src/actions/ai.ts`), AI user-scoped rate limit rule (20/hour) in `src/lib/rate-limit.ts`, Suggest Tags UI with accept/reject chips in new-item and drawer-edit flows, and focused tests (`src/actions/ai.test.ts`, `src/lib/rate-limit.test.ts`). Verified with focused Vitest runs, `npx tsc --noEmit`, and `npm run lint`.
+- 2026-05-10 EDT - Completed AI Auto-Tagging, merged branch `feature/ai-auto-tagging` into `main`, deleted the local feature branch, and reset current feature details. Final implementation includes Pro-gated Suggest Tags UX in create/edit flows, OpenAI Responses API integration, AI-specific user rate limiting, focused unit tests, and compatibility update to the configured model in `src/lib/ai/openai-client.ts`.
