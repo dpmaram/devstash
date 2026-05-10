@@ -33,6 +33,7 @@ import {
 } from "@/lib/create-item-types";
 import {
   getCodeEditorLanguage,
+  getCodeEditorLanguageOptions,
   getCodeEditorLanguageLabel,
   shouldUseCodeEditor,
 } from "@/lib/code-editor";
@@ -317,6 +318,40 @@ export function NewItemDialog({
                   </EditField>
                 ) : canEditContent(draft.typeSlug) ? (
                   <EditField label="Content">
+                    {canEditLanguage(draft.typeSlug) ? (
+                      <div className="mb-3 space-y-2">
+                        <span className="block text-sm font-medium text-muted-foreground">
+                          Language
+                        </span>
+                        <select
+                          className="h-11 w-full rounded-lg border border-devstash-line bg-white/[0.03] px-3 text-base text-white outline-none transition-colors focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50"
+                          disabled={isSaving}
+                          onChange={(event) =>
+                            updateDraft({
+                              language: event.target.value,
+                            })
+                          }
+                          value={draft.language}
+                        >
+                          <option className="bg-[#0b0d10]" value="">
+                            {draft.typeSlug === "command"
+                              ? "Default (Shell)"
+                              : "Default (Plain text)"}
+                          </option>
+                          {getCodeEditorLanguageOptions(draft.typeSlug).map(
+                            (option) => (
+                              <option
+                                className="bg-[#0b0d10]"
+                                key={option.value}
+                                value={option.value}
+                              >
+                                {option.label}
+                              </option>
+                            ),
+                          )}
+                        </select>
+                      </div>
+                    ) : null}
                     {shouldUseCodeEditor(draft.typeSlug) ? (
                       <CodeEditor
                         ariaLabel="New item content editor"
@@ -376,22 +411,6 @@ export function NewItemDialog({
                       required
                       type="url"
                       value={draft.url}
-                    />
-                  </EditField>
-                ) : null}
-
-                {canEditLanguage(draft.typeSlug) ? (
-                  <EditField label="Language">
-                    <Input
-                      autoComplete="off"
-                      className="h-11 border-devstash-line bg-white/[0.03] px-3 text-base text-white"
-                      disabled={isSaving}
-                      onChange={(event) =>
-                        updateDraft({
-                          language: event.target.value,
-                        })
-                      }
-                      value={draft.language}
                     />
                   </EditField>
                 ) : null}

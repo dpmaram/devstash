@@ -1,5 +1,44 @@
 const codeEditorTypeSlugs = new Set(["snippet", "command"]);
 
+export type CodeEditorLanguageOption = {
+  label: string;
+  value: string;
+};
+
+const snippetLanguageOptions: CodeEditorLanguageOption[] = [
+  { value: "javascript", label: "JavaScript" },
+  { value: "typescript", label: "TypeScript" },
+  { value: "python", label: "Python" },
+  { value: "java", label: "Java" },
+  { value: "go", label: "Go" },
+  { value: "rust", label: "Rust" },
+  { value: "ruby", label: "Ruby" },
+  { value: "php", label: "PHP" },
+  { value: "csharp", label: "C#" },
+  { value: "cpp", label: "C++" },
+  { value: "json", label: "JSON" },
+  { value: "yaml", label: "YAML" },
+  { value: "sql", label: "SQL" },
+  { value: "html", label: "HTML" },
+  { value: "css", label: "CSS" },
+  { value: "markdown", label: "Markdown" },
+];
+
+const commandLanguageOptions: CodeEditorLanguageOption[] = [
+  { value: "shell", label: "Shell" },
+  { value: "bash", label: "Bash" },
+  { value: "zsh", label: "Zsh" },
+  { value: "powershell", label: "PowerShell" },
+  { value: "batch", label: "Batch" },
+  { value: "python", label: "Python" },
+  { value: "javascript", label: "JavaScript" },
+  { value: "typescript", label: "TypeScript" },
+  { value: "json", label: "JSON" },
+  { value: "yaml", label: "YAML" },
+  { value: "sql", label: "SQL" },
+  { value: "dockerfile", label: "Dockerfile" },
+];
+
 const monacoLanguageAliases = new Map([
   ["bash", "shell"],
   ["c#", "csharp"],
@@ -62,4 +101,18 @@ export function getCodeEditorLanguageLabel(
   }
 
   return typeSlug === "command" ? "Shell" : "Plain text";
+}
+
+export function getCodeEditorLanguageOptions(
+  typeSlug: string,
+): CodeEditorLanguageOption[] {
+  if (typeSlug === "command") {
+    return commandLanguageOptions;
+  }
+
+  if (typeSlug === "snippet") {
+    return snippetLanguageOptions;
+  }
+
+  return [];
 }

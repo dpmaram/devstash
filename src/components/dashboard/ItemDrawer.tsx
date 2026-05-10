@@ -56,6 +56,7 @@ import type { DashboardItem, ItemDetail } from "@/lib/db/items";
 import type { ItemTypeSlug } from "@/lib/mock-data";
 import {
   getCodeEditorLanguage,
+  getCodeEditorLanguageOptions,
   getCodeEditorLanguageLabel,
   shouldUseCodeEditor,
 } from "@/lib/code-editor";
@@ -848,7 +849,6 @@ function ItemEditForm({
   const tagsId = `${fieldId}-tags`;
   const contentId = `${fieldId}-content`;
   const collectionsId = `${fieldId}-collections`;
-  const languageId = `${fieldId}-language`;
   const urlId = `${fieldId}-url`;
 
   return (
@@ -934,6 +934,43 @@ function ItemEditForm({
 
         {canEditItemContent(item) ? (
           <EditField htmlFor={contentId} label="Content">
+            {canEditItemLanguage(item) ? (
+              <div className="mb-3 space-y-2">
+                <label
+                  className="block text-sm font-medium text-muted-foreground"
+                  htmlFor={`${contentId}-language`}
+                >
+                  Language
+                </label>
+                <select
+                  className="h-11 w-full rounded-lg border border-devstash-line bg-white/[0.03] px-3 text-base text-white outline-none transition-colors focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50"
+                  disabled={isSaving}
+                  id={`${contentId}-language`}
+                  onChange={(event) =>
+                    onChange({
+                      ...draft,
+                      language: event.target.value,
+                    })
+                  }
+                  value={draft.language}
+                >
+                  <option className="bg-[#0b0d10]" value="">
+                    {item.typeSlug === "command"
+                      ? "Default (Shell)"
+                      : "Default (Plain text)"}
+                  </option>
+                  {getCodeEditorLanguageOptions(item.typeSlug).map((option) => (
+                    <option
+                      className="bg-[#0b0d10]"
+                      key={option.value}
+                      value={option.value}
+                    >
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            ) : null}
             {shouldUseCodeEditor(item.typeSlug) ? (
               <CodeEditor
                 ariaLabel={`${item.title} content editor`}
@@ -995,24 +1032,6 @@ function ItemEditForm({
               }
               type="url"
               value={draft.url}
-            />
-          </EditField>
-        ) : null}
-
-        {canEditItemLanguage(item) ? (
-          <EditField htmlFor={languageId} label="Language">
-            <Input
-              autoComplete="off"
-              className="h-11 border-devstash-line bg-white/[0.03] px-3 text-base text-white"
-              disabled={isSaving}
-              id={languageId}
-              onChange={(event) =>
-                onChange({
-                  ...draft,
-                  language: event.target.value,
-                })
-              }
-              value={draft.language}
             />
           </EditField>
         ) : null}
