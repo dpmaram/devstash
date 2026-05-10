@@ -1,9 +1,11 @@
 "use client";
 
 import { loader, type OnMount } from "@monaco-editor/react";
-import { Check, Copy } from "lucide-react";
+import { Check, Copy, Crown, Loader2, Sparkles } from "lucide-react";
 import dynamic from "next/dynamic";
 import { useEffect, useMemo, useState } from "react";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -18,25 +20,40 @@ const DEFAULT_TAB_SIZE = 2;
 
 type CodeEditorProps = {
   ariaLabel?: string;
+  canExplain?: boolean;
   className?: string;
   disabled?: boolean;
+  explanation?: string;
+  explanationLabel?: string;
+  isExplaining?: boolean;
+  isProUser?: boolean;
   language: string;
   languageLabel: string;
+  onExplain?: () => void;
   onChange?: (value: string) => void;
   readOnly?: boolean;
   value: string;
 };
 
+type CodeEditorTab = "code" | "explain";
+
 export function CodeEditor({
   ariaLabel = "Code editor",
+  canExplain = false,
   className,
   disabled,
+  explanation = "",
+  explanationLabel = "Explain",
+  isExplaining = false,
+  isProUser = false,
   language,
   languageLabel,
+  onExplain,
   onChange,
   readOnly = false,
   value,
 }: CodeEditorProps) {
+  const [activeTab, setActiveTab] = useState<CodeEditorTab>("code");
   const [hasCopied, setHasCopied] = useState(false);
   const [isMonacoConfigured, setIsMonacoConfigured] = useState(false);
   const [editorPreferences, setEditorPreferences] = useState<{
@@ -57,6 +74,9 @@ export function CodeEditor({
     readOnly,
     value,
   ]);
+  const hasExplanation = explanation.trim().length > 0;
+  const currentTab = hasExplanation ? activeTab : "code";
+  const showExplainControls = readOnly && canExplain;
 
   // Load editor preferences from server
   useEffect(() => {
@@ -156,9 +176,55 @@ export function CodeEditor({
           <span className="size-3 rounded-full bg-yellow-300" />
           <span className="size-3 rounded-full bg-emerald-400" />
         </div>
-        <span className="min-w-0 flex-1 truncate font-mono text-xs text-zinc-400">
-          {languageLabel}
-        </span>
+        {hasExplanation ? (
+          <div className="flex min-w-0 flex-1 items-center gap-1">
+            <CodeTabButton
+              active={currentTab === "code"}
+              label={languageLabel}
+              onClick={() => setActiveTab("code")}
+            />
+            <CodeTabButton
+              active={currentTab === "explain"}
+              label={explanationLabel}
+              onClick={() => setActiveTab("explain")}
+            />
+          </div>
+        ) : (
+          <span className="min-w-0 flex-1 truncate font-mono text-xs text-zinc-400">
+            {languageLabel}
+          </span>
+        )}
+        {showExplainControls ? (
+          isProUser ? (
+            <Button
+              aria-label={isExplaining ? "Generating explanation" : "Explain code"}
+              className="h-8 gap-1.5 rounded-md bg-white/[0.04] px-2.5 text-xs text-zinc-200 hover:bg-white/[0.08] hover:text-white"
+              disabled={disabled || value.length === 0 || isExplaining}
+              onClick={onExplain}
+              type="button"
+              variant="ghost"
+            >
+              {isExplaining ? (
+                <Loader2 aria-hidden="true" className="size-3.5 animate-spin" />
+              ) : (
+                <Sparkles aria-hidden="true" className="size-3.5" />
+              )}
+              <span>{isExplaining ? "Explaining" : "Explain"}</span>
+            </Button>
+          ) : (
+            <Button
+              aria-label="AI features require Pro subscription"
+              className="h-8 gap-1.5 rounded-md bg-white/[0.04] px-2.5 text-xs text-zinc-200"
+              disabled
+              title="AI features require Pro subscription"
+              type="button"
+              variant="ghost"
+            >
+              <Crown aria-hidden="true" className="size-3.5 text-amber-300" />
+              <span>Explain</span>
+            </Button>
+          )
+        ) : null}
         <Button
           aria-label={hasCopied ? "Copied code" : "Copy code"}
           className="h-8 gap-1.5 rounded-md bg-white/[0.04] px-2.5 text-xs text-zinc-200 hover:bg-white/[0.08] hover:text-white"
@@ -176,7 +242,14 @@ export function CodeEditor({
         </Button>
       </div>
       <div className="devstash-code-editor" style={{ height: editorHeight }}>
-        {isMonacoConfigured ? (
+        {currentTab === "explain" && hasExplanation ? (
+          <div
+            aria-label="AI explanation"
+            className="markdown-preview h-full overflow-auto px-4 py-4 text-sm leading-7 text-zinc-100"
+          >
+            <ReactMarkdown remarkPlugins={[remarkGfm]}>{explanation}</ReactMarkdown>
+          </div>
+        ) : isMonacoConfigured ? (
           <MonacoEditor
             height="100%"
             language={language}
@@ -226,6 +299,29 @@ function CodeEditorLoading() {
     <div className="flex h-full items-center justify-center bg-[#0b0d10] px-4 text-sm text-zinc-500">
       Loading editor...
     </div>
+  );
+}
+
+function CodeTabButton({
+  active,
+  label,
+  onClick,
+}: {
+  active: boolean;
+  label: string;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      className={cn(
+        "inline-flex h-8 shrink-0 items-center rounded-md px-2.5 text-xs text-zinc-400 transition hover:bg-white/[0.06] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50",
+        active && "bg-white/[0.08] text-white",
+      )}
+      onClick={onClick}
+      type="button"
+    >
+      {label}
+    </button>
   );
 }
 

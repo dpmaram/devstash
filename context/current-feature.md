@@ -1,16 +1,32 @@
-# Current Feature
+# Current Feature: AI Explain Code
 
 ## Status
 
 <!-- Not Started|In Progress|Completed -->
 
+In Progress
+
 ## Goals
 
 <!-- Add goals for the active feature here -->
 
+- Add an `explainCode` server action with auth, Pro gating, Zod validation, and rate limiting.
+- Add an Explain icon button (Sparkles) in the code editor header next to Copy in item drawer read view.
+- Show Explain capability only for snippet and command item types in the item drawer (not in create/edit forms).
+- Add Code/Explain tabs in the editor header after generation so users can toggle between original code and AI explanation.
+- Render explanation markdown inline in the same editor container space.
+- Keep explanations concise (about 200-300 words), handle loading with spinner, and surface errors/toasts for gating, limits, and AI failures.
+- Add focused unit tests for the `explainCode` server action.
+
 ## Notes
 
 <!-- Add notes or constraints for the active feature here -->
+
+- Use OpenAI model `gpt-5-nano` for explanation generation per spec.
+- Explanations are not persisted; regenerate on each click.
+- This feature is Pro-only and free users should see Crown icon plus tooltip in UI.
+- Pass `isPro` through item drawer/code editor props where needed.
+- See `docs/ai-integration-plan.md` for architecture context.
 
 ## History
 
@@ -180,3 +196,6 @@
 - 2026-05-10 EDT - Started AI Description Summary Generation on branch `feature/ai-description-summary-generation` and set status to In Progress.
 - 2026-05-10 EDT - Implemented AI Description Summary Generation: added `generateAutoDescription` server action in `src/actions/ai.ts` with auth, Pro gating, rate limiting, context-aware prompt composition from draft fields, and 1-2 sentence normalization; wired icon-only Generate Description actions into `src/components/dashboard/NewItemDialog.tsx` and `src/components/dashboard/ItemDrawer.tsx` to update Description pre-save for all content types using available draft context; added focused action tests in `src/actions/ai.test.ts`. Verified with `npm test -- src/actions/ai.test.ts`, `npx tsc --noEmit`, and `npm run lint`.
 - 2026-05-10 EDT - Completed AI Description Summary Generation, merged branch `feature/ai-description-summary-generation` into `main`, deleted the local feature branch, and reset current feature details. Final implementation includes icon-triggered pre-save description generation in create/edit flows across all item types, context-aware AI summary generation from available draft fields, and focused server-action tests.
+- 2026-05-10 EDT - Loaded AI Explain Code spec from `context/features/ai-explain-spec.md` and set status to Not Started. Scope: add Pro-gated inline code explanation for snippet/command item drawer read views with Explain button, Code/Explain tabs, markdown rendering, and server-action tests.
+- 2026-05-10 EDT - Started AI Explain Code on branch `feature/ai-explain-code` and set status to In Progress.
+- 2026-05-10 EDT - Implemented AI Explain Code: added `explainCode` server action in `src/actions/ai.ts` with auth, Pro gating, Zod validation for snippet/command types, shared AI rate limiting, and concise markdown explanation output using model `gpt-5-nano`; enhanced `src/components/dashboard/CodeEditor.tsx` with Explain control, free-user Crown tooltip gating, and Code/Explain tabs; wired read-only item drawer code views in `src/components/dashboard/ItemDrawer.tsx` to request and display inline explanations with toast-based error handling for AI failures. Added focused explain action unit tests in `src/actions/ai.test.ts`. Verified with `npm test -- src/actions/ai.test.ts`, `npx tsc --noEmit`, and `npm run lint`.
