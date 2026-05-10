@@ -73,6 +73,7 @@ import {
   explainCode,
   generateAutoDescription,
   generateAutoTags,
+  optimizePrompt,
 } from "@/actions/ai";
 
 type ItemDetailResponse =
@@ -348,9 +349,11 @@ function ItemDetailSheet({
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isGeneratingDescription, setIsGeneratingDescription] = useState(false);
+  const [isOptimizingPrompt, setIsOptimizingPrompt] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isSuggestingTags, setIsSuggestingTags] = useState(false);
   const [mode, setMode] = useState<"edit" | "view">("view");
+  const [optimizedPromptSuggestion, setOptimizedPromptSuggestion] = useState("");
   const [suggestedTags, setSuggestedTags] = useState<string[]>([]);
   const [toast, setToast] = useState<DrawerToast>(null);
   const isEditingCurrentItem =
@@ -373,6 +376,7 @@ function ItemDetailSheet({
 
     setDraft(createItemEditDraft(state.item));
     setFormError(null);
+    setOptimizedPromptSuggestion("");
     setSuggestedTags([]);
     setMode("edit");
   }
@@ -380,6 +384,7 @@ function ItemDetailSheet({
   function cancelEdit() {
     setDraft(state.item ? createItemEditDraft(state.item) : null);
     setFormError(null);
+    setOptimizedPromptSuggestion("");
     setSuggestedTags([]);
     setMode("view");
   }
@@ -464,6 +469,73 @@ function ItemDetailSheet({
     }
   }
 
+  async function optimizePromptDraft() {
+    if (
+      !state.item ||
+      !draft ||
+      draft.itemId !== state.item.id ||
+      state.item.typeSlug !== "prompt" ||
+      isOptimizingPrompt ||
+      draft.content.trim().length === 0
+    ) {
+      return;
+    }
+
+    setIsOptimizingPrompt(true);
+
+    try {
+      const result = await optimizePrompt({
+        typeSlug: "prompt",
+        title: draft.title,
+        description: draft.description,
+        content: draft.content,
+        tags: getDraftTags(draft.tagsText),
+      });
+
+      if (!result.success) {
+        setToast({
+          message: result.error,
+          tone: "error",
+        });
+        return;
+      }
+
+      if (!result.data.changed) {
+        setOptimizedPromptSuggestion("");
+        setToast({
+          message: "Prompt already looks optimized.",
+          tone: "success",
+        });
+        return;
+      }
+
+      setOptimizedPromptSuggestion(result.data.optimizedPrompt);
+    } catch {
+      setToast({
+        message: "Unable to optimize prompt right now.",
+        tone: "error",
+      });
+    } finally {
+      setIsOptimizingPrompt(false);
+    }
+  }
+
+  function acceptOptimizedPrompt() {
+    if (!draft || !optimizedPromptSuggestion) {
+      return;
+    }
+
+    setDraft({
+      ...draft,
+      content: optimizedPromptSuggestion,
+    });
+    setOptimizedPromptSuggestion("");
+  }
+
+  function rejectOptimizedPrompt() {
+    setOptimizedPromptSuggestion("");
+  }
+
   function acceptSuggestedTag(tag: string) {
     if (!draft) {
       return;
@@ -519,6 +591,7 @@ function ItemDetailSheet({
 
       replaceItem(result.data);
       setDraft(createItemEditDraft(result.data));
+      setOptimizedPromptSuggestion("");
       setMode("view");
       setToast({
         message: "Item updated.",
@@ -586,7 +659,9 @@ function ItemDetailSheet({
       setIsDeleteDialogOpen(false);
       setIsDeleting(false);
       setIsGeneratingDescription(false);
+      setIsOptimizingPrompt(false);
       setIsSaving(false);
+      setOptimizedPromptSuggestion("");
       setIsSuggestingTags(false);
       setMode("view");
       setSuggestedTags([]);
@@ -753,21 +828,27 @@ function ItemDetailSheet({
                   draft={draft}
                   error={formError}
                   isGeneratingDescription={isGeneratingDescription}
+                  isOptimizingPrompt={isOptimizingPrompt}
                   isProUser={isProUser}
                   isSaving={isSaving}
                   isSuggestingTags={isSuggestingTags}
                   item={state.item}
+                  onAcceptOptimizedPrompt={acceptOptimizedPrompt}
                   onAcceptSuggestedTag={acceptSuggestedTag}
                   onChange={(nextDraft) => {
                     setDraft(nextDraft);
+                    setOptimizedPromptSuggestion("");
                     setSuggestedTags((currentTags) =>
                       filterSuggestedTags(currentTags, nextDraft.tagsText),
                     );
                   }}
+                  onOptimizePrompt={optimizePromptDraft}
+                  onRejectOptimizedPrompt={rejectOptimizedPrompt}
                   onRejectSuggestedTag={rejectSuggestedTag}
                   onSave={saveEdit}
                   onGenerateDescription={generateDescription}
                   onSuggestTags={suggestTags}
+                  optimizedPromptSuggestion={optimizedPromptSuggestion}
                   suggestedTags={suggestedTags}
                 />
               ) : (
@@ -980,32 +1061,42 @@ function ItemEditForm({
   draft,
   error,
   isGeneratingDescription,
+  isOptimizingPrompt,
   isProUser,
   isSaving,
   isSuggestingTags,
   item,
+  onAcceptOptimizedPrompt,
   onAcceptSuggestedTag,
   onChange,
   onGenerateDescription,
+  onOptimizePrompt,
+  onRejectOptimizedPrompt,
   onRejectSuggestedTag,
   onSave,
   onSuggestTags,
+  optimizedPromptSuggestion,
   suggestedTags,
 }: {
   availableCollections: DashboardCollection[];
   draft: ItemEditDraft;
   error: string | null;
   isGeneratingDescription: boolean;
+  isOptimizingPrompt: boolean;
   isProUser: boolean;
   isSaving: boolean;
   isSuggestingTags: boolean;
   item: ItemDetail;
+  onAcceptOptimizedPrompt: () => void;
   onAcceptSuggestedTag: (tag: string) => void;
   onChange: (draft: ItemEditDraft) => void;
   onGenerateDescription: () => void;
+  onOptimizePrompt: () => void;
+  onRejectOptimizedPrompt: () => void;
   onRejectSuggestedTag: (tag: string) => void;
   onSave: () => void;
   onSuggestTags: () => void;
+  optimizedPromptSuggestion: string;
   suggestedTags: string[];
 }) {
   const fieldId = useId();
@@ -1235,17 +1326,56 @@ function ItemEditForm({
                 value={draft.content}
               />
             ) : shouldUseMarkdownEditor(item.typeSlug) ? (
-              <MarkdownEditor
-                ariaLabel={`${item.title} markdown content editor`}
-                disabled={isSaving}
-                onChange={(value) =>
-                  onChange({
-                    ...draft,
-                    content: value,
-                  })
-                }
-                value={draft.content}
-              />
+              <>
+                <MarkdownEditor
+                  ariaLabel={`${item.title} markdown content editor`}
+                  canOptimize={item.typeSlug === "prompt"}
+                  disabled={isSaving}
+                  isOptimizing={isOptimizingPrompt}
+                  isProUser={isProUser}
+                  onChange={(value) =>
+                    onChange({
+                      ...draft,
+                      content: value,
+                    })
+                  }
+                  onOptimize={onOptimizePrompt}
+                  value={draft.content}
+                />
+                {item.typeSlug === "prompt" && optimizedPromptSuggestion ? (
+                  <div className="mt-3 space-y-2 rounded-lg border border-devstash-line bg-white/[0.03] p-3">
+                    <p className="text-xs uppercase tracking-wide text-muted-foreground">
+                      Use optimized prompt?
+                    </p>
+                    <div className="max-h-40 overflow-auto rounded-md border border-devstash-line bg-black/20 px-3 py-2 text-sm leading-6 text-zinc-100">
+                      {optimizedPromptSuggestion}
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      <Button
+                        className="h-8 gap-1.5 rounded-md px-3 text-xs"
+                        onClick={onAcceptOptimizedPrompt}
+                        type="button"
+                        variant="ghost"
+                      >
+                        <Check
+                          aria-hidden="true"
+                          className="size-3.5 text-emerald-300"
+                        />
+                        <span>Use this prompt</span>
+                      </Button>
+                      <Button
+                        className="h-8 gap-1.5 rounded-md px-3 text-xs"
+                        onClick={onRejectOptimizedPrompt}
+                        type="button"
+                        variant="ghost"
+                      >
+                        <X aria-hidden="true" className="size-3.5" />
+                        <span>Keep current</span>
+                      </Button>
+                    </div>
+                  </div>
+                ) : null}
+              </>
             ) : (
               <EditTextarea
                 className="min-h-64 font-mono text-sm leading-7"

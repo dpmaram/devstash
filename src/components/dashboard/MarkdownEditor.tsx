@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, Copy, Eye, Pencil } from "lucide-react";
+import { Check, Copy, Crown, Eye, Loader2, Pencil, Sparkles } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -11,8 +11,12 @@ import { cn } from "@/lib/utils";
 
 type MarkdownEditorProps = {
   ariaLabel?: string;
+  canOptimize?: boolean;
   className?: string;
   disabled?: boolean;
+  isOptimizing?: boolean;
+  isProUser?: boolean;
+  onOptimize?: () => void;
   onChange?: (value: string) => void;
   readOnly?: boolean;
   value: string;
@@ -22,8 +26,12 @@ type MarkdownEditorTab = "write" | "preview";
 
 export function MarkdownEditor({
   ariaLabel = "Markdown editor",
+  canOptimize = false,
   className,
   disabled,
+  isOptimizing = false,
+  isProUser = false,
+  onOptimize,
   onChange,
   readOnly = false,
   value,
@@ -88,6 +96,37 @@ export function MarkdownEditor({
             Markdown
           </span>
         )}
+        {canOptimize ? (
+          isProUser ? (
+            <Button
+              aria-label={isOptimizing ? "Optimizing prompt" : "Optimize prompt"}
+              className="h-8 gap-1.5 rounded-md bg-white/[0.04] px-2.5 text-xs text-zinc-200 hover:bg-white/[0.08] hover:text-white"
+              disabled={disabled || value.length === 0 || isOptimizing}
+              onClick={onOptimize}
+              type="button"
+              variant="ghost"
+            >
+              {isOptimizing ? (
+                <Loader2 aria-hidden="true" className="size-3.5 animate-spin" />
+              ) : (
+                <Sparkles aria-hidden="true" className="size-3.5" />
+              )}
+              <span>{isOptimizing ? "Optimizing" : "Optimize"}</span>
+            </Button>
+          ) : (
+            <Button
+              aria-label="AI features require Pro subscription"
+              className="h-8 gap-1.5 rounded-md bg-white/[0.04] px-2.5 text-xs text-zinc-200"
+              disabled
+              title="AI features require Pro subscription"
+              type="button"
+              variant="ghost"
+            >
+              <Crown aria-hidden="true" className="size-3.5 text-amber-300" />
+              <span>Optimize</span>
+            </Button>
+          )
+        ) : null}
         <Button
           aria-label={hasCopied ? "Copied markdown" : "Copy markdown"}
           className="h-8 gap-1.5 rounded-md bg-white/[0.04] px-2.5 text-xs text-zinc-200 hover:bg-white/[0.08] hover:text-white"

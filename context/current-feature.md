@@ -1,16 +1,30 @@
-# Current Feature
+# Current Feature: Prompt Optimization for Prompt Types
 
 ## Status
 
 <!-- Not Started|In Progress|Completed -->
 
+In Progress
+
 ## Goals
 
 <!-- Add goals for the active feature here -->
 
+- Add a prompt optimization flow for prompt item types that analyzes current prompt content and returns a refined version when improvements are possible.
+- Add an `Optimize` button in the prompt editor header, matching the placement and behavior style used by the Explain button in snippet/command headers.
+- Show the optimized prompt as a suggested replacement and ask the user to confirm whether to use the updated prompt.
+- Support explicit accept/reject actions so users can apply the optimized prompt or keep their original text.
+- Include loading and error handling UX that matches existing AI action patterns.
+- Add focused tests for the new optimization server action behavior.
+
 ## Notes
 
 <!-- Add notes or constraints for the active feature here -->
+
+- Apply this only to prompt types; avoid exposing Optimize for non-prompt item types.
+- Keep existing prompt text unchanged until the user explicitly accepts the optimized suggestion.
+- Reuse existing auth, Pro plan gating, and AI rate-limiting patterns from current AI actions.
+- Align button/icon styling and header layout with existing code editor action controls for consistency.
 
 ## History
 
@@ -184,3 +198,5 @@
 - 2026-05-10 EDT - Started AI Explain Code on branch `feature/ai-explain-code` and set status to In Progress.
 - 2026-05-10 EDT - Implemented AI Explain Code: added `explainCode` server action in `src/actions/ai.ts` with auth, Pro gating, Zod validation for snippet/command types, shared AI rate limiting, and concise markdown explanation output using model `gpt-5-nano`; enhanced `src/components/dashboard/CodeEditor.tsx` with Explain control, free-user Crown tooltip gating, and Code/Explain tabs; wired read-only item drawer code views in `src/components/dashboard/ItemDrawer.tsx` to request and display inline explanations with toast-based error handling for AI failures. Added focused explain action unit tests in `src/actions/ai.test.ts`. Verified with `npm test -- src/actions/ai.test.ts`, `npx tsc --noEmit`, and `npm run lint`.
 - 2026-05-10 EDT - Completed AI Explain Code, merged branch `feature/ai-explain-code` into `main`, deleted the local feature branch, and reset current feature details. Final implementation includes Pro-gated Explain action in read-only code viewer for snippet/command items, inline Code/Explain tab rendering with markdown output, and focused server-action test coverage.
+- 2026-05-10 EDT - Loaded inline feature request for Prompt Optimization for Prompt Types and set status to Not Started. Scope: add an Optimize header action for prompt types that refines the current prompt and asks the user whether to apply the suggested update.
+- 2026-05-10 09:36 EDT - Started Prompt Optimization for Prompt Types on branch `feature/prompt-optimization-for-prompt-types` and set status to In Progress.

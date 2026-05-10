@@ -26,6 +26,14 @@ const autoDescriptionSchema = z.object({
   tags: z.array(z.string().trim().min(1)).default([]),
 });
 
+const optimizePromptSchema = z.object({
+  typeSlug: z.literal("prompt").optional().default("prompt"),
+  title: z.string().trim().max(200).optional().default(""),
+  content: z.string().trim().min(1, "Prompt content is required.").max(20_000),
+  description: z.string().trim().max(1_000).optional().default(""),
+  tags: z.array(z.string().trim().min(1)).default([]),
+});
+
 const explainCodeSchema = z.object({
   typeSlug: z.enum(["snippet", "command"]),
   title: z.string().trim().max(200).optional().default(""),
@@ -182,6 +190,32 @@ function buildDescriptionInput(input: z.infer<typeof autoDescriptionSchema>) {
   return lines.join("\n");
 }
 
+function buildOptimizePromptInput(input: z.infer<typeof optimizePromptSchema>) {
+  const truncatedContent = input.content.slice(0, 4_000).trim();
+  const existingTags = normalizeTags(input.tags);
+  const lines = [
+    "Refine this developer prompt to improve clarity, constraints, and output quality.",
+    "Return only the optimized prompt text. Do not add markdown fences, notes, or explanations.",
+    "If the prompt is already strong, return it with minimal wording changes.",
+  ];
+
+  if (input.title) {
+    lines.push(`Title: ${input.title}`);
+  }
+
+  if (input.description) {
+    lines.push(`Description: ${input.description}`);
+  }
+
+  if (existingTags.length > 0) {
+    lines.push(`Tags: ${existingTags.join(", ")}`);
+  }
+
+  lines.push(`Prompt:\n${truncatedContent}`);
+
+  return lines.join("\n\n");
+}
+
 function hasDescriptionContext(input: z.infer<typeof autoDescriptionSchema>) {
   return Boolean(
     input.title ||
@@ -216,6 +250,10 @@ function normalizeDescriptionSummary(summary: string) {
   }
 
   return cleaned.slice(0, 280).trim();
+}
+
+function normalizePromptText(prompt: string) {
+  return prompt.replace(/\r/g, "").replace(/\s+/g, " ").trim();
 }
 
 function buildExplainCodeInput(input: z.infer<typeof explainCodeSchema>) {
@@ -486,6 +524,116 @@ type ExplainCodeResult =
       error: string;
     };
 
+type OptimizePromptResult =
+  | {
+      success: true;
+      data: {
+        optimizedPrompt: string;
+        changed: boolean;
+      };
+    }
+  | {
+      success: false;
+      error: string;
+    };
+
+export async function handleOptimizePrompt(
+  data: unknown,
+  deps: GenerateAutoTagsDeps = defaultDeps,
+): Promise<OptimizePromptResult> {
+  const parsedData = optimizePromptSchema.safeParse(data);
+
+  if (!parsedData.success) {
+    return {
+      success: false,
+      error: parsedData.error.issues[0]?.message ?? "Invalid input.",
+    };
+  }
+
+  const session = await deps.auth();
+
+  if (!session?.user?.id) {
+    return {
+      success: false,
+      error: "You must be signed in.",
+    };
+  }
+
+  const dashboardUser = await deps.getDashboardUserForSession(session.user);
+
+  if (!dashboardUser) {
+    return {
+      success: false,
+      error: "Unable to optimize prompt right now.",
+    };
+  }
+
+  const billingState = await deps.getUserBillingState(dashboardUser.id);
+
+  if (!billingState?.isPro) {
+    return {
+      success: false,
+      error: "AI features require Pro subscription.",
+    };
+  }
+
+  const rateLimitResult = await deps.checkUserRateLimit(
+    "aiAutoTags",
+    dashboardUser.id,
+  );
+
+  if (!rateLimitResult.success) {
+    return {
+      success: false,
+      error: `AI prompt optimization limit reached. ${rateLimitResult.error}`,
+    };
+  }
+
+  const client = deps.getOpenAIClient();
+
+  if (!client) {
+    return {
+      success: false,
+      error: "AI service is not configured yet.",
+    };
+  }
+
+  try {
+    const response = await client.responses.create({
+      model: EXPLAIN_CODE_MODEL,
+      instructions:
+        "You improve developer prompts for clarity and output quality. Return only the rewritten prompt text.",
+      input: buildOptimizePromptInput(parsedData.data),
+    });
+
+    const optimizedPrompt = (response.output_text ?? "").trim();
+
+    if (!optimizedPrompt) {
+      return {
+        success: false,
+        error: "Unable to optimize prompt right now.",
+      };
+    }
+
+    return {
+      success: true,
+      data: {
+        optimizedPrompt,
+        changed:
+          normalizePromptText(optimizedPrompt) !==
+          normalizePromptText(parsedData.data.content),
+      },
+    };
+  } catch (error) {
+    console.error("optimizePrompt error:", error);
+
+    return {
+      success: false,
+      error: "Unable to optimize prompt right now.",
+    };
+  }
+}
+
 export async function handleExplainCode(
   data: unknown,
   deps: GenerateAutoTagsDeps = defaultDeps,
@@ -582,4 +730,8 @@ export async function handleExplainCode(
 
 export async function explainCode(data: unknown) {
   return handleExplainCode(data);
+}
+
+export async function optimizePrompt(data: unknown) {
+  return handleOptimizePrompt(data);
 }

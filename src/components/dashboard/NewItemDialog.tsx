@@ -12,7 +12,11 @@ import {
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
-import { generateAutoDescription, generateAutoTags } from "@/actions/ai";
+import {
+  generateAutoDescription,
+  generateAutoTags,
+  optimizePrompt,
+} from "@/actions/ai";
 import { createItem as createItemAction } from "@/actions/items";
 import { CollectionPicker } from "@/components/dashboard/CollectionPicker";
 import { CodeEditor } from "@/components/dashboard/CodeEditor";
@@ -81,7 +85,10 @@ export function NewItemDialog({
   const [isOpen, setIsOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isGeneratingDescription, setIsGeneratingDescription] = useState(false);
+  const [isOptimizingPrompt, setIsOptimizingPrompt] = useState(false);
   const [isSuggestingTags, setIsSuggestingTags] = useState(false);
+  const [optimizedPromptSuggestion, setOptimizedPromptSuggestion] =
+    useState("");
   const [suggestedTags, setSuggestedTags] = useState<string[]>([]);
   const [toast, setToast] = useState<NewItemToast>(null);
   const typeOptions = getCreateableItemTypes(itemTypes);
@@ -101,9 +108,75 @@ export function NewItemDialog({
     setDraft(createInitialNewItemDraft(initialTypeSlug));
     setError(null);
     setIsGeneratingDescription(false);
+    setIsOptimizingPrompt(false);
     setIsSaving(false);
+    setOptimizedPromptSuggestion("");
     setIsSuggestingTags(false);
     setSuggestedTags([]);
+  }
+
+  async function handleOptimizePrompt() {
+    if (
+      isSaving ||
+      isOptimizingPrompt ||
+      draft.typeSlug !== "prompt" ||
+      draft.content.trim().length === 0
+    ) {
+      return;
+    }
+
+    setIsOptimizingPrompt(true);
+
+    try {
+      const result = await optimizePrompt({
+        typeSlug: "prompt",
+        title: draft.title,
+        description: draft.description,
+        content: draft.content,
+        tags: getDraftTags(draft.tagsText),
+      });
+
+      if (!result.success) {
+        setToast({
+          message: result.error,
+          tone: "error",
+        });
+        return;
+      }
+
+      if (!result.data.changed) {
+        setOptimizedPromptSuggestion("");
+        setToast({
+          message: "Prompt already looks optimized.",
+          tone: "success",
+        });
+        return;
+      }
+
+      setOptimizedPromptSuggestion(result.data.optimizedPrompt);
+    } catch {
+      setToast({
+        message: "Unable to optimize prompt right now.",
+        tone: "error",
+      });
+    } finally {
+      setIsOptimizingPrompt(false);
+    }
+  }
+
+  function acceptOptimizedPrompt() {
+    if (!optimizedPromptSuggestion) {
+      return;
+    }
+
+    updateDraft({
+      content: optimizedPromptSuggestion,
+    });
+    setOptimizedPromptSuggestion("");
+  }
+
+  function rejectOptimizedPrompt() {
+    setOptimizedPromptSuggestion("");
   }
 
   async function handleGenerateDescription() {
@@ -340,11 +413,12 @@ export function NewItemDialog({
                           )}
                           disabled={isSaving}
                           key={itemType.slug}
-                          onClick={() =>
+                          onClick={() => {
                             updateDraft({
                               typeSlug: itemType.slug,
-                            })
-                          }
+                            });
+                            setOptimizedPromptSuggestion("");
+                          }}
                           type="button"
                         >
                           {renderItemTypeIcon(itemType.slug)}
@@ -558,31 +632,77 @@ export function NewItemDialog({
                           draft.typeSlug,
                         )}
                         onChange={(content) =>
-                          updateDraft({
-                            content,
-                          })
+                          {
+                            updateDraft({
+                              content,
+                            });
+                            setOptimizedPromptSuggestion("");
+                          }
                         }
                         value={draft.content}
                       />
                     ) : shouldUseMarkdownEditor(draft.typeSlug) ? (
-                      <MarkdownEditor
-                        ariaLabel="New item markdown content editor"
-                        disabled={isSaving}
-                        onChange={(content) =>
-                          updateDraft({
-                            content,
-                          })
-                        }
-                        value={draft.content}
-                      />
+                      <>
+                        <MarkdownEditor
+                          ariaLabel="New item markdown content editor"
+                          canOptimize={draft.typeSlug === "prompt"}
+                          disabled={isSaving}
+                          isOptimizing={isOptimizingPrompt}
+                          isProUser={isPro}
+                          onChange={(content) => {
+                            updateDraft({
+                              content,
+                            });
+                            setOptimizedPromptSuggestion("");
+                          }}
+                          onOptimize={handleOptimizePrompt}
+                          value={draft.content}
+                        />
+                        {draft.typeSlug === "prompt" && optimizedPromptSuggestion ? (
+                          <div className="mt-3 space-y-2 rounded-lg border border-devstash-line bg-white/[0.03] p-3">
+                            <p className="text-xs uppercase tracking-wide text-muted-foreground">
+                              Use optimized prompt?
+                            </p>
+                            <div className="max-h-40 overflow-auto rounded-md border border-devstash-line bg-black/20 px-3 py-2 text-sm leading-6 text-zinc-100">
+                              {optimizedPromptSuggestion}
+                            </div>
+                            <div className="flex flex-wrap gap-2">
+                              <Button
+                                className="h-8 gap-1.5 rounded-md px-3 text-xs"
+                                onClick={acceptOptimizedPrompt}
+                                type="button"
+                                variant="ghost"
+                              >
+                                <Check
+                                  aria-hidden="true"
+                                  className="size-3.5 text-emerald-300"
+                                />
+                                <span>Use this prompt</span>
+                              </Button>
+                              <Button
+                                className="h-8 gap-1.5 rounded-md px-3 text-xs"
+                                onClick={rejectOptimizedPrompt}
+                                type="button"
+                                variant="ghost"
+                              >
+                                <X aria-hidden="true" className="size-3.5" />
+                                <span>Keep current</span>
+                              </Button>
+                            </div>
+                          </div>
+                        ) : null}
+                      </>
                     ) : (
                       <EditTextarea
                         className="min-h-56 font-mono text-sm leading-7"
                         disabled={isSaving}
                         onChange={(content) =>
-                          updateDraft({
-                            content,
-                          })
+                          {
+                            updateDraft({
+                              content,
+                            });
+                            setOptimizedPromptSuggestion("");
+                          }
                         }
                         rows={10}
                         value={draft.content}

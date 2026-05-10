@@ -503,3 +503,181 @@ describe("explainCode action", () => {
     });
   });
 });
+
+describe("optimizePrompt action", () => {
+  it("requires prompt content", async () => {
+    const { handleOptimizePrompt } = await import("./ai");
+
+    const result = await handleOptimizePrompt(
+      {
+        typeSlug: "prompt",
+        content: "   ",
+      },
+      {
+        auth: async () => {
+          throw new Error("auth should not be called");
+        },
+        checkUserRateLimit: async () => {
+          throw new Error("checkUserRateLimit should not be called");
+        },
+        getDashboardUserForSession: async () => {
+          throw new Error("getDashboardUserForSession should not be called");
+        },
+        getOpenAIClient: () => {
+          throw new Error("getOpenAIClient should not be called");
+        },
+        getUserBillingState: async () => {
+          throw new Error("getUserBillingState should not be called");
+        },
+      },
+    );
+
+    assert.deepEqual(result, {
+      success: false,
+      error: "Prompt content is required.",
+    });
+  });
+
+  it("blocks free-tier users", async () => {
+    const { handleOptimizePrompt } = await import("./ai");
+
+    const result = await handleOptimizePrompt(
+      {
+        typeSlug: "prompt",
+        title: "Summarize release notes",
+        content: "Summarize this changelog.",
+      },
+      {
+        auth: async () => ({
+          user: {
+            id: "signed-in-user",
+          },
+        }),
+        checkUserRateLimit: async () => {
+          throw new Error("checkUserRateLimit should not be called");
+        },
+        getDashboardUserForSession: async () => ({
+          id: "dashboard-user",
+        }),
+        getOpenAIClient: () => {
+          throw new Error("getOpenAIClient should not be called");
+        },
+        getUserBillingState: async () => ({
+          id: "dashboard-user",
+          isPro: false,
+          planTier: "FREE",
+          stripeCustomerId: null,
+          stripeSubscriptionId: null,
+        }),
+      },
+    );
+
+    assert.deepEqual(result, {
+      success: false,
+      error: "AI features require Pro subscription.",
+    });
+  });
+
+  it("returns optimized prompt and marks changed output", async () => {
+    const { handleOptimizePrompt } = await import("./ai");
+
+    const result = await handleOptimizePrompt(
+      {
+        typeSlug: "prompt",
+        title: "Generate test plan",
+        content: "Create a test plan for this feature.",
+      },
+      {
+        auth: async () => ({
+          user: {
+            id: "signed-in-user",
+          },
+        }),
+        checkUserRateLimit: async () => ({
+          success: true,
+          limit: 20,
+          remaining: 19,
+          reset: Date.now() + 3_600_000,
+          retryAfter: 0,
+        }),
+        getDashboardUserForSession: async () => ({
+          id: "dashboard-user",
+        }),
+        getOpenAIClient: () => ({
+          responses: {
+            create: async () => ({
+              output_text:
+                "Create a concise test plan for this feature with sections for scope, risks, test cases, and success criteria.",
+            }),
+          },
+        }),
+        getUserBillingState: async () => ({
+          id: "dashboard-user",
+          isPro: true,
+          planTier: "PRO",
+          stripeCustomerId: "cus_123",
+          stripeSubscriptionId: "sub_123",
+        }),
+      },
+    );
+
+    assert.deepEqual(result, {
+      success: true,
+      data: {
+        optimizedPrompt:
+          "Create a concise test plan for this feature with sections for scope, risks, test cases, and success criteria.",
+        changed: true,
+      },
+    });
+  });
+
+  it("returns changed=false when optimizer output matches original prompt", async () => {
+    const { handleOptimizePrompt } = await import("./ai");
+
+    const result = await handleOptimizePrompt(
+      {
+        typeSlug: "prompt",
+        content: "Generate release notes with bullet points.",
+      },
+      {
+        auth: async () => ({
+          user: {
+            id: "signed-in-user",
+          },
+        }),
+        checkUserRateLimit: async () => ({
+          success: true,
+          limit: 20,
+          remaining: 18,
+          reset: Date.now() + 3_600_000,
+          retryAfter: 0,
+        }),
+        getDashboardUserForSession: async () => ({
+          id: "dashboard-user",
+        }),
+        getOpenAIClient: () => ({
+          responses: {
+            create: async () => ({
+              output_text: "Generate release notes with bullet points.",
+            }),
+          },
+        }),
+        getUserBillingState: async () => ({
+          id: "dashboard-user",
+          isPro: true,
+          planTier: "PRO",
+          stripeCustomerId: "cus_123",
+          stripeSubscriptionId: "sub_123",
+        }),
+      },
+    );
+
+    assert.deepEqual(result, {
+      success: true,
+      data: {
+        optimizedPrompt: "Generate release notes with bullet points.",
+        changed: false,
+      },
+    });
+  });
+});
