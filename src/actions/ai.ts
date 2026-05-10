@@ -26,6 +26,15 @@ const autoDescriptionSchema = z.object({
   tags: z.array(z.string().trim().min(1)).default([]),
 });
 
+const explainCodeSchema = z.object({
+  typeSlug: z.enum(["snippet", "command"]),
+  title: z.string().trim().max(200).optional().default(""),
+  content: z.string().trim().min(1, "Content is required.").max(20_000),
+  language: z.string().trim().max(120).optional().default(""),
+});
+
+const EXPLAIN_CODE_MODEL = "gpt-5-nano";
+
 type AutoTagResponseClient = {
   responses: {
     create: (input: {
@@ -207,6 +216,38 @@ function normalizeDescriptionSummary(summary: string) {
   }
 
   return cleaned.slice(0, 280).trim();
+}
+
+function buildExplainCodeInput(input: z.infer<typeof explainCodeSchema>) {
+  const truncatedContent = input.content.slice(0, 4_000);
+  const language = input.language || (input.typeSlug === "command" ? "shell" : "plain text");
+
+  return [
+    "Explain this developer code or command.",
+    "Return markdown only.",
+    "Keep it concise (roughly 200-300 words).",
+    "Cover what it does, key concepts, and notable implementation details.",
+    input.title ? `Title: ${input.title}` : "Title: (none)",
+    `Type: ${input.typeSlug}`,
+    `Language: ${language}`,
+    `Code:\n${truncatedContent}`,
+  ].join("\n\n");
+}
+
+function normalizeExplanationMarkdown(markdown: string) {
+  const cleaned = markdown.replace(/\r/g, "").trim();
+
+  if (!cleaned) {
+    return "";
+  }
+
+  const words = cleaned.split(/\s+/);
+
+  if (words.length <= 320) {
+    return cleaned;
+  }
+
+  return `${words.slice(0, 320).join(" ")}...`;
 }
 
 export async function handleGenerateAutoTags(
@@ -431,4 +472,114 @@ export async function handleGenerateAutoDescription(
 
 export async function generateAutoDescription(data: unknown) {
   return handleGenerateAutoDescription(data);
+}
+
+type ExplainCodeResult =
+  | {
+      success: true;
+      data: {
+        explanation: string;
+      };
+    }
+  | {
+      success: false;
+      error: string;
+    };
+
+export async function handleExplainCode(
+  data: unknown,
+  deps: GenerateAutoTagsDeps = defaultDeps,
+): Promise<ExplainCodeResult> {
+  const parsedData = explainCodeSchema.safeParse(data);
+
+  if (!parsedData.success) {
+    return {
+      success: false,
+      error: parsedData.error.issues[0]?.message ?? "Invalid input.",
+    };
+  }
+
+  const session = await deps.auth();
+
+  if (!session?.user?.id) {
+    return {
+      success: false,
+      error: "You must be signed in.",
+    };
+  }
+
+  const dashboardUser = await deps.getDashboardUserForSession(session.user);
+
+  if (!dashboardUser) {
+    return {
+      success: false,
+      error: "Unable to explain code right now.",
+    };
+  }
+
+  const billingState = await deps.getUserBillingState(dashboardUser.id);
+
+  if (!billingState?.isPro) {
+    return {
+      success: false,
+      error: "AI features require Pro subscription.",
+    };
+  }
+
+  const rateLimitResult = await deps.checkUserRateLimit(
+    "aiAutoTags",
+    dashboardUser.id,
+  );
+
+  if (!rateLimitResult.success) {
+    return {
+      success: false,
+      error: `AI explain limit reached. ${rateLimitResult.error}`,
+    };
+  }
+
+  const client = deps.getOpenAIClient();
+
+  if (!client) {
+    return {
+      success: false,
+      error: "AI service is not configured yet.",
+    };
+  }
+
+  try {
+    const response = await client.responses.create({
+      model: EXPLAIN_CODE_MODEL,
+      instructions:
+        "You explain code and commands clearly for developers. Keep explanations concise and practical, and return markdown only.",
+      input: buildExplainCodeInput(parsedData.data),
+    });
+
+    const explanation = normalizeExplanationMarkdown(response.output_text ?? "");
+
+    if (!explanation) {
+      return {
+        success: false,
+        error: "Unable to explain code right now.",
+      };
+    }
+
+    return {
+      success: true,
+      data: {
+        explanation,
+      },
+    };
+  } catch (error) {
+    console.error("explainCode error:", error);
+
+    return {
+      success: false,
+      error: "Unable to explain code right now.",
+    };
+  }
+}
+
+export async function explainCode(data: unknown) {
+  return handleExplainCode(data);
 }

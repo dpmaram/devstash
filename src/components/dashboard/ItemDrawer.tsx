@@ -69,7 +69,11 @@ import {
 import type { DashboardCollection } from "@/lib/db/collections";
 import { shouldUseMarkdownEditor } from "@/lib/markdown-editor";
 import { cn } from "@/lib/utils";
-import { generateAutoDescription, generateAutoTags } from "@/actions/ai";
+import {
+  explainCode,
+  generateAutoDescription,
+  generateAutoTags,
+} from "@/actions/ai";
 
 type ItemDetailResponse =
   | {
@@ -767,7 +771,11 @@ function ItemDetailSheet({
                   suggestedTags={suggestedTags}
                 />
               ) : (
-                <ItemDetailBody item={state.item} />
+                <ItemDetailBody
+                  isProUser={isProUser}
+                  item={state.item}
+                  onToast={setToast}
+                />
               )
             ) : null}
           </div>
@@ -1455,7 +1463,15 @@ function DeleteItemConfirmationDialog({
   );
 }
 
-function ItemDetailBody({ item }: { item: ItemDetail }) {
+function ItemDetailBody({
+  isProUser,
+  item,
+  onToast,
+}: {
+  isProUser: boolean;
+  item: ItemDetail;
+  onToast: (toast: DrawerToast) => void;
+}) {
   return (
     <div className="space-y-8">
       <DetailSection title="Description">
@@ -1463,7 +1479,12 @@ function ItemDetailBody({ item }: { item: ItemDetail }) {
       </DetailSection>
 
       <DetailSection title="Content">
-        <ItemContent item={item} />
+        <ItemContent
+          isProUser={isProUser}
+          item={item}
+          key={item.id}
+          onToast={onToast}
+        />
       </DetailSection>
 
       {item.tags.length > 0 ? (
@@ -1517,17 +1538,68 @@ function ItemDetailBody({ item }: { item: ItemDetail }) {
   );
 }
 
-function ItemContent({ item }: { item: ItemDetail }) {
+function ItemContent({
+  isProUser,
+  item,
+  onToast,
+}: {
+  isProUser: boolean;
+  item: ItemDetail;
+  onToast: (toast: DrawerToast) => void;
+}) {
+  const [explanation, setExplanation] = useState("");
+  const [isExplaining, setIsExplaining] = useState(false);
+
+  async function handleExplainCode() {
+    if (!item.content || isExplaining || !canExplainItem(item)) {
+      return;
+    }
+
+    setIsExplaining(true);
+
+    try {
+      const result = await explainCode({
+        content: item.content,
+        language: item.language,
+        title: item.title,
+        typeSlug: item.typeSlug,
+      });
+
+      if (!result.success) {
+        onToast({
+          message: result.error,
+          tone: "error",
+        });
+        return;
+      }
+
+      setExplanation(result.data.explanation);
+    } catch {
+      onToast({
+        message: "Unable to explain code right now.",
+        tone: "error",
+      });
+    } finally {
+      setIsExplaining(false);
+    }
+  }
+
   if (item.content) {
     if (shouldUseCodeEditor(item.typeSlug)) {
       return (
         <CodeEditor
           ariaLabel={`${item.title} content`}
+          canExplain={canExplainItem(item)}
+          explanation={explanation}
+          explanationLabel="Explain"
+          isExplaining={isExplaining}
+          isProUser={isProUser}
           language={getCodeEditorLanguage(item.language, item.typeSlug)}
           languageLabel={getCodeEditorLanguageLabel(
             item.language,
             item.typeSlug,
           )}
+          onExplain={handleExplainCode}
           readOnly
           value={item.content}
         />
@@ -1621,6 +1693,10 @@ function ItemContent({ item }: { item: ItemDetail }) {
       No content saved for this item yet.
     </p>
   );
+}
+
+function canExplainItem(item: ItemDetail) {
+  return item.typeSlug === "snippet" || item.typeSlug === "command";
 }
 
 function DetailSection({

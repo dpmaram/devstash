@@ -375,3 +375,131 @@ describe("generateAutoDescription action", () => {
     });
   });
 });
+
+describe("explainCode action", () => {
+  it("validates supported type slug", async () => {
+    const { handleExplainCode } = await import("./ai");
+
+    const result = await handleExplainCode(
+      {
+        typeSlug: "note",
+        content: "const x = 1;",
+      },
+      {
+        auth: async () => {
+          throw new Error("auth should not be called");
+        },
+        checkUserRateLimit: async () => {
+          throw new Error("checkUserRateLimit should not be called");
+        },
+        getDashboardUserForSession: async () => {
+          throw new Error("getDashboardUserForSession should not be called");
+        },
+        getOpenAIClient: () => {
+          throw new Error("getOpenAIClient should not be called");
+        },
+        getUserBillingState: async () => {
+          throw new Error("getUserBillingState should not be called");
+        },
+      },
+    );
+
+    assert.deepEqual(result, {
+      success: false,
+      error: 'Invalid option: expected one of "snippet"|"command"',
+    });
+  });
+
+  it("blocks free-tier users", async () => {
+    const { handleExplainCode } = await import("./ai");
+
+    const result = await handleExplainCode(
+      {
+        typeSlug: "snippet",
+        title: "Auth middleware",
+        content: "export function middleware(request) { return NextResponse.next(); }",
+      },
+      {
+        auth: async () => ({
+          user: {
+            id: "signed-in-user",
+          },
+        }),
+        checkUserRateLimit: async () => {
+          throw new Error("checkUserRateLimit should not be called");
+        },
+        getDashboardUserForSession: async () => ({
+          id: "dashboard-user",
+        }),
+        getOpenAIClient: () => {
+          throw new Error("getOpenAIClient should not be called");
+        },
+        getUserBillingState: async () => ({
+          id: "dashboard-user",
+          isPro: false,
+          planTier: "FREE",
+          stripeCustomerId: null,
+          stripeSubscriptionId: null,
+        }),
+      },
+    );
+
+    assert.deepEqual(result, {
+      success: false,
+      error: "AI features require Pro subscription.",
+    });
+  });
+
+  it("returns markdown explanation on success", async () => {
+    const { handleExplainCode } = await import("./ai");
+
+    const result = await handleExplainCode(
+      {
+        typeSlug: "command",
+        title: "List git branches",
+        content: "git branch --all",
+        language: "shell",
+      },
+      {
+        auth: async () => ({
+          user: {
+            id: "signed-in-user",
+          },
+        }),
+        checkUserRateLimit: async () => ({
+          success: true,
+          limit: 20,
+          remaining: 19,
+          reset: Date.now() + 3_600_000,
+          retryAfter: 0,
+        }),
+        getDashboardUserForSession: async () => ({
+          id: "dashboard-user",
+        }),
+        getOpenAIClient: () => ({
+          responses: {
+            create: async () => ({
+              output_text:
+                "This command lists local and remote branches, helping you inspect branch state across repositories. It is useful for confirming branch names before checkout, merge, or cleanup tasks.",
+            }),
+          },
+        }),
+        getUserBillingState: async () => ({
+          id: "dashboard-user",
+          isPro: true,
+          planTier: "PRO",
+          stripeCustomerId: "cus_123",
+          stripeSubscriptionId: "sub_123",
+        }),
+      },
+    );
+
+    assert.deepEqual(result, {
+      success: true,
+      data: {
+        explanation:
+          "This command lists local and remote branches, helping you inspect branch state across repositories. It is useful for confirming branch names before checkout, merge, or cleanup tasks.",
+      },
+    });
+  });
+});
