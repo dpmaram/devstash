@@ -7,7 +7,8 @@ export type RateLimitRule =
   | "forgotPassword"
   | "resetPassword"
   | "resendVerification"
-  | "changePassword";
+  | "changePassword"
+  | "aiAutoTags";
 
 type RateLimitRuleConfig = {
   limit: number;
@@ -83,6 +84,11 @@ export const authRateLimitRules = {
     limit: 5,
     window: "15 m",
     keyPrefix: "auth:change-password",
+  },
+  aiAutoTags: {
+    limit: 20,
+    window: "1 h",
+    keyPrefix: "ai:auto-tags",
   },
 } satisfies Record<RateLimitRule, RateLimitRuleConfig>;
 
@@ -183,6 +189,39 @@ function formatRateLimitError(retryAfter: number) {
   return `Too many attempts. Please try again in ${minutes} ${unit}.`;
 }
 
+function evaluateRateLimitResult(
+  result: RateLimitBackendResult | null,
+  deps: RateLimitDeps,
+): RateLimitResult {
+  if (!result?.success) {
+    if (!result) {
+      return createAllowedResult(result);
+    }
+
+    const retryAfter = Math.max(1, Math.ceil((result.reset - deps.now()) / 1_000));
+
+    return {
+      success: false,
+      limit: result.limit,
+      remaining: result.remaining,
+      reset: result.reset,
+      retryAfter,
+      error: formatRateLimitError(retryAfter),
+    };
+  }
+
+  return createAllowedResult(result);
+}
+
+export function createUserRateLimitKey(
+  rule: RateLimitRule,
+  identifier: string,
+) {
+  const normalizedIdentifier = normalizeIdentifier(identifier || "unknown");
+
+  return `${authRateLimitRules[rule].keyPrefix}:${normalizedIdentifier}`;
+}
+
 export async function checkRateLimit(
   rule: RateLimitRule,
   request: Request,
@@ -196,27 +235,23 @@ export async function checkRateLimit(
   try {
     const result = await deps.limit(rule, key);
 
-    if (!result?.success) {
-      if (!result) {
-        return createAllowedResult(result);
-      }
+    return evaluateRateLimitResult(result, deps);
+  } catch {
+    return createAllowedResult(null);
+  }
+}
 
-      const retryAfter = Math.max(
-        1,
-        Math.ceil((result.reset - deps.now()) / 1_000),
-      );
+export async function checkUserRateLimit(
+  rule: RateLimitRule,
+  identifier: string,
+  deps: RateLimitDeps = defaultRateLimitDeps,
+): Promise<RateLimitResult> {
+  const key = createUserRateLimitKey(rule, identifier);
 
-      return {
-        success: false,
-        limit: result.limit,
-        remaining: result.remaining,
-        reset: result.reset,
-        retryAfter,
-        error: formatRateLimitError(retryAfter),
-      };
-    }
+  try {
+    const result = await deps.limit(rule, key);
 
-    return createAllowedResult(result);
+    return evaluateRateLimitResult(result, deps);
   } catch {
     return createAllowedResult(null);
   }

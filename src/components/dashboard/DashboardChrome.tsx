@@ -159,6 +159,7 @@ function TopBar({
         <NewItemDialog
           collections={collections}
           initialTypeSlug={newItemInitialTypeSlug}
+          isPro={currentUser.planTier === "pro"}
           itemTypes={itemTypes}
         />
       </div>

@@ -15,6 +15,7 @@ import {
   LoaderCircle,
   Pencil,
   Pin,
+  Sparkles,
   Star,
   Tag,
   Trash2,
@@ -55,6 +56,11 @@ import {
 import type { DashboardItem, ItemDetail } from "@/lib/db/items";
 import type { ItemTypeSlug } from "@/lib/mock-data";
 import {
+  appendTagToTagsText,
+  filterSuggestedTags,
+  parseTagsText,
+} from "@/lib/ai/tags";
+import {
   getCodeEditorLanguage,
   getCodeEditorLanguageOptions,
   getCodeEditorLanguageLabel,
@@ -63,6 +69,7 @@ import {
 import type { DashboardCollection } from "@/lib/db/collections";
 import { shouldUseMarkdownEditor } from "@/lib/markdown-editor";
 import { cn } from "@/lib/utils";
+import { generateAutoTags } from "@/actions/ai";
 
 type ItemDetailResponse =
   | {
@@ -111,12 +118,14 @@ export function ItemCardGrid({
   displayMode = "cards",
   emptyMessage = "No items yet.",
   initialItemId,
+  isProUser = false,
   items,
 }: {
   availableCollections?: DashboardCollection[];
   displayMode?: "cards" | "fileList" | "imageGallery";
   emptyMessage?: string;
   initialItemId?: string | null;
+  isProUser?: boolean;
   items: DashboardItem[];
 }) {
   const pathname = usePathname();
@@ -186,6 +195,7 @@ export function ItemCardGrid({
       )}
       <ItemDetailSheet
         availableCollections={availableCollections}
+        isProUser={isProUser}
         onOpenChange={drawer.onOpenChange}
         open={drawer.isOpen}
         replaceItem={drawer.replaceItem}
@@ -198,10 +208,12 @@ export function ItemCardGrid({
 export function ItemRowList({
   availableCollections = [],
   emptyMessage = "No items yet.",
+  isProUser = false,
   items,
 }: {
   availableCollections?: DashboardCollection[];
   emptyMessage?: string;
+  isProUser?: boolean;
   items: DashboardItem[];
 }) {
   const drawer = useItemDrawer();
@@ -220,6 +232,7 @@ export function ItemRowList({
       </div>
       <ItemDetailSheet
         availableCollections={availableCollections}
+        isProUser={isProUser}
         onOpenChange={drawer.onOpenChange}
         open={drawer.isOpen}
         replaceItem={drawer.replaceItem}
@@ -310,12 +323,14 @@ function useItemDrawer() {
 
 function ItemDetailSheet({
   availableCollections,
+  isProUser,
   onOpenChange,
   open,
   replaceItem,
   state,
 }: {
   availableCollections: DashboardCollection[];
+  isProUser: boolean;
   onOpenChange: (open: boolean) => void;
   open: boolean;
   replaceItem: (item: ItemDetail) => void;
@@ -329,7 +344,9 @@ function ItemDetailSheet({
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [isSuggestingTags, setIsSuggestingTags] = useState(false);
   const [mode, setMode] = useState<"edit" | "view">("view");
+  const [suggestedTags, setSuggestedTags] = useState<string[]>([]);
   const [toast, setToast] = useState<DrawerToast>(null);
   const isEditingCurrentItem =
     mode === "edit" && Boolean(state.item && draft?.itemId === state.item.id);
@@ -351,13 +368,74 @@ function ItemDetailSheet({
 
     setDraft(createItemEditDraft(state.item));
     setFormError(null);
+    setSuggestedTags([]);
     setMode("edit");
   }
 
   function cancelEdit() {
     setDraft(state.item ? createItemEditDraft(state.item) : null);
     setFormError(null);
+    setSuggestedTags([]);
     setMode("view");
+  }
+
+  async function suggestTags() {
+    if (!state.item || !draft || draft.itemId !== state.item.id || isSuggestingTags) {
+      return;
+    }
+
+    setIsSuggestingTags(true);
+
+    try {
+      const result = await generateAutoTags({
+        title: draft.title,
+        description: draft.description,
+        content: draft.content,
+        tags: getDraftTags(draft.tagsText),
+      });
+
+      if (!result.success) {
+        setToast({
+          message: result.error,
+          tone: "error",
+        });
+        return;
+      }
+
+      setSuggestedTags(filterSuggestedTags(result.data.tags, draft.tagsText));
+    } catch {
+      setToast({
+        message: "Unable to generate tag suggestions right now.",
+        tone: "error",
+      });
+    } finally {
+      setIsSuggestingTags(false);
+    }
+  }
+
+  function acceptSuggestedTag(tag: string) {
+    if (!draft) {
+      return;
+    }
+
+    const nextTagsText = appendTagToTagsText(draft.tagsText, tag);
+
+    setDraft({
+      ...draft,
+      tagsText: nextTagsText,
+    });
+    setSuggestedTags((currentTags) =>
+      filterSuggestedTags(
+        currentTags.filter((candidateTag) => candidateTag !== tag),
+        nextTagsText,
+      ),
+    );
+  }
+
+  function rejectSuggestedTag(tag: string) {
+    setSuggestedTags((currentTags) =>
+      currentTags.filter((candidateTag) => candidateTag !== tag),
+    );
   }
 
   async function saveEdit() {
@@ -457,7 +535,9 @@ function ItemDetailSheet({
       setIsDeleteDialogOpen(false);
       setIsDeleting(false);
       setIsSaving(false);
+      setIsSuggestingTags(false);
       setMode("view");
+      setSuggestedTags([]);
     }
 
     onOpenChange(nextOpen);
@@ -620,10 +700,21 @@ function ItemDetailSheet({
                   availableCollections={availableCollections}
                   draft={draft}
                   error={formError}
+                  isProUser={isProUser}
                   isSaving={isSaving}
+                  isSuggestingTags={isSuggestingTags}
                   item={state.item}
-                  onChange={setDraft}
+                  onAcceptSuggestedTag={acceptSuggestedTag}
+                  onChange={(nextDraft) => {
+                    setDraft(nextDraft);
+                    setSuggestedTags((currentTags) =>
+                      filterSuggestedTags(currentTags, nextDraft.tagsText),
+                    );
+                  }}
+                  onRejectSuggestedTag={rejectSuggestedTag}
                   onSave={saveEdit}
+                  onSuggestTags={suggestTags}
+                  suggestedTags={suggestedTags}
                 />
               ) : (
                 <ItemDetailBody item={state.item} />
@@ -830,18 +921,30 @@ function ItemEditForm({
   availableCollections,
   draft,
   error,
+  isProUser,
   isSaving,
+  isSuggestingTags,
   item,
+  onAcceptSuggestedTag,
   onChange,
+  onRejectSuggestedTag,
   onSave,
+  onSuggestTags,
+  suggestedTags,
 }: {
   availableCollections: DashboardCollection[];
   draft: ItemEditDraft;
   error: string | null;
+  isProUser: boolean;
   isSaving: boolean;
+  isSuggestingTags: boolean;
   item: ItemDetail;
+  onAcceptSuggestedTag: (tag: string) => void;
   onChange: (draft: ItemEditDraft) => void;
+  onRejectSuggestedTag: (tag: string) => void;
   onSave: () => void;
+  onSuggestTags: () => void;
+  suggestedTags: string[];
 }) {
   const fieldId = useId();
   const titleId = `${fieldId}-title`;
@@ -909,13 +1012,72 @@ function ItemEditForm({
             disabled={isSaving}
             id={tagsId}
             onChange={(event) =>
-              onChange({
-                ...draft,
-                tagsText: event.target.value,
-              })
+              {
+                const nextTagsText = event.target.value;
+
+                onChange({
+                  ...draft,
+                  tagsText: nextTagsText,
+                });
+              }
             }
             value={draft.tagsText}
           />
+          {isProUser ? (
+            <div className="mt-3 space-y-3">
+              <Button
+                className="h-9 gap-2 rounded-md px-3 text-sm"
+                disabled={isSaving || isSuggestingTags}
+                onClick={onSuggestTags}
+                type="button"
+                variant="ghost"
+              >
+                {isSuggestingTags ? (
+                  <LoaderCircle
+                    aria-hidden="true"
+                    className="size-4 animate-spin"
+                  />
+                ) : (
+                  <Sparkles aria-hidden="true" className="size-4" />
+                )}
+                <span>Suggest Tags</span>
+              </Button>
+
+              {suggestedTags.length > 0 ? (
+                <div className="space-y-2">
+                  <p className="text-xs uppercase tracking-wide text-muted-foreground">
+                    Suggestions
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {suggestedTags.map((tag) => (
+                      <span
+                        className="inline-flex items-center gap-1 rounded-md border border-devstash-line bg-white/[0.05] px-2.5 py-1 text-xs text-zinc-100"
+                        key={tag}
+                      >
+                        <span>{tag}</span>
+                        <button
+                          aria-label={`Accept tag ${tag}`}
+                          className="rounded p-0.5 text-emerald-300 transition hover:bg-emerald-400/20"
+                          onClick={() => onAcceptSuggestedTag(tag)}
+                          type="button"
+                        >
+                          <Check aria-hidden="true" className="size-3.5" />
+                        </button>
+                        <button
+                          aria-label={`Reject tag ${tag}`}
+                          className="rounded p-0.5 text-muted-foreground transition hover:bg-white/10 hover:text-zinc-100"
+                          onClick={() => onRejectSuggestedTag(tag)}
+                          type="button"
+                        >
+                          <X aria-hidden="true" className="size-3.5" />
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
+            </div>
+          ) : null}
         </EditField>
 
         <EditField htmlFor={collectionsId} label="Collections">
@@ -1504,10 +1666,7 @@ function createUpdateItemPayload(item: ItemDetail, draft: ItemEditDraft) {
 }
 
 function getDraftTags(tagsText: string) {
-  return tagsText
-    .split(",")
-    .map((tag) => tag.trim())
-    .filter(Boolean);
+  return parseTagsText(tagsText);
 }
 
 function getItemDetailPreview(item: ItemDetail) {

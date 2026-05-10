@@ -1,20 +1,31 @@
-# Current Feature
+# Current Feature: AI Auto-Tagging
 
 ## Status
 
 <!-- Not Started|In Progress|Completed -->
 
-Not Started
+In Progress
 
 ## Goals
 
 <!-- Add goals for the active feature here -->
 
+- Add OpenAI-backed tag suggestion flow using `gpt-5-nano` and the Responses API.
+- Implement `generateAutoTags` server action with auth, Pro gating, validation, and rate limiting.
+- Add AI suggestion UX in both New Item dialog and Item Drawer edit mode with accept/reject controls.
+- Enforce 20 requests/hour AI rate limit and robust error/toast handling.
+- Add focused unit tests for the auto-tagging server action behavior.
 
 
 ## Notes
 
 <!-- Add notes or constraints for the active feature here -->
+
+- Use OpenAI Responses API (`client.responses.create`) with `text.format: { type: "json_object" }`; do not use Chat Completions for `gpt-5-nano`.
+- Handle model responses that may return either `{ "tags": [...] }` or an array format, then normalize tags to lowercase.
+- Truncate item content to 2000 chars before calling the model.
+- This is Pro-only and requires both server-side enforcement and UI-level gating.
+- `OPENAI_API_KEY` is already available in local env.
 
 ## History
 
@@ -176,3 +187,6 @@ Not Started
 - 2026-05-09 EDT - Completed Stripe Integration - Phase 2 (Integration and UI), merged branch `feature/stripe-integration-phase-2-integration-ui` into `main`, added Stripe checkout/portal/webhook routes, enforced server-side billing gates for items/collections/uploads, added Settings billing panel and homepage pricing checkout wiring, added Stripe route and gating tests, and documented Stripe setup plus Stripe CLI webhook verification in README. Verified with `npm test`, `npm run lint`, and `npx tsc --noEmit`.
 - 2026-05-09 EDT - Completed free-tier upload access hardening on `main`: reduced demo seed content to 3 collections with under-50 items and reset stale demo content during reseed, blocked free users from `/items/files` and `/items/images` with an in-app upgrade panel, added reusable pro-gate helper tests, and updated sidebar/type plan mapping so free users see clear Pro upgrade hints for Files and Images. Verified with focused Vitest runs, `npm run lint`, and `npx tsc --noEmit`.
 - 2026-05-09 EDT - Implemented upgrade page flow with `/upgrade` route displaying pricing comparison, monthly/yearly toggle, and Stripe checkout integration. Updated header to show "Upgrade" button for free users, redirected pro-gated routes to upgrade page, and enabled public access to upgrade page. Verified with `npm test`, `npm run lint`, `npx tsc --noEmit`, and `npm run build`.
+- 2026-05-10 EDT - Loaded AI Auto-Tagging spec from `context/features/ai-auto-tag-spec.md`, set current feature to "AI Auto-Tagging", captured goals/notes for OpenAI Responses API + Pro gating + rate limits, and set status to Not Started.
+- 2026-05-10 EDT - Started AI Auto-Tagging on branch `feature/ai-auto-tagging` and set status to In Progress.
+- 2026-05-10 EDT - Implemented AI Auto-Tagging foundation and UX: added OpenAI client utility (`src/lib/ai/openai-client.ts`), `generateAutoTags` server action with auth/pro/rate-limit checks and Responses API parsing (`src/actions/ai.ts`), AI user-scoped rate limit rule (20/hour) in `src/lib/rate-limit.ts`, Suggest Tags UI with accept/reject chips in new-item and drawer-edit flows, and focused tests (`src/actions/ai.test.ts`, `src/lib/rate-limit.test.ts`). Verified with focused Vitest runs, `npx tsc --noEmit`, and `npm run lint`.

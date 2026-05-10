@@ -113,6 +113,7 @@ export default async function CollectionDetailPage({
         <ItemCardGrid
           availableCollections={sidebarCollections}
           emptyMessage="No items in this collection yet."
+          isProUser={currentUser.planTier === "pro"}
           items={items}
         />
 
