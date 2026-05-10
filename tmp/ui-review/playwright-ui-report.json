@@ -1,0 +1,38 @@
+{
+  "timestamp": "2026-05-10T13:54:52.295Z",
+  "baseUrl": "http://localhost:3000",
+  "register": {
+    "path": "/register",
+    "title": "Create account | DevStash",
+    "githubVisible": false,
+    "githubSelector": null
+  },
+  "dashboard": {
+    "path": "/dashboard",
+    "url": "http://localhost:3000/sign-in?callbackUrl=http%3A%2F%2Flocalhost%3A3000%2Fdashboard",
+    "signedIn": false,
+    "attemptedAccounts": [
+      {
+        "email": "demo@devstash.io",
+        "urlAfterSubmit": "http://localhost:3000/sign-in",
+        "errorSnippet": "DevStash Features Pricing Sign In Get Started DevStash WELCOME BACK Sign in to DevStash Open your saved snippets, commands, prompts, notes, files, images, and links. Sign in Use your DevStash account or continue with GitHub. Email Password "
+      },
+      {
+        "email": "ui-review-1778421288862@example.com",
+        "urlAfterSubmit": "http://localhost:3000/sign-in",
+        "errorSnippet": "DevStash Features Pricing Sign In Get Started DevStash WELCOME BACK Sign in to DevStash Open your saved snippets, commands, prompts, notes, files, images, and links. Sign in Use your DevStash account or continue with GitHub. Email Password "
+      }
+    ],
+    "sidebar": {
+      "currentPath": "/sign-in",
+      "totalSidebarLinks": 0,
+      "activeByAria": [],
+      "activeByPath": [],
+      "sampleLinks": []
+    }
+  },
+  "mobile": {
+    "path": "/register",
+    "hasHorizontalOverflow": false
+  }
+}
