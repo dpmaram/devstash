@@ -248,3 +248,130 @@ describe("generateAutoTags action", () => {
     });
   });
 });
+
+describe("generateAutoDescription action", () => {
+  it("requires source context before auth", async () => {
+    const { handleGenerateAutoDescription } = await import("./ai");
+
+    const result = await handleGenerateAutoDescription(
+      {
+        title: "",
+        content: "",
+        url: "",
+      },
+      {
+        auth: async () => {
+          throw new Error("auth should not be called");
+        },
+        checkUserRateLimit: async () => {
+          throw new Error("checkUserRateLimit should not be called");
+        },
+        getDashboardUserForSession: async () => {
+          throw new Error("getDashboardUserForSession should not be called");
+        },
+        getOpenAIClient: () => {
+          throw new Error("getOpenAIClient should not be called");
+        },
+        getUserBillingState: async () => {
+          throw new Error("getUserBillingState should not be called");
+        },
+      },
+    );
+
+    assert.deepEqual(result, {
+      success: false,
+      error: "Add a title, content, URL, or file name first.",
+    });
+  });
+
+  it("blocks free-tier users", async () => {
+    const { handleGenerateAutoDescription } = await import("./ai");
+
+    const result = await handleGenerateAutoDescription(
+      {
+        title: "Snippet about rate limits",
+      },
+      {
+        auth: async () => ({
+          user: {
+            id: "signed-in-user",
+          },
+        }),
+        checkUserRateLimit: async () => {
+          throw new Error("checkUserRateLimit should not be called");
+        },
+        getDashboardUserForSession: async () => ({
+          id: "dashboard-user",
+        }),
+        getOpenAIClient: () => {
+          throw new Error("getOpenAIClient should not be called");
+        },
+        getUserBillingState: async () => ({
+          id: "dashboard-user",
+          isPro: false,
+          planTier: "FREE",
+          stripeCustomerId: null,
+          stripeSubscriptionId: null,
+        }),
+      },
+    );
+
+    assert.deepEqual(result, {
+      success: false,
+      error: "AI description suggestions are available on Pro plans only.",
+    });
+  });
+
+  it("returns a normalized 1-2 sentence summary", async () => {
+    const { handleGenerateAutoDescription } = await import("./ai");
+
+    const result = await handleGenerateAutoDescription(
+      {
+        typeSlug: "snippet",
+        title: "Rate limiter helper",
+        content: "Utility for retry-after and user key generation",
+        tags: ["rate-limit", "auth"],
+      },
+      {
+        auth: async () => ({
+          user: {
+            id: "signed-in-user",
+          },
+        }),
+        checkUserRateLimit: async () => ({
+          success: true,
+          limit: 20,
+          remaining: 19,
+          reset: Date.now() + 3_600_000,
+          retryAfter: 0,
+        }),
+        getDashboardUserForSession: async () => ({
+          id: "dashboard-user",
+        }),
+        getOpenAIClient: () => ({
+          responses: {
+            create: async () => ({
+              output_text:
+                "- A shared helper that enforces per-user rate limits and consistent retry guidance. It centralizes key generation and limit handling across auth and AI flows. Extra sentence that should be removed.",
+            }),
+          },
+        }),
+        getUserBillingState: async () => ({
+          id: "dashboard-user",
+          isPro: true,
+          planTier: "PRO",
+          stripeCustomerId: "cus_123",
+          stripeSubscriptionId: "sub_123",
+        }),
+      },
+    );
+
+    assert.deepEqual(result, {
+      success: true,
+      data: {
+        description:
+          "A shared helper that enforces per-user rate limits and consistent retry guidance. It centralizes key generation and limit handling across auth and AI flows.",
+      },
+    });
+  });
+});
