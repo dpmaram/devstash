@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { Loader2, UserPlus } from "lucide-react";
+import { Code2, Loader2, UserPlus } from "lucide-react";
+import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
@@ -27,6 +28,7 @@ export function RegisterForm({
   const [errors, setErrors] = useState<RegisterFormErrors>({});
   const [formError, setFormError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSigningInWithGitHub, setIsSigningInWithGitHub] = useState(false);
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -168,7 +170,7 @@ export function RegisterForm({
 
       <Button
         className="h-11 w-full gap-2 bg-foreground text-background hover:bg-foreground/90"
-        disabled={isSubmitting}
+        disabled={isSubmitting || isSigningInWithGitHub}
         type="submit"
       >
         {isSubmitting ? (
@@ -177,6 +179,24 @@ export function RegisterForm({
           <UserPlus aria-hidden="true" className="size-4" />
         )}
         Create account
+      </Button>
+
+      <Button
+        className="h-11 w-full gap-2 border-devstash-line bg-white/[0.04] text-foreground hover:bg-white/[0.08]"
+        disabled={isSubmitting || isSigningInWithGitHub}
+        onClick={() => {
+          setIsSigningInWithGitHub(true);
+          signIn("github", { callbackUrl });
+        }}
+        type="button"
+        variant="outline"
+      >
+        {isSigningInWithGitHub ? (
+          <Loader2 aria-hidden="true" className="size-4 animate-spin" />
+        ) : (
+          <Code2 aria-hidden="true" className="size-4" />
+        )}
+        Sign up with GitHub
       </Button>
 
       <p className="text-center text-sm text-muted-foreground">

@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useState, type ReactNode } from "react";
 import {
   ChevronUp,
@@ -244,6 +245,7 @@ function SidebarContent({
   onToggleCollapse: () => void;
   variant: "desktop" | "mobile";
 }) {
+  const pathname = usePathname();
   const favoriteCollections = collections.filter((collection) => collection.isFavorite);
   const recentCollections = collections.slice(0, 5);
 
@@ -291,10 +293,16 @@ function SidebarContent({
             const isProOnlyType = shouldShowSidebarProBadge(itemType.slug);
             const shouldShowUpgradeHint =
               currentUser.planTier === "free" && isProOnlyType;
+            const isActive = pathname === itemType.href || pathname.startsWith(itemType.href + "/");
 
             return (
               <Link
-                className="flex h-11 items-center gap-3 rounded-lg px-3 text-sm text-zinc-300 transition hover:bg-white/[0.06] hover:text-white"
+                aria-current={isActive ? "page" : undefined}
+                className={`flex h-11 items-center gap-3 rounded-lg px-3 text-sm transition hover:bg-white/[0.06] hover:text-white ${
+                  isActive
+                    ? "bg-white/[0.08] text-white"
+                    : "text-zinc-300"
+                }`}
                 href={itemType.href}
                 key={itemType.id}
                 onClick={variant === "mobile" ? onCloseMobile : undefined}
@@ -336,6 +344,7 @@ function SidebarContent({
             <CollectionLink
               collection={collection}
               isCollapsed={isCollapsed}
+              isActive={pathname === `/collections/${collection.slug}`}
               key={collection.id}
               onClick={variant === "mobile" ? onCloseMobile : undefined}
               variant="favorite"
@@ -348,12 +357,14 @@ function SidebarContent({
             <CollectionLink
               collection={collection}
               isCollapsed={isCollapsed}
+              isActive={pathname === `/collections/${collection.slug}`}
               key={collection.id}
               onClick={variant === "mobile" ? onCloseMobile : undefined}
               variant="recent"
             />
           ))}
           <ViewAllCollectionsLink
+            isActive={pathname === "/collections"}
             isCollapsed={isCollapsed}
             onClick={variant === "mobile" ? onCloseMobile : undefined}
           />
@@ -495,18 +506,23 @@ function SidebarSection({
 
 function CollectionLink({
   collection,
+  isActive,
   isCollapsed,
   onClick,
   variant,
 }: {
   collection: DashboardCollection;
+  isActive: boolean;
   isCollapsed: boolean;
   onClick?: () => void;
   variant: "favorite" | "recent";
 }) {
   return (
     <Link
-      className="flex h-11 items-center gap-3 rounded-lg px-3 text-sm text-zinc-300 transition hover:bg-white/[0.06] hover:text-white"
+      aria-current={isActive ? "page" : undefined}
+      className={`flex h-11 items-center gap-3 rounded-lg px-3 text-sm transition hover:bg-white/[0.06] hover:text-white ${
+        isActive ? "bg-white/[0.08] text-white" : "text-zinc-300"
+      }`}
       href={`/collections/${collection.slug}`}
       onClick={onClick}
       title={isCollapsed ? collection.name : undefined}
@@ -540,15 +556,20 @@ function CollectionLink({
 }
 
 function ViewAllCollectionsLink({
+  isActive,
   isCollapsed,
   onClick,
 }: {
+  isActive: boolean;
   isCollapsed: boolean;
   onClick?: () => void;
 }) {
   return (
     <Link
-      className="flex h-11 items-center gap-3 rounded-lg px-3 text-sm text-zinc-300 transition hover:bg-white/[0.06] hover:text-white"
+      aria-current={isActive ? "page" : undefined}
+      className={`flex h-11 items-center gap-3 rounded-lg px-3 text-sm transition hover:bg-white/[0.06] hover:text-white ${
+        isActive ? "bg-white/[0.08] text-white" : "text-zinc-300"
+      }`}
       href="/collections"
       onClick={onClick}
       title={isCollapsed ? "View all collections" : undefined}
