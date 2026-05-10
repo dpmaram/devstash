@@ -50,6 +50,7 @@ export async function DashboardShell() {
       <DashboardMain
         availableCollections={sidebarCollections}
         collections={collections}
+        isProUser={currentUser.planTier === "pro"}
         pinnedItems={pinnedItems}
         recentItems={recentItems}
         stats={stats}
@@ -61,12 +62,14 @@ export async function DashboardShell() {
 function DashboardMain({
   availableCollections,
   collections,
+  isProUser,
   pinnedItems,
   recentItems,
   stats,
 }: {
   availableCollections: DashboardCollection[];
   collections: DashboardCollection[];
+  isProUser: boolean;
   pinnedItems: DashboardItem[];
   recentItems: DashboardItem[];
   stats: DashboardStat[];
@@ -107,6 +110,7 @@ function DashboardMain({
         <DashboardSection title="Pinned Items">
           <ItemCardGrid
             availableCollections={availableCollections}
+            isProUser={isProUser}
             items={pinnedItems}
           />
         </DashboardSection>
@@ -115,6 +119,7 @@ function DashboardMain({
       <DashboardSection title="Recent Items">
         <ItemRowList
           availableCollections={availableCollections}
+          isProUser={isProUser}
           items={recentItems}
         />
       </DashboardSection>

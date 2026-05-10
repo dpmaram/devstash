@@ -6,11 +6,13 @@ import {
   Code2,
   LoaderCircle,
   Plus,
+  Sparkles,
   X,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
+import { generateAutoTags } from "@/actions/ai";
 import { createItem as createItemAction } from "@/actions/items";
 import { CollectionPicker } from "@/components/dashboard/CollectionPicker";
 import { CodeEditor } from "@/components/dashboard/CodeEditor";
@@ -32,6 +34,11 @@ import {
   type NewItemDraft,
 } from "@/lib/create-item-types";
 import {
+  appendTagToTagsText,
+  filterSuggestedTags,
+  parseTagsText,
+} from "@/lib/ai/tags";
+import {
   getCodeEditorLanguage,
   getCodeEditorLanguageOptions,
   getCodeEditorLanguageLabel,
@@ -52,6 +59,7 @@ type NewItemToast = {
 export function NewItemDialog({
   collections = [],
   initialTypeSlug,
+  isPro = false,
   itemTypes,
   triggerClassName,
   triggerLabel = "New Item",
@@ -59,6 +67,7 @@ export function NewItemDialog({
 }: {
   collections?: DashboardCollection[];
   initialTypeSlug?: string | null;
+  isPro?: boolean;
   itemTypes: DashboardItemType[];
   triggerClassName?: string;
   triggerLabel?: string;
@@ -71,6 +80,8 @@ export function NewItemDialog({
   const [error, setError] = useState<string | null>(null);
   const [isOpen, setIsOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [isSuggestingTags, setIsSuggestingTags] = useState(false);
+  const [suggestedTags, setSuggestedTags] = useState<string[]>([]);
   const [toast, setToast] = useState<NewItemToast>(null);
   const typeOptions = getCreateableItemTypes(itemTypes);
   const canSave =
@@ -89,6 +100,62 @@ export function NewItemDialog({
     setDraft(createInitialNewItemDraft(initialTypeSlug));
     setError(null);
     setIsSaving(false);
+    setIsSuggestingTags(false);
+    setSuggestedTags([]);
+  }
+
+  async function handleSuggestTags() {
+    if (isSaving || isSuggestingTags) {
+      return;
+    }
+
+    setIsSuggestingTags(true);
+
+    try {
+      const result = await generateAutoTags({
+        title: draft.title,
+        description: draft.description,
+        content: draft.content,
+        tags: getDraftTags(draft.tagsText),
+      });
+
+      if (!result.success) {
+        setToast({
+          message: result.error,
+          tone: "error",
+        });
+        return;
+      }
+
+      setSuggestedTags(filterSuggestedTags(result.data.tags, draft.tagsText));
+    } catch {
+      setToast({
+        message: "Unable to generate tag suggestions right now.",
+        tone: "error",
+      });
+    } finally {
+      setIsSuggestingTags(false);
+    }
+  }
+
+  function acceptSuggestedTag(tag: string) {
+    const nextTagsText = appendTagToTagsText(draft.tagsText, tag);
+
+    updateDraft({
+      tagsText: nextTagsText,
+    });
+    setSuggestedTags((currentTags) =>
+      filterSuggestedTags(
+        currentTags.filter((candidateTag) => candidateTag !== tag),
+        nextTagsText,
+      ),
+    );
+  }
+
+  function rejectSuggestedTag(tag: string) {
+    setSuggestedTags((currentTags) =>
+      currentTags.filter((candidateTag) => candidateTag !== tag),
+    );
   }
 
   function handleOpenChange(nextOpen: boolean) {
@@ -280,12 +347,74 @@ export function NewItemDialog({
                     className="h-11 border-devstash-line bg-white/[0.03] px-3 text-base text-white"
                     disabled={isSaving}
                     onChange={(event) =>
-                      updateDraft({
-                        tagsText: event.target.value,
-                      })
+                      {
+                        const nextTagsText = event.target.value;
+
+                        updateDraft({
+                          tagsText: nextTagsText,
+                        });
+                        setSuggestedTags((currentTags) =>
+                          filterSuggestedTags(currentTags, nextTagsText),
+                        );
+                      }
                     }
                     value={draft.tagsText}
                   />
+                  {isPro ? (
+                    <div className="mt-3 space-y-3">
+                      <Button
+                        className="h-9 gap-2 rounded-md px-3 text-sm"
+                        disabled={isSaving || isSuggestingTags}
+                        onClick={handleSuggestTags}
+                        type="button"
+                        variant="ghost"
+                      >
+                        {isSuggestingTags ? (
+                          <LoaderCircle
+                            aria-hidden="true"
+                            className="size-4 animate-spin"
+                          />
+                        ) : (
+                          <Sparkles aria-hidden="true" className="size-4" />
+                        )}
+                        <span>Suggest Tags</span>
+                      </Button>
+
+                      {suggestedTags.length > 0 ? (
+                        <div className="space-y-2">
+                          <p className="text-xs uppercase tracking-wide text-muted-foreground">
+                            Suggestions
+                          </p>
+                          <div className="flex flex-wrap gap-2">
+                            {suggestedTags.map((tag) => (
+                              <span
+                                className="inline-flex items-center gap-1 rounded-md border border-devstash-line bg-white/[0.05] px-2.5 py-1 text-xs text-zinc-100"
+                                key={tag}
+                              >
+                                <span>{tag}</span>
+                                <button
+                                  aria-label={`Accept tag ${tag}`}
+                                  className="rounded p-0.5 text-emerald-300 transition hover:bg-emerald-400/20"
+                                  onClick={() => acceptSuggestedTag(tag)}
+                                  type="button"
+                                >
+                                  <Check aria-hidden="true" className="size-3.5" />
+                                </button>
+                                <button
+                                  aria-label={`Reject tag ${tag}`}
+                                  className="rounded p-0.5 text-muted-foreground transition hover:bg-white/10 hover:text-zinc-100"
+                                  onClick={() => rejectSuggestedTag(tag)}
+                                  type="button"
+                                >
+                                  <X aria-hidden="true" className="size-3.5" />
+                                </button>
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      ) : null}
+                    </div>
+                  ) : null}
                 </EditField>
 
                 <EditField label="Collections">
@@ -544,10 +673,7 @@ function getCreateableItemTypes(itemTypes: DashboardItemType[]) {
 }
 
 function getDraftTags(tagsText: string) {
-  return tagsText
-    .split(",")
-    .map((tag) => tag.trim())
-    .filter(Boolean);
+  return parseTagsText(tagsText);
 }
 
 function canEditContent(typeSlug: CreateItemTypeSlug) {

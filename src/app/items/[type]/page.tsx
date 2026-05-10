@@ -157,6 +157,7 @@ export default async function ItemsByTypePage({
             <NewItemDialog
               collections={sidebarCollections}
               initialTypeSlug={itemType.slug}
+              isPro={currentUser.planTier === "pro"}
               itemTypes={itemTypes}
               triggerClassName="w-full sm:w-auto"
               triggerLabel={`New ${itemType.name}`}
@@ -176,6 +177,7 @@ export default async function ItemsByTypePage({
           }
           emptyMessage={`No ${itemType.label.toLowerCase()} saved yet.`}
           initialItemId={initialItemId}
+          isProUser={currentUser.planTier === "pro"}
           items={items}
         />
 

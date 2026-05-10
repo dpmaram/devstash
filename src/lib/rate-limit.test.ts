@@ -3,7 +3,9 @@ import { describe, it } from "vitest";
 
 import {
   checkRateLimit,
+  checkUserRateLimit,
   createRateLimitKey,
+  createUserRateLimitKey,
   createTooManyRequestsResponse,
   type RateLimitDeps,
 } from "./rate-limit";
@@ -38,6 +40,15 @@ describe("createRateLimitKey", () => {
     assert.equal(
       createRateLimitKey("register", request),
       "auth:register:198.51.100.24",
+    );
+  });
+});
+
+describe("createUserRateLimitKey", () => {
+  it("creates a normalized user-scoped key", () => {
+    assert.equal(
+      createUserRateLimitKey("aiAutoTags", " User_123 "),
+      "ai:auto-tags:user_123",
     );
   });
 });
@@ -85,6 +96,31 @@ describe("checkRateLimit", () => {
 
     assert.equal(result.success, true);
     assert.equal(result.remaining, Number.POSITIVE_INFINITY);
+  });
+});
+
+describe("checkUserRateLimit", () => {
+  it("returns blocked metadata for user-scoped limits", async () => {
+    const deps: RateLimitDeps = {
+      limit: async () => ({
+        success: false,
+        limit: 20,
+        remaining: 0,
+        reset: fixedNow + 60_000,
+      }),
+      now: () => fixedNow,
+    };
+
+    const result = await checkUserRateLimit("aiAutoTags", "user_123", deps);
+
+    assert.deepEqual(result, {
+      success: false,
+      limit: 20,
+      remaining: 0,
+      reset: fixedNow + 60_000,
+      retryAfter: 60,
+      error: "Too many attempts. Please try again in 1 minute.",
+    });
   });
 });
 
